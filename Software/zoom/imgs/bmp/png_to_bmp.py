@@ -8,6 +8,6 @@ def png_to_bmp(img):
 for i in range(21):
     img = cv2.imdecode(np.fromfile("../png/"+str(i)+".png", dtype=np.uint8), -1)
     img_encode = png_to_bmp(img)
-    with open("../bmp/"+str(i)+".bmp", 'wb') as f:
+    with open("./"+str(i)+".bmp", 'wb') as f:
         f.write(img_encode)
 
