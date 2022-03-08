@@ -1,10 +1,10 @@
-#!/bin/sh
-cd jpg
+#!/bin/bash
+cd Software/zoom/imgs/jpg
 echo "generate png..."
-python3 add_trans.py
+# python3 add_trans.py
 echo "generate bmp..."
 cd ../bmp
-python3 png_to_bmp.py
+# python3 png_to_bmp.py
 echo "generate png_1k..."
 cd ../png_1k
 source downscale_png.sh
