@@ -20,11 +20,11 @@ module bicubic_read_bmp (
 
 );
 
-    // localparam HEIGHT = 540;
-    // localparam WIDTH  = 960;
+    localparam HEIGHT = 540;
+    localparam WIDTH  = 960;
 
-    localparam HEIGHT = 6;
-    localparam WIDTH  = 11;
+    // localparam HEIGHT = 6;
+    // localparam WIDTH  = 11;
 
     localparam OFFSET = 138;
     localparam TOTAL_SIZE = HEIGHT * WIDTH *3 + OFFSET;
@@ -37,7 +37,7 @@ module bicubic_read_bmp (
     localparam RESULT_SIZE = HEIGHT*WIDTH*3*4*4 + OFFSET;
     reg [23:0] result_data [RESULT_SIZE-1:0];
 
-    integer shaped_index = 11+4;
+    integer shaped_index = WIDTH+4;
     integer com = 0;
     integer bmp_file_id, icode, index = 0;
 
@@ -75,10 +75,10 @@ module bicubic_read_bmp (
             shaped_data[ii] = 0;
         end
         
-        #1
+        // #1
         
-        bmp_file_id = $fopen("2.bmp", "rb");
-        // bmp_file_id = $fopen("49_1k.bmp", "rb");
+        // bmp_file_id = $fopen("2.bmp", "rb");
+        bmp_file_id = $fopen("49_1k.bmp", "rb");
         icode = $fread(bmp_data, bmp_file_id);
 
         img_width = {bmp_data[21], bmp_data[20], bmp_data[19], bmp_data[18]};
@@ -86,13 +86,15 @@ module bicubic_read_bmp (
         img_start_index = {bmp_data[13], bmp_data[12], bmp_data[11], bmp_data[10]};
         img_size = {bmp_data[5], bmp_data[4], bmp_data[3], bmp_data[2]};
 
-        $display("img_width :%d, img_height: %d", img_width, img_height);
+        // $display("img_width :%d, img_height: %d", img_width, img_height);
         $fclose(bmp_file_id);
 
 
         for (i = img_height - 1; i >= 0; i = i - 1) begin
             for(j = 0; j < img_width; j = j + 1) begin
-                index = i * (img_width+1) * 3 + j * 3 + img_start_index;
+                // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
+                // index = (img_height-1) * (img_width+1) * 3 + j * 3 + img_start_index;
+                index = i * (img_width) * 3 + j * 3 + img_start_index;
                 shaped_data[shaped_index+com] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
                 shaped_index = shaped_index + 1;
                 // $display("r:%x", bmp_data[index+2]);
@@ -102,29 +104,30 @@ module bicubic_read_bmp (
             com = com + 3;
         end
 
-        #1
-        for (i=0; i< SIZE; i= i+1) begin
-            $display("%d: %x", i, shaped_data[i]);
-        end
+        // #1
+        // for (i=0; i< SIZE; i= i+1) begin
+        //     $display("%d: %x", i, shaped_data[i]);
+        // end
 
 
 
         // in bmp format, the last row of the data is stored first (Revese order).
-        index = (img_height-1) * (img_width+1) * 3 + 0 * 3 + img_start_index;
-        $display("(0, 0): %x, %x, %x", bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]);
-        $display("(0, 1): %x, %x, %x", bmp_data[index+5], bmp_data[index+4], bmp_data[index+3]);
-        $display("(0, 2): %x, %x, %x", bmp_data[index+8], bmp_data[index+7], bmp_data[index+6]);
 
-        index = (img_height-2) * (img_width+1) * 3 + 0 * 3 + img_start_index;
-        $display("(1, 0): %x, %x, %x", bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]);
-        $display("(1, 1): %x, %x, %x", bmp_data[index+5], bmp_data[index+4], bmp_data[index+3]);
-        $display("(1, 2): %x, %x, %x", bmp_data[index+8], bmp_data[index+7], bmp_data[index+6]);
+        // index = (img_height-1) * (img_width) * 3 + 0 * 3 + img_start_index;
+        // $display("(0, 0): %x, %x, %x", bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]);
+        // $display("(0, 1): %x, %x, %x", bmp_data[index+5], bmp_data[index+4], bmp_data[index+3]);
+        // $display("(0, 2): %x, %x, %x", bmp_data[index+8], bmp_data[index+7], bmp_data[index+6]);
 
-        $display("shaped data");
-        $display("(0, 0): %x", shaped_data[0]);
-        $display("(0, 1): %x", shaped_data[1]);
-        $display("(1, 1): %x", shaped_data[14*1+1]);
-        $display("(2, 1): %x", shaped_data[14*2+1]);
+        // index = (img_height-2) * (img_width) * 3 + 0 * 3 + img_start_index;
+        // $display("(1, 0): %x, %x, %x", bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]);
+        // $display("(1, 1): %x, %x, %x", bmp_data[index+5], bmp_data[index+4], bmp_data[index+3]);
+        // $display("(1, 2): %x, %x, %x", bmp_data[index+8], bmp_data[index+7], bmp_data[index+6]);
+
+        // $display("shaped data");
+        // $display("(0, 0): %x", shaped_data[0]);
+        // $display("(0, 1): %x", shaped_data[1]);
+        // $display("(1, 1): %x", shaped_data[(WIDTH+3)*1+1]);
+        // $display("(2, 1): %x", shaped_data[(WIDTH+3)*2+1]);
 
     end
 
@@ -141,13 +144,14 @@ module bicubic_read_bmp (
         end
         else begin
             valid_reg <= #1 1'b1;
-            data_reg <= #1 shaped_data[ptr];
             if(bmp_hsked) begin
+                data_reg <= #1 shaped_data[ptr];
                 ptr <= #1 ptr + 1;
             end
         end
 
     end
+    wire cur_is_last_data = (ptr % (WIDTH+3)) ? 1'b0 : 1'b1;
     assign valid = valid_reg;
     assign data = data_reg;
 
@@ -160,6 +164,7 @@ endmodule
 //     reg ready_tb;
 //     wire [24-1:0] data_tb;
 //     wire valid_tb;
+
 //     initial begin
 //         clk_tb = 1'b0;
 //         rst_n_tb = 1'b0;
@@ -168,7 +173,7 @@ endmodule
 //         #4 ready_tb = 1'b1;
 
 
-//         #200 $finish;
+//         #20000 $finish;
 //     end
 //     always #2 clk_tb = ~clk_tb;
     
@@ -179,9 +184,9 @@ endmodule
 //         .data(data_tb),
 //         .valid(valid_tb)
 //     );
-//     initial begin
-//         $monitor("data: %x", data_tb);
-//     end
+//     // initial begin
+//     //     $monitor("data: %x", data_tb);
+//     // end
 
 //     initial begin
 //         $dumpfile("wave.vcd");

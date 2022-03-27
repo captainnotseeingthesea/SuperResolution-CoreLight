@@ -52,6 +52,10 @@ module buffer #(
     
 );
 
+    localparam WIDTH = 960;
+    localparam HEIGHT = 540;
+
+
     wire bf_2_bcci_hsked = bf_req_valid & bcci_req_ready; 
     wire bcci_2_bf_hsked = bcci_rsp_valid & bf_rsp_ready;
     assign bf_rsp_ready = 1'b1;
@@ -81,17 +85,62 @@ module buffer #(
 
 
     localparam INIT_CNT_WIDTH = 12;
+    // wire [INIT_CNT_WIDTH-1:0] cur_init_cnt, nxt_init_cnt;
+    // wire cur_is_47 = (cur_init_cnt == 12'd47) ? 1'b1 : 1'b0; // (11+3)*3 + 5
+    // assign nxt_init_cnt = cur_init_cnt + 1;
+    // wire init_cnt_ena = cur_is_47 ? 1'b0 : 1'b1;
+    // dfflr #(.DW(INIT_CNT_WIDTH)) u_init_dff (.lden(init_cnt_ena), .dnxt(nxt_init_cnt), .qout(cur_init_cnt), .clk(clk), .rst_n(rst_n));
+
+
     wire [INIT_CNT_WIDTH-1:0] cur_init_cnt, nxt_init_cnt;
-    wire cur_is_47 = (cur_init_cnt == 12'd47) ? 1'b1 : 1'b0; // (11+3)*3 + 5
+    wire init_finished = (cur_init_cnt == (WIDTH+3)*3+5) ? 1'b1 : 1'b0;
     assign nxt_init_cnt = cur_init_cnt + 1;
-    wire init_cnt_ena = cur_is_47 ? 1'b0 : 1'b1;
+    wire init_cnt_ena = init_finished ? 1'b0 : 1'b1;
     dfflr #(.DW(INIT_CNT_WIDTH)) u_init_dff (.lden(init_cnt_ena), .dnxt(nxt_init_cnt), .qout(cur_init_cnt), .clk(clk), .rst_n(rst_n));
 
-    assign bf_req_valid = cur_is_47 ? 1'b1 : 1'b0;
+
+
+    localparam COL_CNT_WIDTH = 10;
+    wire [COL_CNT_WIDTH-1:0] cur_col_cnt, nxt_col_cnt;
+    // wire cur_col_cnt_below_11 = (cur_col_cnt < 10'd11) ? 1'b1 : 1'b0;
+    // wire cur_col_cnt_is_11 = (cur_col_cnt == 10'd11) ? 1'b1 : 1'b0;
+    // wire cur_col_cnt_is_13 = (cur_col_cnt == 10'd13) ? 1'b1 : 1'b0;
+    // assign nxt_col_cnt = cur_col_cnt_is_13 ? 10'd0 : cur_col_cnt + 1;
+    // wire col_cnt_ena = (cur_cnt_is_3 & bcci_2_bf_hsked)  | (~cur_col_cnt_below_11);
+    // dfflr #(.DW(COL_CNT_WIDTH)) u_col_dff (.lden(col_cnt_ena), .dnxt(nxt_col_cnt), .qout(cur_col_cnt), .clk(clk), .rst_n(rst_n));
+
+    wire cur_col_cnt_below_width = (cur_col_cnt < WIDTH) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_is_width = (cur_col_cnt == WIDTH) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_is_width_plus_2 = (cur_col_cnt == WIDTH+2) ? 1'b1 : 1'b0;
+    assign nxt_col_cnt = cur_col_cnt_is_width_plus_2 ? 10'd0 : cur_col_cnt + 1;
+    wire col_cnt_ena = (cur_cnt_is_3 & bcci_2_bf_hsked)  | (~cur_col_cnt_below_width);
+    dfflr #(.DW(COL_CNT_WIDTH)) u_col_dff (.lden(col_cnt_ena), .dnxt(nxt_col_cnt), .qout(cur_col_cnt), .clk(clk), .rst_n(rst_n));
+
+
+    localparam ROW_CNT_WIDTH = 10;
+    wire [ROW_CNT_WIDTH-1:0] cur_row_cnt, nxt_row_cnt;
+    // wire cur_is_last_row = (cur_row_cnt == 10'd5) ? 1'b1 : 1'b0;
+    // assign nxt_row_cnt = cur_row_cnt + 1;
+    // wire row_cnt_ena = cur_col_cnt_is_13;
+    // dfflr #(.DW(COL_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
+
+    wire cur_is_last_row = (cur_row_cnt == HEIGHT-1) ? 1'b1 : 1'b0;
+    assign nxt_row_cnt = cur_row_cnt + 1;
+    wire row_cnt_ena = cur_col_cnt_is_width_plus_2;
+    dfflr #(.DW(COL_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
 
 
 
-    wire shift_ena = (~cur_is_47 & axi_valid) | (cur_cnt_is_3 & bcci_2_bf_hsked);
+    // wire end_of_upsample = cur_is_last_row & cur_col_cnt_is_11;
+    wire end_of_upsample = cur_is_last_row & cur_col_cnt_is_width;
+
+
+    // assign bf_req_valid = cur_is_47 ? cur_col_cnt_below_11 : 1'b0;
+    assign bf_req_valid = init_finished ? cur_col_cnt_below_width : 1'b0;
+
+    // wire shift_ena = (~cur_is_47 & axi_valid) | (cur_cnt_is_3 & bcci_2_bf_hsked) | (~cur_col_cnt_below_11);
+    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_3 & bcci_2_bf_hsked) | (~cur_col_cnt_below_width);
+
     assign axi_ready = shift_ena;
 
 
@@ -100,9 +149,14 @@ module buffer #(
     wire [BUFFER_WIDTH-1:0] out_bf2;
     wire [BUFFER_WIDTH-1:0] out_bf3;
     
-    line_buffer #(.DEPTH(11-1),.DW(24)) u_line_buffer1(.shift_en(shift_ena), .bf_nxt(out_p5), .bf_out(out_bf1), .clk(clk));
-    line_buffer #(.DEPTH(11-1),.DW(24)) u_line_buffer2(.shift_en(shift_ena), .bf_nxt(out_p9), .bf_out(out_bf2), .clk(clk));
-    line_buffer #(.DEPTH(11-1),.DW(24)) u_line_buffer3(.shift_en(shift_ena), .bf_nxt(out_p13), .bf_out(out_bf3), .clk(clk));
+    // line_buffer #(.DEPTH(11-1),.DW(24)) u_line_buffer1(.shift_en(shift_ena), .bf_nxt(out_p5), .bf_out(out_bf1), .clk(clk));
+    // line_buffer #(.DEPTH(11-1),.DW(24)) u_line_buffer2(.shift_en(shift_ena), .bf_nxt(out_p9), .bf_out(out_bf2), .clk(clk));
+    // line_buffer #(.DEPTH(11-1),.DW(24)) u_line_buffer3(.shift_en(shift_ena), .bf_nxt(out_p13), .bf_out(out_bf3), .clk(clk));
+
+    line_buffer #(.DEPTH(WIDTH-1),.DW(24)) u_line_buffer1(.shift_en(shift_ena), .bf_nxt(out_p5), .bf_out(out_bf1), .clk(clk));
+    line_buffer #(.DEPTH(WIDTH-1),.DW(24)) u_line_buffer2(.shift_en(shift_ena), .bf_nxt(out_p9), .bf_out(out_bf2), .clk(clk));
+    line_buffer #(.DEPTH(WIDTH-1),.DW(24)) u_line_buffer3(.shift_en(shift_ena), .bf_nxt(out_p13), .bf_out(out_bf3), .clk(clk));
+
 
     dffl #(.DW(BUFFER_WIDTH)) u_dffl1(.lden(shift_ena), .dnxt(out_p2), .qout(out_p1), .clk(clk));
     dffl #(.DW(BUFFER_WIDTH)) u_dffl2(.lden(shift_ena), .dnxt(out_p3), .qout(out_p2), .clk(clk));
@@ -127,9 +181,6 @@ module buffer #(
     // wire [BUFFER_WIDTH*4-1:0] axi_req_data;
     localparam OUT_BUFFER_WIDTH = BUFFER_WIDTH*4;
     wire [OUT_BUFFER_WIDTH-1:0] nxt_out = {bcci_rsp_data1, bcci_rsp_data2, bcci_rsp_data3, bcci_rsp_data4};
-    // line_buffer #(.DEPTH(92*53*4),.DW(OUT_BUFFER_WIDTH)) u_out_buffer(.shift_en(bcci_2_bf_hsked), .bf_nxt(nxt_out), .bf_out(axi_req_data), .clk(clk));
-
-    // reg [92*53*4*OUT_BUFFER_WIDTH-1:0] out_reg;
 
 
 
@@ -142,9 +193,21 @@ module buffer #(
         end
         else begin
             if(bcci_2_bf_hsked) begin
-                // $display("%x", clk, nxt_out);
                 result_cnt <= result_cnt + 1;
-                $display("cnt: %d, %x", result_cnt, nxt_out);
+                // $display("cnt %d %x", result_cnt, nxt_out);
+                $display("%x", nxt_out);
+
+                // $display("%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+                // bcci_rsp_data1[23:16], bcci_rsp_data1[15:8],bcci_rsp_data1[7:0], 
+                // bcci_rsp_data2[23:16], bcci_rsp_data2[15:8],bcci_rsp_data2[7:0],
+                // bcci_rsp_data3[23:16], bcci_rsp_data3[15:8],bcci_rsp_data3[7:0],
+                // bcci_rsp_data4[23:16], bcci_rsp_data4[15:8],bcci_rsp_data4[7:0],);
+
+                // $display("0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x",
+                // bcci_rsp_data1[23:16], bcci_rsp_data1[15:8],bcci_rsp_data1[7:0], 
+                // bcci_rsp_data2[23:16], bcci_rsp_data2[15:8],bcci_rsp_data2[7:0],
+                // bcci_rsp_data3[23:16], bcci_rsp_data3[15:8],bcci_rsp_data3[7:0],
+                // bcci_rsp_data4[23:16], bcci_rsp_data4[15:8],bcci_rsp_data4[7:0],);
                 
             end
         end

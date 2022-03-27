@@ -266,10 +266,17 @@ module bicubic_top
         .bcci_rsp_data4 (B_bcci_rsp_data4)
     );
 
-    assign bcci_rsp_data1 = {R_bcci_rsp_data1, G_bcci_rsp_data1, B_bcci_rsp_data1};
-    assign bcci_rsp_data2 = {R_bcci_rsp_data2, G_bcci_rsp_data2, B_bcci_rsp_data2};
-    assign bcci_rsp_data3 = {R_bcci_rsp_data3, G_bcci_rsp_data3, B_bcci_rsp_data3};
-    assign bcci_rsp_data4 = {R_bcci_rsp_data4, G_bcci_rsp_data4, B_bcci_rsp_data4};
+    // assign bcci_rsp_data1 = {R_bcci_rsp_data1, G_bcci_rsp_data1, B_bcci_rsp_data1};
+    // assign bcci_rsp_data2 = {R_bcci_rsp_data2, G_bcci_rsp_data2, B_bcci_rsp_data2};
+    // assign bcci_rsp_data3 = {R_bcci_rsp_data3, G_bcci_rsp_data3, B_bcci_rsp_data3};
+    // assign bcci_rsp_data4 = {R_bcci_rsp_data4, G_bcci_rsp_data4, B_bcci_rsp_data4};
+
+    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
+    assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
+    assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
+    assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
+
+
 
     assign bcci_rsp_valid = R_bcci_rsp_valid & G_bcci_rsp_valid & B_bcci_rsp_valid;
 
@@ -290,10 +297,10 @@ module bicubic_top_tb();
 
     always #2 clk_tb = ~clk_tb;
 
-    initial begin
-        $dumpfile("wave.vcd");
-        $dumpvars(0, bicubic_top_tb);
-    end
+    // initial begin
+    //     $dumpfile("wave.vcd");
+    //     $dumpvars(0, bicubic_top_tb);
+    // end
 
     bicubic_top u_bicubic_top(
         .clk(clk_tb),
@@ -301,23 +308,12 @@ module bicubic_top_tb();
     );
 
 
-
-
-    integer i = 0;
-    integer outfile;
     initial begin
-        // outfile = $fopen("out.txt", "w+");
 
-        #1000
-        // for(i = 0; i < 92*53*4; i = i + 1) begin
-        //     $fwrite(outfile, `RESULT[])
-        // end
-        // $fclose(outfile);
 
+        #20000000
 
         #5 $finish;
     end
-
-
 
 endmodule

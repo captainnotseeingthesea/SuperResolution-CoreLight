@@ -30,17 +30,26 @@ line_buffer:
 	vvp -n vvp.exec wave -lxt2
 	gtkwave wave.vcd
 
-bicubic:
+bicubic_iverilog:
 	make clean
 	iverilog -o vvp.exec bicubic_top.v
-	vvp -n vvp.exec wave -lxt2
-	gtkwave wave.vcd
-run:
+	vvp -n vvp.exec > display.txt
+	# gtkwave wave.vcd
+
+gen_bmp:
+	rm -rf 49_4k.bmp
+	python3 gen_bmp.py
+
+bicubic_verilator:
 	make clean
-	verilator -Wno-lint --output-split 40000 -threads 8 -cc -exe --build -top bicubic_top sim_main.cpp bicubic_top.v
-	numactl -C 1-8 -- obj_dir/Vbicubic_top
+	verilator -Wno-lint --output-split 40000 -threads 4 --trace -cc -exe --build -top bicubic_top sim_main.cpp bicubic_top.v
+	numactl -C 1-4 -- obj_dir/Vbicubic_top > display_verilator.txt
+
+metircs:
+	python3 psnr_ssim.py
+	python3 lpips_2imgs.py -p0 49_4k.bmp -p1 49.bmp
 
 
 clean:
-	rm -rf vvp.exec wave.vcd out.txt
+	rm -rf vvp.exec wave.vcd out.txt display_verilator.txt obj_dir display.txt
 

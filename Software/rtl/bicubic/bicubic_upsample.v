@@ -37,7 +37,7 @@ module bicubic_upsample  (
     localparam WEIGHT_WIDTH = 4;
 
 
-
+    //           
     localparam S_U1_1 = 4'd0;         // 0       0
     localparam S_U1_2 = 4'd7;         // 128     7
     localparam S_U1_3 = 4'd0;         // 0       0
@@ -307,10 +307,16 @@ module bicubic_upsample  (
     assign p4_3 = cur_is_gen_temp_matrix ? {1'b0, p12} : cur_is_gen_result ? cur_product3 : {CHANNEL_WIDTH{1'b0}};  
     assign p4_4 = cur_is_gen_temp_matrix ? {1'b0, p16} : cur_is_gen_result ? cur_product4 : {CHANNEL_WIDTH{1'b0}}; 
 
-    assign bcci_rsp_data1 = cur_product1[CHANNEL_WIDTH-1:0];
-    assign bcci_rsp_data2 = cur_product2[CHANNEL_WIDTH-1:0];
-    assign bcci_rsp_data3 = cur_product3[CHANNEL_WIDTH-1:0];
-    assign bcci_rsp_data4 = cur_product4[CHANNEL_WIDTH-1:0];  
+    assign bcci_rsp_data1 = nxt_product1[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data2 = nxt_product2[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data3 = nxt_product3[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data4 = nxt_product4[CHANNEL_WIDTH-1:0];
+
+
+    // assign bcci_rsp_data1 = cur_product1[CHANNEL_WIDTH-1:0];
+    // assign bcci_rsp_data2 = cur_product2[CHANNEL_WIDTH-1:0];
+    // assign bcci_rsp_data3 = cur_product3[CHANNEL_WIDTH-1:0];
+    // assign bcci_rsp_data4 = cur_product4[CHANNEL_WIDTH-1:0];  
 
 
 

@@ -17,7 +17,7 @@ int main(int argc, char** argv, char** env) {
     unsigned int clock = 0;
     #define PERIOD 4
 
-    while (!contextp->gotFinish() && (clock < 100000)) { 
+    while (!contextp->gotFinish() && (clock < 20000000)) { 
         clock++;
 
         if(clock%PERIOD == 1){
@@ -32,7 +32,7 @@ int main(int argc, char** argv, char** env) {
         else {
           top->rst_n = 0x1;
         }
-        // std::cout << "current top rst_n is:"<< top->rst_n<<std::endl;
+
         top->eval(); 
 
         // if (tfp){

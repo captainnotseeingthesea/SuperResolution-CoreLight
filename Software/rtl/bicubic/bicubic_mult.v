@@ -7,7 +7,7 @@ module bicubic_mult(
     output wire [7:0] product,
     output wire product_sign
 );
-    wire multi_by_0   = (weight == 3'd0) | (~(|pixel)) ? 1'b1 : 1'b0;
+    wire multi_by_0   = (weight == 3'd0) ? 1'b1 : 1'b0;
     wire multi_by_3   = (weight == 3'd1) ? 1'b1 : 1'b0;
     wire multi_by_8   = (weight == 3'd2) ? 1'b1 : 1'b0;
     wire multi_by_9   = (weight == 3'd3) ? 1'b1 : 1'b0;
@@ -56,8 +56,12 @@ module bicubic_mult(
                             | ({15{multi_by_128}} & pixel_in_mult_128);
 
 
-    assign product_sign = multi_by_0 ? 1'b0 : weight_sign ^ pixel_sign;
-    assign product = product_data[14:7];
+    wire [7:0] temp_product = product_data[14:7];
+
+    wire product_is_0 = multi_by_0 | (~(|pixel)) | (~(|temp_product));
+
+    assign product_sign = product_is_0 ? 1'b0 : weight_sign ^ pixel_sign;
+    assign product = product_is_0 ? 8'd0 : temp_product;
 
     
 

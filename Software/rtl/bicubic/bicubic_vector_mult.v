@@ -49,16 +49,21 @@ module bicubic_vector_mult(
         .product_sign (product_t4[8]  )
     );
 
+    wire t1_is_0 = (~(|product_t1[7:0])) ? 1'b1 : 1'b0;
+    wire t2_is_0 = (~(|product_t2[7:0])) ? 1'b1 : 1'b0;
+    wire t3_is_0 = (~(|product_t3[7:0])) ? 1'b1 : 1'b0;
+    wire t4_is_0 = (~(|product_t4[7:0])) ? 1'b1 : 1'b0;
+        
     wire [7:0] t1_complement = (~product_t1[7:0]) + 1;
     wire [7:0] t2_complement = (~product_t2[7:0]) + 1;
     wire [7:0] t3_complement = (~product_t3[7:0]) + 1;
     wire [7:0] t4_complement = (~product_t4[7:0]) + 1;
 
-    wire [9:0] adder1_src1 = product_t1[8] ? {2'b11, t1_complement} : {2'b00, product_t1[7:0]};
-    wire [9:0] adder1_src2 = product_t2[8] ? {2'b11, t2_complement} : {2'b00, product_t2[7:0]};
+    wire [9:0] adder1_src1 = t1_is_0 ? 10'd0 : product_t1[8] ? {2'b11, t1_complement} : {2'b00, product_t1[7:0]};
+    wire [9:0] adder1_src2 = t2_is_0 ? 10'd0 : product_t2[8] ? {2'b11, t2_complement} : {2'b00, product_t2[7:0]};
 
-    wire [9:0] adder2_src1 = product_t3[8] ? {2'b11, t3_complement} : {2'b00, product_t3[7:0]};
-    wire [9:0] adder2_src2 = product_t4[8] ? {2'b11, t4_complement} : {2'b00, product_t4[7:0]};   
+    wire [9:0] adder2_src1 = t3_is_0 ? 10'd0 : product_t3[8] ? {2'b11, t3_complement} : {2'b00, product_t3[7:0]};
+    wire [9:0] adder2_src2 = t4_is_0 ? 10'd0 : product_t4[8] ? {2'b11, t4_complement} : {2'b00, product_t4[7:0]};   
 
     wire [9:0] result1 = adder1_src1 + adder1_src2;
     wire [9:0] result2 = adder2_src1 + adder2_src2;
@@ -69,7 +74,6 @@ module bicubic_vector_mult(
     wire result3_overflow = result3[9] ^ result3[8];
 
     wire overflow = result1_overflow | result2_overflow | result3_overflow;
-
     // assert (overflow) $fatal("expression overflow!");
 
     assign inner_product = result3[9] ? (~result3[7:0] + 1) : result3[7:0];
