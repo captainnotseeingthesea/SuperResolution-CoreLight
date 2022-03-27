@@ -67,16 +67,21 @@ module bicubic_vector_mult(
 
     wire [9:0] result1 = adder1_src1 + adder1_src2;
     wire [9:0] result2 = adder2_src1 + adder2_src2;
-    wire [9:0] result3 = result1 + result2;
-    
+
     wire result1_overflow = result1[9] ^ result1[8];
     wire result2_overflow = result2[9] ^ result2[8];
+
+    // wire [9:0] adder3_rs1 = result1_overflow ? {result1[9], result1[9], }
+
+    wire [9:0] result3 = result1 + result2;
+    
+
     wire result3_overflow = result3[9] ^ result3[8];
 
     wire overflow = result1_overflow | result2_overflow | result3_overflow;
     // assert (overflow) $fatal("expression overflow!");
 
-    assign inner_product = result3[9] ? (~result3[7:0] + 1) : result3[7:0];
+    assign inner_product = result3_overflow ? 8'hff : result3[9] ? (~result3[7:0] + 1) : result3[7:0];
     assign inner_product_sign = result3[9];
 
 endmodule
@@ -123,23 +128,28 @@ endmodule
 //         pixel_4_tb = 9'd0;
 
 //         #5 
-//         pixel_1_tb = 9'd128;
-//         pixel_2_tb = 9'd128;
-//         pixel_3_tb = 9'd128;
-//         pixel_4_tb = 9'd128;
+//         pixel_1_tb = 9'd255;
+//         pixel_2_tb = 9'd255;
+//         pixel_3_tb = 9'd255;
+//         pixel_4_tb = 9'd248;
 //         weight_1_tb = 4'd1;
 
-//         #5 
-//         weight_1_tb = {1'b0, 3'd1};
-//         weight_2_tb = {1'b0, 3'd1};
-//         weight_3_tb = {1'b0, 3'd1};
-//         weight_4_tb = {1'b0, 3'd1};        
 
+//     // localparam S_U2_1 = {1'b1,3'd3};  // -9      B
+//     // localparam S_U2_2 = 4'd6;         // 111     6
+//     // localparam S_U2_3 = 4'd4;         // 29      4
+//     // localparam S_U2_4 = {1'b1, 3'd1}; // -3      9
 //         #5 
-//         weight_1_tb = {1'b1, 3'd1};
-//         weight_2_tb = {1'b1, 3'd1};
-//         weight_3_tb = {1'b1, 3'd1};
-//         weight_4_tb = {1'b1, 3'd1};
+//         weight_1_tb = {1'b1,3'd3};  // -9      B
+//         weight_2_tb = 4'd6;         // 111     6
+//         weight_3_tb = 4'd4;         // 29      4
+//         weight_4_tb = {1'b1, 3'd1}; // -3      9       
+
+//         // #5 
+//         // weight_1_tb = {1'b1, 3'd1};
+//         // weight_2_tb = {1'b1, 3'd1};
+//         // weight_3_tb = {1'b1, 3'd1};
+//         // weight_4_tb = {1'b1, 3'd1};
         
 
 //         #5 $finish;

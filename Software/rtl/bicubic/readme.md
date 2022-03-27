@@ -30,6 +30,6 @@ The comparation result of the 2nd img is :
 
 | Method | PSNR   | SSIM | lpips |
 |  ----  |  ----  | ---- | ---- |
-|    -   | 29.076 | 0.88 | 0.335 |
+|    -   | 31.25 | 0.88 | 0.332 |
 
 Note : Since the libarry is used, there may be differences with the official one

@@ -42,8 +42,8 @@ gen_bmp:
 
 bicubic_verilator:
 	make clean
-	verilator -Wno-lint --output-split 40000 -threads 4 --trace -cc -exe --build -top bicubic_top sim_main.cpp bicubic_top.v
-	numactl -C 1-4 -- obj_dir/Vbicubic_top > display_verilator.txt
+	verilator -Wno-lint --output-split 40000 -threads 2 --trace -cc -exe --build -top bicubic_top sim_main.cpp bicubic_top.v
+	numactl -C 1-2 -- obj_dir/Vbicubic_top > display_verilator.txt
 
 metircs:
 	python3 psnr_ssim.py
