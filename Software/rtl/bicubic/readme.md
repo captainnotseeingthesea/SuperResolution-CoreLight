@@ -32,4 +32,4 @@ The comparation result of the 2nd img is :
 |  ----  |  ----  | ---- | ---- |
 |    -   | 31.25 | 0.88 | 0.332 |
 
-Note : Since the libarry is used, there may be differences with the official one
+Note : Since the library is used, there may be differences with the official one

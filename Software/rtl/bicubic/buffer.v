@@ -43,17 +43,44 @@ module buffer #(
 
 
     output wire bf_rsp_ready,
+
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data2,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data3,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
+
+`ifdef GEN_IN_TWO
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data5,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data6,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data7,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data8,
+`elif GEN_IN_ONE
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data5,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data6,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data7,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data8,
+
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data9,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data10,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data11,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data12,
+
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data13,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data14,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data15,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data16,
+`endif
+
     input wire bcci_rsp_valid
 
     
 );
 
-    localparam WIDTH = 960;
-    localparam HEIGHT = 540;
+    // localparam WIDTH = 960;
+    // localparam HEIGHT = 540;
+
+    localparam WIDTH = 11;
+    localparam HEIGHT = 6;
 
 
     wire bf_2_bcci_hsked = bf_req_valid & bcci_req_ready; 
@@ -180,10 +207,14 @@ module buffer #(
 
     // wire [BUFFER_WIDTH*4-1:0] axi_req_data;
     localparam OUT_BUFFER_WIDTH = BUFFER_WIDTH*4;
-    wire [OUT_BUFFER_WIDTH-1:0] nxt_out = {bcci_rsp_data1, bcci_rsp_data2, bcci_rsp_data3, bcci_rsp_data4};
-
-
-
+    wire [OUT_BUFFER_WIDTH-1:0] nxt_out1 = {bcci_rsp_data1, bcci_rsp_data2, bcci_rsp_data3, bcci_rsp_data4};
+`ifdef GEN_IN_TWO
+    wire [OUT_BUFFER_WIDTH-1:0] nxt_out2 = {bcci_rsp_data5, bcci_rsp_data6, bcci_rsp_data7, bcci_rsp_data8};
+`elif GEN_IN_ONE
+    wire [OUT_BUFFER_WIDTH-1:0] nxt_out2 = {bcci_rsp_data5, bcci_rsp_data6, bcci_rsp_data7, bcci_rsp_data8};
+    wire [OUT_BUFFER_WIDTH-1:0] nxt_out3 = {bcci_rsp_data9, bcci_rsp_data10, bcci_rsp_data11, bcci_rsp_data12};
+    wire [OUT_BUFFER_WIDTH-1:0] nxt_out4 = {bcci_rsp_data13, bcci_rsp_data14, bcci_rsp_data15, bcci_rsp_data16};
+`endif
 
 
     reg [9:0] result_cnt;
@@ -194,9 +225,15 @@ module buffer #(
         else begin
             if(bcci_2_bf_hsked) begin
                 result_cnt <= result_cnt + 1;
-                // $display("cnt %d %x", result_cnt, nxt_out);
-                $display("%x", nxt_out);
-
+                // $display("cnt %d %x", result_cnt, nxt_out1);
+                $display("%x", nxt_out1);
+                `ifdef GEN_IN_TWO
+                    $display("%x", nxt_out1);
+                `elif GEN_IN_ONE
+                    $display("%x", nxt_out1);
+                    $display("%x", nxt_out1);   
+                    $display("%x", nxt_out1);
+                `endif
                 // $display("%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
                 // bcci_rsp_data1[23:16], bcci_rsp_data1[15:8],bcci_rsp_data1[7:0], 
                 // bcci_rsp_data2[23:16], bcci_rsp_data2[15:8],bcci_rsp_data2[7:0],

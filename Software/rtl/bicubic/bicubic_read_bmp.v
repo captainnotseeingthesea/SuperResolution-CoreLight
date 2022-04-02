@@ -20,11 +20,11 @@ module bicubic_read_bmp (
 
 );
 
-    localparam HEIGHT = 540;
-    localparam WIDTH  = 960;
+    // localparam HEIGHT = 540;
+    // localparam WIDTH  = 960;
 
-    // localparam HEIGHT = 6;
-    // localparam WIDTH  = 11;
+    localparam HEIGHT = 6;
+    localparam WIDTH  = 11;
 
     localparam OFFSET = 138;
     localparam TOTAL_SIZE = HEIGHT * WIDTH *3 + OFFSET;
@@ -75,10 +75,10 @@ module bicubic_read_bmp (
             shaped_data[ii] = 0;
         end
         
-        // #1
+        #1
         
-        // bmp_file_id = $fopen("2.bmp", "rb");
-        bmp_file_id = $fopen("49_1k.bmp", "rb");
+        bmp_file_id = $fopen("2.bmp", "rb");
+        // bmp_file_id = $fopen("49_1k.bmp", "rb");
         icode = $fread(bmp_data, bmp_file_id);
 
         img_width = {bmp_data[21], bmp_data[20], bmp_data[19], bmp_data[18]};
@@ -93,32 +93,25 @@ module bicubic_read_bmp (
         for (i = img_height - 1; i >= 0; i = i - 1) begin
             for(j = 0; j < img_width; j = j + 1) begin
                 // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
-                // index = (img_height-1) * (img_width+1) * 3 + j * 3 + img_start_index;
-                index = i * (img_width) * 3 + j * 3 + img_start_index;
+                index = i * (img_width+1) * 3 + j * 3 + img_start_index;
                 shaped_data[shaped_index+com] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
                 shaped_index = shaped_index + 1;
-                // $display("r:%x", bmp_data[index+2]);
-                // $display("r:%x", bmp_data[index+1]);
-                // $display("r:%x", bmp_data[index+0]);
             end
             com = com + 3;
         end
 
-        // #1
-        // for (i=0; i< SIZE; i= i+1) begin
-        //     $display("%d: %x", i, shaped_data[i]);
-        // end
+
 
 
 
         // in bmp format, the last row of the data is stored first (Revese order).
 
-        // index = (img_height-1) * (img_width) * 3 + 0 * 3 + img_start_index;
+        // index = (img_height-1) * (img_width+1) * 3 + 0 * 3 + img_start_index;
         // $display("(0, 0): %x, %x, %x", bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]);
         // $display("(0, 1): %x, %x, %x", bmp_data[index+5], bmp_data[index+4], bmp_data[index+3]);
         // $display("(0, 2): %x, %x, %x", bmp_data[index+8], bmp_data[index+7], bmp_data[index+6]);
 
-        // index = (img_height-2) * (img_width) * 3 + 0 * 3 + img_start_index;
+        // index = (img_height-2) * (img_width+1) * 3 + 0 * 3 + img_start_index;
         // $display("(1, 0): %x, %x, %x", bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]);
         // $display("(1, 1): %x, %x, %x", bmp_data[index+5], bmp_data[index+4], bmp_data[index+3]);
         // $display("(1, 2): %x, %x, %x", bmp_data[index+8], bmp_data[index+7], bmp_data[index+6]);
@@ -173,7 +166,7 @@ endmodule
 //         #4 ready_tb = 1'b1;
 
 
-//         #20000 $finish;
+//         #2000 $finish;
 //     end
 //     always #2 clk_tb = ~clk_tb;
     
