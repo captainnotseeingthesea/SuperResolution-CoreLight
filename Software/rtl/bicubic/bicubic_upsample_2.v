@@ -1,4 +1,4 @@
-`define GEN_IN_TWO
+`include "define.v"
 `include "bicubic_pvector_mult_wmatrix.v"
 `include "bicubic_wvector_mult_pmatrix.v"
 
@@ -183,7 +183,7 @@ module bicubic_upsample_2(
                 | ({WEIGHT_WIDTH{cur_is_s2}} & S_U3_3);
 
     assign w4_a = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_4)
-                | ({WEIGHT_WIDTH{cur_is_s3}} & S_U3_4);
+                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U3_4);
 
     assign w1_b = ({WEIGHT_WIDTH{cur_is_s1}} & S_U2_1)
                 | ({WEIGHT_WIDTH{cur_is_s2}} & S_U4_1);
@@ -195,7 +195,7 @@ module bicubic_upsample_2(
                 | ({WEIGHT_WIDTH{cur_is_s2}} & S_U4_3);
 
     assign w4_b = ({WEIGHT_WIDTH{cur_is_s1}} & S_U2_4)
-                | ({WEIGHT_WIDTH{cur_is_s3}} & S_U4_4);
+                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U4_4);
 
     assign p1_1 = {1'b0, p1};
     assign p1_2 = {1'b0, p5};   
@@ -216,8 +216,6 @@ module bicubic_upsample_2(
     assign p4_2 = {1'b0, p8};   
     assign p4_3 = {1'b0, p12};
     assign p4_4 = {1'b0, p16}; 
-
-
 
     wire [WEIGHT_WIDTH-1:0] w1_1, w1_2, w1_3, w1_4;
     wire [WEIGHT_WIDTH-1:0] w2_1, w2_2, w2_3, w2_4;

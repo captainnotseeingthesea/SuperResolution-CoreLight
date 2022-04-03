@@ -1,4 +1,4 @@
-`define GEN_IN_EIGHT
+`include "define.v"
 
 `include "bicubic_vector_mult.v"
 module bicubic_upsample_8  (

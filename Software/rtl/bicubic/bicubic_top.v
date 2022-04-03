@@ -1,13 +1,14 @@
+`include "define.v"
 `ifndef BUFFER
     `include "buffer.v"
 `endif
 `ifdef GEN_IN_EIGHT
     `include "bicubic_upsample_8.v"
-`elif GEN_IN_FOUR
+`elsif GEN_IN_FOUR
     `include "bicubic_upsample_4.v"
-`elif GEN_IN_TWO
+`elsif GEN_IN_TWO
     `include "bicubic_upsample_2.v"
-`elif GEN_IN_ONE
+`elsif GEN_IN_ONE
     `include "bicubic_upsample_1.v"
 `else
     `include "bicubic_upsample_8.v"
@@ -53,7 +54,12 @@ module bicubic_top
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data6;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data7;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data8;
-`elif GEN_IN_ONE
+`elsif GEN_IN_ONE
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data5;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data6;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data7;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data8;
+
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data9;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data10;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data11;
@@ -98,6 +104,13 @@ module bicubic_top
         .bcci_rsp_data3(bcci_rsp_data3),
         .bcci_rsp_data4(bcci_rsp_data4),
 
+    `ifdef GEN_IN_TWO
+        .bcci_rsp_data5(bcci_rsp_data5),
+        .bcci_rsp_data6(bcci_rsp_data6),
+        .bcci_rsp_data7(bcci_rsp_data7),
+        .bcci_rsp_data8(bcci_rsp_data8),
+
+    `elsif GEN_IN_ONE
         .bcci_rsp_data5(bcci_rsp_data5),
         .bcci_rsp_data6(bcci_rsp_data6),
         .bcci_rsp_data7(bcci_rsp_data7),
@@ -112,7 +125,7 @@ module bicubic_top
         .bcci_rsp_data14(bcci_rsp_data14),
         .bcci_rsp_data15(bcci_rsp_data15),
         .bcci_rsp_data16(bcci_rsp_data16),
-
+    `endif
 
 
         .bcci_rsp_valid(bcci_rsp_valid)
@@ -205,6 +218,60 @@ module bicubic_top
     wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data4;
     wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data4;
     wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data4;
+
+`ifdef GEN_IN_TWO
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data5;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data5;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data5;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data6;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data6;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data6;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data7;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data7;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data7;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data8;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data8;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data8;
+`elsif GEN_IN_ONE
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data5;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data5;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data5;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data6;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data6;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data6;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data7;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data7;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data7;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data8;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data8;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data8;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data9;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data9;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data9;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data10;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data10;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data10;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data11;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data11;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data11;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data12;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data12;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data12;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data13;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data13;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data13;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data14;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data14;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data14;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data15;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data15;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data15;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data16;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data16;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data16;
+`endif
+
+
 
 
 
@@ -310,7 +377,7 @@ module bicubic_top
         .bcci_rsp_data3 (B_bcci_rsp_data3),
         .bcci_rsp_data4 (B_bcci_rsp_data4)
     );
-`elif GEN_IN_FOUR
+`elsif GEN_IN_FOUR
     bicubic_upsample_4 u_R_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
@@ -405,7 +472,7 @@ module bicubic_top
         .bcci_rsp_data4 (B_bcci_rsp_data4)
     );
 
-`elif GEN_IN_TWO
+`elsif GEN_IN_TWO
     bicubic_upsample_2 u_R_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
@@ -513,7 +580,7 @@ module bicubic_top
         .bcci_rsp_data8 (B_bcci_rsp_data8)
     );
 
-`elif GEN_IN_ONE
+`elsif GEN_IN_ONE
     bicubic_upsample_1 u_R_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
@@ -659,7 +726,12 @@ module bicubic_top
     assign bcci_rsp_data6 = {B_bcci_rsp_data6, G_bcci_rsp_data6, R_bcci_rsp_data6};
     assign bcci_rsp_data7 = {B_bcci_rsp_data7, G_bcci_rsp_data7, R_bcci_rsp_data7};
     assign bcci_rsp_data8 = {B_bcci_rsp_data8, G_bcci_rsp_data8, R_bcci_rsp_data8};
-`elif GEN_IN_ONE
+`elsif GEN_IN_ONE
+    assign bcci_rsp_data5 = {B_bcci_rsp_data5, G_bcci_rsp_data5, R_bcci_rsp_data5};
+    assign bcci_rsp_data6 = {B_bcci_rsp_data6, G_bcci_rsp_data6, R_bcci_rsp_data6};
+    assign bcci_rsp_data7 = {B_bcci_rsp_data7, G_bcci_rsp_data7, R_bcci_rsp_data7};
+    assign bcci_rsp_data8 = {B_bcci_rsp_data8, G_bcci_rsp_data8, R_bcci_rsp_data8};
+
     assign bcci_rsp_data9 = {B_bcci_rsp_data9, G_bcci_rsp_data9, R_bcci_rsp_data9};
     assign bcci_rsp_data10 = {B_bcci_rsp_data10, G_bcci_rsp_data10, R_bcci_rsp_data10};
     assign bcci_rsp_data11 = {B_bcci_rsp_data11, G_bcci_rsp_data11, R_bcci_rsp_data11};
@@ -680,34 +752,34 @@ endmodule
 
 
 
-module bicubic_top_tb();
-    reg clk_tb;
-    reg rst_n_tb;
-    initial begin
-        clk_tb = 1'b0;
-        rst_n_tb = 1'b0;
-        #7 rst_n_tb = 1'b1;
-    end
+// module bicubic_top_tb();
+//     reg clk_tb;
+//     reg rst_n_tb;
+//     initial begin
+//         clk_tb = 1'b0;
+//         rst_n_tb = 1'b0;
+//         #7 rst_n_tb = 1'b1;
+//     end
 
-    always #2 clk_tb = ~clk_tb;
+//     always #2 clk_tb = ~clk_tb;
 
-    initial begin
-        $dumpfile("wave.vcd");
-        $dumpvars(0, bicubic_top_tb);
-    end
+//     initial begin
+//         $dumpfile("wave.vcd");
+//         $dumpvars(0, bicubic_top_tb);
+//     end
 
-    bicubic_top u_bicubic_top(
-        .clk(clk_tb),
-        .rst_n(rst_n_tb)
-    );
-
-
-    initial begin
+//     bicubic_top u_bicubic_top(
+//         .clk(clk_tb),
+//         .rst_n(rst_n_tb)
+//     );
 
 
-        // #1320
-        #4000
-        #5 $finish;
-    end
+//     initial begin
 
-endmodule
+
+//         // #1320
+//         #4000
+//         #5 $finish;
+//     end
+
+// endmodule
