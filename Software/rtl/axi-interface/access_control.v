@@ -47,10 +47,10 @@ module access_control # (
    // Inputs
    clk, rst_n, crf_ac_UPSTR, crf_ac_UPENDR, crf_ac_UPSRCAR,
    crf_ac_UPDSTAR, crf_ac_wbusy, upsp_ac_rd, upsp_ac_wrt,
-   upsp_ac_wdata, m_axi_awready, m_axi_wready, m_axi_bvalid,
-   m_axi_bid, m_axi_bresp, m_axi_arready, m_axi_rvalid, m_axi_rid,
-   m_axi_rdata, m_axi_rresp, m_axi_rlast, s_axis_tvalid, s_axis_tid,
-   s_axis_tdata, s_axis_tstrb, s_axis_tkeep, s_axis_tlast,
+   upsp_ac_wdata, upsp_ac_done, m_axi_awready, m_axi_wready,
+   m_axi_bvalid, m_axi_bid, m_axi_bresp, m_axi_arready, m_axi_rvalid,
+   m_axi_rid, m_axi_rdata, m_axi_rresp, m_axi_rlast, s_axis_tvalid,
+   s_axis_tid, s_axis_tdata, s_axis_tstrb, s_axis_tkeep, s_axis_tlast,
    s_axis_tdest, s_axis_user
    );
 
@@ -76,6 +76,7 @@ module access_control # (
 	output [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;
 	input                        upsp_ac_wrt;
 	input  [UPSP_DATA_WIDTH-1:0] upsp_ac_wdata;
+	input                        upsp_ac_done;
 
 
 	// Interface as an AXI4-Full master
@@ -197,11 +198,35 @@ module access_control # (
 			startup <= 1'b0;
 	end
 
+	// After finish upsampling, clear UPSTR and write UPENDR.
+	always @(posedge clk or negedge rst_n) begin
+		if(~rst_n) begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			ac_crf_waddr <= {CRF_ADDR_WIDTH{1'b0}};
+			ac_crf_wdata <= {CRF_DATA_WIDTH{1'b0}};
+			ac_crf_wrt <= 1'h0;
+			// End of automatics
+		end else if(processing & upsp_ac_done & UPSTR[0]) begin
+			ac_crf_wrt <= 1'b1;
+			ac_crf_waddr <= {CRF_ADDR_WIDTH{1'b0}};
+			ac_crf_wdata <= {{(CRF_DATA_WIDTH-1){1'b0}}, 1'b1};
+		end else if(processing & upsp_ac_done & ~UPSTR[0] & ~UPENDR[0]) begin
+			ac_crf_wrt <= 1'b1;
+			ac_crf_waddr <= {{(CRF_DATA_WIDTH-1){1'b0}}, 1'b1};
+			ac_crf_wdata <= {{(CRF_DATA_WIDTH-1){1'b0}}, 1'b1};	
+		end
+
+
+	end
+
 
 	// Stream in
-	stream_in #(.AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
-				.AXIS_STRB_WIDTH(AXIS_STRB_WIDTH),
-				.UPSP_DATA_WIDTH(UPSP_DATA_WIDTH))
+	stream_in #(/*AUTOINSTPARAM*/
+		    // Parameters
+		    .AXIS_DATA_WIDTH	(AXIS_DATA_WIDTH),
+		    .AXIS_STRB_WIDTH	(AXIS_STRB_WIDTH),
+		    .UPSP_DATA_WIDTH	(UPSP_DATA_WIDTH))
 	AAA_stream_in(
 			  .s_axis_aclk	(clk),
 			  .s_axis_arstn	(rst_n),

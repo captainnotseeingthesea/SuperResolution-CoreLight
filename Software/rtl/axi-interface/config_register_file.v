@@ -29,18 +29,18 @@ module config_register_file # (
    interrupt_updone, crf_ac_UPSTR, crf_ac_UPENDR, crf_ac_UPSRCAR,
    crf_ac_UPDSTAR, crf_ac_wbusy,
    // Inputs
-   s_axi_aclk, s_axi_rstn, s_axi_awvalid, s_axi_awaddr, s_axi_awprot,
+   clk, rst_n, s_axi_awvalid, s_axi_awaddr, s_axi_awprot,
    s_axi_wvalid, s_axi_wdata, s_axi_wstrb, s_axi_bready,
    s_axi_arvalid, s_axi_araddr, s_axi_arprot, s_axi_rready,
    ac_crf_wrt, ac_crf_waddr, ac_crf_wdata
    );
 
-	parameter RESP_OKAY = 2'b00;
+	localparam RESP_OKAY = 2'b00;
 
 
 	// Common
-	input s_axi_aclk;
-	input s_axi_rstn;
+	input clk;
+	input rst_n;
 
 	// Write address channel
 	input                      s_axi_awvalid;
@@ -106,10 +106,6 @@ module config_register_file # (
 	reg [CRF_DATA_WIDTH-1:0] UPDSTAR;
 
 
-	// Below are logics for different channels
-	wire clk  = s_axi_aclk;
-	wire rstn = s_axi_rstn;
-
 	// Directly output registers.
 	assign crf_ac_UPDSTAR   = UPDSTAR;
 	assign crf_ac_UPENDR    = UPENDR ;
@@ -125,8 +121,8 @@ module config_register_file # (
 	// When processing PS write, set busy signal to PL side. Wait for both awvalid
 	// and wvalid before setting awready to simplify write process.
 	// If there is a pending response, wait until that response finishes.
-	always@(posedge clk or negedge rstn) begin: AWREADY
-		if(~rstn) begin
+	always@(posedge clk or negedge rst_n) begin: AWREADY
+		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			crf_ac_wbusy <= 1'h0;
@@ -149,8 +145,8 @@ module config_register_file # (
 	// Write data channel
 	// When awvalid and awready are both 1s, the data will be write into register.
 	// Only one of PS and PL can write at the same time.
-	always@(posedge clk or negedge rstn) begin: WREADY
-		if(~rstn)
+	always@(posedge clk or negedge rst_n) begin: WREADY
+		if(~rst_n)
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			s_axi_wready <= 1'h0;
@@ -168,8 +164,8 @@ module config_register_file # (
 	wire axi_wren  = s_axi_awvalid & s_axi_awready & s_axi_wvalid & s_axi_wready;
 	wire axi_waddr = s_axi_awaddr[CRF_ADDR_WIDTH-1:0];
 
-	always@(posedge clk or negedge rstn) begin: WRITE_PROC
-		if(~rstn) begin
+	always@(posedge clk or negedge rst_n) begin: WRITE_PROC
+		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			UPDSTAR <= {CRF_DATA_WIDTH{1'b0}};
@@ -212,8 +208,8 @@ module config_register_file # (
 	// is OKAY, just hard-wiring it.
 	assign s_axi_bresp = RESP_OKAY;
 
-	always@(posedge clk or negedge rstn) begin: BVALID
-		if(~rstn) begin
+	always@(posedge clk or negedge rst_n) begin: BVALID
+		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			s_axi_bvalid <= 1'h0;
@@ -231,8 +227,8 @@ module config_register_file # (
 
 	// Read address channel
 	// PS can read at any time, we simply ignore the coherence.
-	always@(posedge clk or negedge rstn) begin: ARREADY
-		if(~rstn)
+	always@(posedge clk or negedge rst_n) begin: ARREADY
+		if(~rst_n)
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			s_axi_arready <= 1'h0;
@@ -249,8 +245,8 @@ module config_register_file # (
 	wire   axi_raddr   = s_axi_araddr[CRF_ADDR_WIDTH-1:0];
 	assign s_axi_rresp = RESP_OKAY;
 
-	always@(posedge clk or negedge rstn) begin: READ_PROC
-		if(~rstn) begin
+	always@(posedge clk or negedge rst_n) begin: READ_PROC
+		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			s_axi_rdata <= {AXI_DATA_WIDTH{1'b0}};
