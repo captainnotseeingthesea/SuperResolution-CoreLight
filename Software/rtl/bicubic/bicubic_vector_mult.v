@@ -1,4 +1,6 @@
-
+`ifndef BICUBIC_MULT
+    `define BICUBIC_MULT
+`endif
 `include "bicubic_mult.v"
 module bicubic_vector_mult(
     input wire [3:0] weight_1,

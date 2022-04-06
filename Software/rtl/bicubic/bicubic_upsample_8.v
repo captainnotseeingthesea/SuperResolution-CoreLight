@@ -1,5 +1,7 @@
+`include "define.v"
+
 `include "bicubic_vector_mult.v"
-module bicubic_upsample  (
+module bicubic_upsample_8  (
     input wire clk,
     input wire rst_n,
     input wire bf_req_valid,
@@ -163,20 +165,19 @@ module bicubic_upsample  (
     wire bcci_rsp_hsked = bcci_rsp_valid & bf_rsp_ready;
 
 
-    localparam FSM_WIDTH = 4;
-    localparam STATE_IDLE = 4'd0;
-    localparam STATE_S1 = 4'd1;
-    localparam STATE_S2 = 4'd2;
-    localparam STATE_S3 = 4'd3;
-    localparam STATE_S4 = 4'd4;
-    localparam STATE_S5 = 4'd5;
-    localparam STATE_S6 = 4'd6;
-    localparam STATE_S7 = 4'd7;
-    localparam STATE_S8 = 4'd8;
+    localparam FSM_WIDTH = 3;
+    localparam STATE_S1 = 3'd0;
+    localparam STATE_S2 = 3'd1;
+    localparam STATE_S3 = 3'd2;
+    localparam STATE_S4 = 3'd3;
+    localparam STATE_S5 = 3'd4;
+    localparam STATE_S6 = 3'd5;
+    localparam STATE_S7 = 3'd6;
+    localparam STATE_S8 = 3'd7;
 
     wire [FSM_WIDTH-1:0] cur_state, nxt_state;
 
-    wire [FSM_WIDTH-1:0] state_idle_nxt = STATE_S1;
+
     wire [FSM_WIDTH-1:0] state_s1_nxt = STATE_S2;
     wire [FSM_WIDTH-1:0] state_s2_nxt = STATE_S3;
     wire [FSM_WIDTH-1:0] state_s3_nxt = STATE_S4;
@@ -184,9 +185,8 @@ module bicubic_upsample  (
     wire [FSM_WIDTH-1:0] state_s5_nxt = STATE_S6;
     wire [FSM_WIDTH-1:0] state_s6_nxt = STATE_S7;
     wire [FSM_WIDTH-1:0] state_s7_nxt = STATE_S8;
-    wire [FSM_WIDTH-1:0] state_s8_nxt = STATE_IDLE;
+    wire [FSM_WIDTH-1:0] state_s8_nxt = STATE_S1;
 
-    wire cur_is_idle = (cur_state == STATE_IDLE) ? 1'b1 : 1'b0;
     wire cur_is_s1 = (cur_state == STATE_S1) ? 1'b1 : 1'b0;
     wire cur_is_s2 = (cur_state == STATE_S2) ? 1'b1 : 1'b0;
     wire cur_is_s3 = (cur_state == STATE_S3) ? 1'b1 : 1'b0;
@@ -196,12 +196,11 @@ module bicubic_upsample  (
     wire cur_is_s7 = (cur_state == STATE_S7) ? 1'b1 : 1'b0;
     wire cur_is_s8 = (cur_state == STATE_S8) ? 1'b1 : 1'b0;
 
-    assign bcci_req_ready = cur_is_idle;
+    assign bcci_req_ready = cur_is_s1;
     assign bcci_rsp_valid = cur_is_s2 | cur_is_s4
                           | cur_is_s6 | cur_is_s8;
 
-    wire state_idle_exit_ena = bf_req_hsked;
-    wire state_s1_exit_ena = cur_is_s1;
+    wire state_s1_exit_ena = cur_is_s1 & bf_req_hsked;
     wire state_s2_exit_ena = cur_is_s2 & bcci_rsp_hsked;
     wire state_s3_exit_ena = cur_is_s3;
     wire state_s4_exit_ena = cur_is_s4 & bcci_rsp_hsked;
@@ -210,8 +209,7 @@ module bicubic_upsample  (
     wire state_s7_exit_ena = cur_is_s7;
     wire state_s8_exit_ena = cur_is_s8 & bcci_rsp_hsked;
 
-    wire state_ena = state_idle_exit_ena
-                    | state_s1_exit_ena
+    wire state_ena =  state_s1_exit_ena
                     | state_s2_exit_ena
                     | state_s3_exit_ena
                     | state_s4_exit_ena
@@ -220,8 +218,7 @@ module bicubic_upsample  (
                     | state_s7_exit_ena
                     | state_s8_exit_ena;
     
-    assign nxt_state = ({FSM_WIDTH{state_idle_exit_ena}} & state_idle_nxt)
-                    | ({FSM_WIDTH{state_s1_exit_ena}} & state_s1_nxt)
+    assign nxt_state = ({FSM_WIDTH{state_s1_exit_ena}} & state_s1_nxt)
                     | ({FSM_WIDTH{state_s2_exit_ena}} & state_s2_nxt)
                     | ({FSM_WIDTH{state_s3_exit_ena}} & state_s3_nxt)
                     | ({FSM_WIDTH{state_s4_exit_ena}} & state_s4_nxt)
@@ -245,25 +242,25 @@ module bicubic_upsample  (
     wire cur_is_gen_temp_matrix = cur_is_s1 | cur_is_s3 | cur_is_s5 | cur_is_s7;
     wire cur_is_gen_result = cur_is_s2 | cur_is_s4 | cur_is_s6 | cur_is_s8;
 
-    assign w1_1 =  ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_1)
+    assign w1_1 = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_1)
                 | ({WEIGHT_WIDTH{cur_is_s3}} & S_U2_1)
                 | ({WEIGHT_WIDTH{cur_is_s5}} & S_U3_1)
                 | ({WEIGHT_WIDTH{cur_is_s7}} & S_U4_1)
                 | ({WEIGHT_WIDTH{cur_is_gen_result}} & S_U1_1);
 
-    assign w1_2 =  ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_2)
+    assign w1_2 = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_2)
                 | ({WEIGHT_WIDTH{cur_is_s3}} & S_U2_2)
                 | ({WEIGHT_WIDTH{cur_is_s5}} & S_U3_2)
                 | ({WEIGHT_WIDTH{cur_is_s7}} & S_U4_2)
                 | ({WEIGHT_WIDTH{cur_is_gen_result}} & S_U1_2);
 
-    assign w1_3 =  ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_3)
+    assign w1_3 = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_3)
                 | ({WEIGHT_WIDTH{cur_is_s3}} & S_U2_3)
                 | ({WEIGHT_WIDTH{cur_is_s5}} & S_U3_3)
                 | ({WEIGHT_WIDTH{cur_is_s7}} & S_U4_3)
                 | ({WEIGHT_WIDTH{cur_is_gen_result}} & S_U1_3);
 
-    assign w1_4 =  ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_4)
+    assign w1_4 = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_4)
                 | ({WEIGHT_WIDTH{cur_is_s3}} & S_U2_4)
                 | ({WEIGHT_WIDTH{cur_is_s5}} & S_U3_4)
                 | ({WEIGHT_WIDTH{cur_is_s7}} & S_U4_4)

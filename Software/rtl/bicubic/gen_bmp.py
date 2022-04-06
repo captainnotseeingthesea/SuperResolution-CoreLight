@@ -1,8 +1,10 @@
 
 width=960
 height=540
-
 f = open("display_verilator.txt")
+# width=11
+# height=6
+# f = open("display.txt")
 result = []
 cnt = 0
 for line in f.readlines():
@@ -10,11 +12,12 @@ for line in f.readlines():
 f.close()
 
 # if use iverilog, the first line should be poped
+
 # result.pop(0)
 
 while len(result) != width*height*4:
     result.pop()
-# print(result)
+
 
 
 des = []
@@ -37,9 +40,6 @@ for i in range(4*height):
     res.append(t)
     t=""
 
-# print(res[0])
-# print(res[1])
-
 
 des=[]
 for i in range(4*height):
@@ -47,6 +47,7 @@ for i in range(4*height):
 
 
 f = open("49_1k.bmp","rb")
+# f = open("2.bmp","rb")
 head = f.read(18)
 f.seek(f.tell()+8)
 tail = f.read(28)
@@ -54,6 +55,7 @@ tail = f.read(28)
 f.close()
 
 import struct
+# test = open("tt.bmp","wb+")
 test = open("49_4k.bmp","wb+")
 test.write(struct.pack('B',head[0]))
 test.write(struct.pack('B',head[1]))
@@ -66,8 +68,7 @@ for i in range(28):
     test.write(struct.pack('B', tail[i]))
 
 
-# print(int(t[0*2:0*2+2],16))
-# test.write(struct.pack('B', int(t[0*2:0*2+1],16)))
+
 for i in range (len(des)):
     t = des[i]
     for j in range (12*width):

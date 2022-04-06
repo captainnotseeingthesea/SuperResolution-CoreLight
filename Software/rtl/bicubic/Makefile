@@ -34,10 +34,10 @@ bicubic_iverilog:
 	make clean
 	iverilog -o vvp.exec bicubic_top.v
 	vvp -n vvp.exec > display.txt
-	# gtkwave wave.vcd
+	gtkwave wave.vcd
 
 gen_bmp:
-	rm -rf 49_4k.bmp
+	rm -rf 49_4k.bmp tt.bmp
 	python3 gen_bmp.py
 
 bicubic_verilator:
