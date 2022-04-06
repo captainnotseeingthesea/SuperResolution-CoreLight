@@ -11,15 +11,20 @@
 
  Description:
 
- Access control, receives read/write requests from PL side and
- transforms them into AXI4 requests to DDR in PS side.
-
+ Access control, contains stream_in to serve read requests from 
+ Up-Sampling and transforms Up-Sampling write requests into AXI4 
+ requests to DDR in PS side as the AXI4 master.
+ R and AR channels 
  **************************************************/
 
 module access_control # (
+		// AXI-Full
 		parameter AXI_DATA_WIDTH = 32,
 		parameter AXI_ADDR_WIDTH = 32,
 		parameter AXI_STRB_WIDTH = AXI_DATA_WIDTH/8,
+		// AXI-Stream
+		parameter AXIS_DATA_WIDTH = 32,
+		parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8,
 
 		parameter CRF_DATA_WIDTH = 32,
 		parameter CRF_ADDR_WIDTH = 32,
@@ -30,22 +35,27 @@ module access_control # (
 		parameter DST_IMG_WIDTH  = 4096,
 		parameter DST_IMG_HEIGHT = 2160
 	) (/*AUTOARG*/
-		// Outputs
-		ac_crf_wrt, ac_crf_wdata, ac_crf_waddr, UPSTR, UPENDR,
-		ac_upsp_rvalid, ac_upsp_rdata, m_axi_awvalid, m_axi_awid,
-		m_axi_awaddr, m_axi_awlen, m_axi_awsize, m_axi_awburst,
-		m_axi_awlock, m_axi_awcache, m_axi_awprot, m_axi_awqos,
-		m_axi_wvalid, m_axi_wid, m_axi_wdata, m_axi_wstrb, m_axi_wlast,
-		m_axi_bready, m_axi_arvalid, m_axi_arid, m_axi_araddr, m_axi_arlen,
-		m_axi_arsize, m_axi_arburst, m_axi_arlock, m_axi_arcache,
-		m_axi_arprot, m_axi_arqos, m_axi_rready,
-		// Inputs
-		crf_ac_UPSTR, crf_ac_UPENDR, crf_ac_UPSRCAR, crf_ac_UPDSTAR,
-		crf_ac_wbusy, upsp_ac_rd, upsp_ac_wrt, upsp_ac_wdata, upsp_ac_start,
-		m_axi_aclk, m_axi_rstn, m_axi_awready, m_axi_wready, m_axi_bvalid,
-		m_axi_bid, m_axi_bresp, m_axi_arready, m_axi_rvalid, m_axi_rid,
-		m_axi_rdata, m_axi_rresp, m_axi_rlast
-	);
+   // Outputs
+   ac_crf_wrt, ac_crf_wdata, ac_crf_waddr, UPSTR, UPENDR,
+   ac_upsp_rvalid, ac_upsp_rdata, m_axi_awvalid, m_axi_awid,
+   m_axi_awaddr, m_axi_awlen, m_axi_awsize, m_axi_awburst,
+   m_axi_awlock, m_axi_awcache, m_axi_awprot, m_axi_awqos,
+   m_axi_wvalid, m_axi_wid, m_axi_wdata, m_axi_wstrb, m_axi_wlast,
+   m_axi_bready, m_axi_arvalid, m_axi_arid, m_axi_araddr, m_axi_arlen,
+   m_axi_arsize, m_axi_arburst, m_axi_arlock, m_axi_arcache,
+   m_axi_arprot, m_axi_arqos, m_axi_rready, s_axis_tready,
+   // Inputs
+   clk, rst_n, crf_ac_UPSTR, crf_ac_UPENDR, crf_ac_UPSRCAR,
+   crf_ac_UPDSTAR, crf_ac_wbusy, upsp_ac_rd, upsp_ac_wrt,
+   upsp_ac_wdata, m_axi_awready, m_axi_wready, m_axi_bvalid,
+   m_axi_bid, m_axi_bresp, m_axi_arready, m_axi_rvalid, m_axi_rid,
+   m_axi_rdata, m_axi_rresp, m_axi_rlast, s_axis_tvalid, s_axis_tid,
+   s_axis_tdata, s_axis_tstrb, s_axis_tkeep, s_axis_tlast,
+   s_axis_tdest, s_axis_user
+   );
+
+	input clk;
+	input rst_n;
 
 	// Interface with config register file
 	output                      ac_crf_wrt;
@@ -57,20 +67,21 @@ module access_control # (
 	input  [CRF_DATA_WIDTH-1:0] crf_ac_UPDSTAR;
 	input                       crf_ac_wbusy;
 
+
 	// Interface with upsp
-	output  [CRF_DATA_WIDTH-1:0]  UPSTR;
-	output  [CRF_DATA_WIDTH-1:0]  UPENDR;
-	input                         upsp_ac_rd;
-	output                        ac_upsp_rvalid;
-	output [UPSP_DATA_WIDTH-1:0]  ac_upsp_rdata;
-	input                         upsp_ac_wrt;
-	input   [UPSP_DATA_WIDTH-1:0] upsp_ac_wdata;
-	input                         upsp_ac_start;
+	output [CRF_DATA_WIDTH-1:0]  UPSTR;
+	output [CRF_DATA_WIDTH-1:0]  UPENDR;
+	input                        upsp_ac_rd;
+	output                       ac_upsp_rvalid;
+	output [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;
+	input                        upsp_ac_wrt;
+	input  [UPSP_DATA_WIDTH-1:0] upsp_ac_wdata;
+
 
 	// Interface as an AXI4-Full master
 	// Common
-	input m_axi_aclk;
-	input m_axi_rstn;
+	// input m_axi_aclk;
+	// input m_rst_n;
 
 	// Write address channel
 	output                      m_axi_awvalid;
@@ -128,6 +139,19 @@ module access_control # (
 //  input                      m_axi_ruser;
 
 
+	// Interface for AXI-Stream slave
+	// input s_axis_aclk;
+    // input s_axis_arstn;
+	input                       s_axis_tvalid;	
+	output                      s_axis_tready;
+	input                       s_axis_tid;
+	input [AXIS_DATA_WIDTH-1:0] s_axis_tdata;
+	input [AXIS_STRB_WIDTH-1:0] s_axis_tstrb;
+	input [AXIS_STRB_WIDTH-1:0] s_axis_tkeep;
+	input                       s_axis_tlast;
+	input                       s_axis_tdest;
+	input                       s_axis_user;
+
 
 	/*AUTOWIRE*/
 
@@ -135,24 +159,14 @@ module access_control # (
 	// Beginning of automatic regs (for this module's undeclared outputs)
 	reg [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;
 	reg [CRF_DATA_WIDTH-1:0] ac_crf_wdata;
-	reg     ac_crf_wrt;
-	reg     ac_upsp_rvalid;
-	reg [1:0]   m_axi_arburst;
-	reg     m_axi_arvalid;
-	reg     m_axi_awvalid;
-	reg     m_axi_bready;
-	reg     m_axi_rready;
+	reg		ac_crf_wrt;
+	reg		m_axi_awvalid;
+	reg		m_axi_bready;
 	reg [AXI_DATA_WIDTH-1:0] m_axi_wdata;
-	reg     m_axi_wlast;
-	reg     m_axi_wvalid;
+	reg		m_axi_wlast;
+	reg		m_axi_wvalid;
 	// End of automatics
 
-
-
-	wire clk;
-	wire rst_n    = ~upsp_ac_start;
-	wire axi_clk;
-	wire axi_rstn = m_axi_rstn & ~upsp_ac_start;
 
 
 
@@ -162,12 +176,61 @@ module access_control # (
 	wire [CRF_DATA_WIDTH-1:0] UPSRCAR = crf_ac_UPSRCAR;
 	wire [CRF_DATA_WIDTH-1:0] UPDSTAR = crf_ac_UPDSTAR;
 
+	// A start impulse
+	reg processing;
+	always@(posedge clk or negedge rst_n) begin: PROCESSING
+		if(~rst_n)
+			processing <= 1'b0;
+		else if(UPSTR[0] & ~UPENDR[0] & ~processing)
+			processing <= 1'b1;
+		else if(~UPSTR[0] & UPENDR[0] & processing)
+			processing <= 1'b0;
+	end
+
+	reg startup;
+	always@(posedge clk or negedge rst_n) begin: START_UP
+		if(~rst_n)
+			startup <= 1'b0;
+		else if(UPSTR[0] & ~UPENDR[0] & ~startup & ~processing)
+			startup <= 1'b1;
+		else
+			startup <= 1'b0;
+	end
+
+
+	// Stream in
+	stream_in #(.AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
+				.AXIS_STRB_WIDTH(AXIS_STRB_WIDTH),
+				.UPSP_DATA_WIDTH(UPSP_DATA_WIDTH))
+	AAA_stream_in(
+			  .s_axis_aclk	(clk),
+			  .s_axis_arstn	(rst_n),
+			  .UPSTR		(UPSTR[0]),
+			  .UPENDR		(UPENDR[0]),
+			  /*AUTOINST*/
+		      // Outputs
+		      .ac_upsp_rvalid	(ac_upsp_rvalid),
+		      .ac_upsp_rdata	(ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]),
+		      .s_axis_tready	(s_axis_tready),
+		      // Inputs
+		      .upsp_ac_rd	(upsp_ac_rd),
+		      .s_axis_tvalid	(s_axis_tvalid),
+		      .s_axis_tid	(s_axis_tid),
+		      .s_axis_tdata	(s_axis_tdata[AXIS_DATA_WIDTH-1:0]),
+		      .s_axis_tstrb	(s_axis_tstrb[AXIS_STRB_WIDTH-1:0]),
+		      .s_axis_tkeep	(s_axis_tkeep[AXIS_STRB_WIDTH-1:0]),
+		      .s_axis_tlast	(s_axis_tlast),
+		      .s_axis_tdest	(s_axis_tdest),
+		      .s_axis_user	(s_axis_user));
+
+
+
+
+
 
 	// Some AXI signals will be hard wired
 	localparam AXI_WRTBURST_LEN  = 3-1; //  transfers inside a transaction
 	localparam AXI_WRTBURST_SIZE = 2;   // 2^2=4 bytes, 32 bits data
-	localparam AXI_RDBURST_LEN  = 16-1; // 16 transfers inside a transaction
-	localparam AXI_RDBURST_SIZE = 2;   // 2^2=4 bytes, 32 bits data
 
 	// Write address channel
 	assign m_axi_awid    = 1'b0;           // No multi-transaction
@@ -183,28 +246,31 @@ module access_control # (
 	assign m_axi_wid     = 1'b0;           // No multi-transaction
 	assign m_axi_wstrb   = {AXI_STRB_WIDTH{1'b1}}; // Write all data
 
-	// Read address channel
-	assign m_axi_arid    = 1'b0;           // No multi-transaction
-	assign m_axi_arlen   = AXI_RDBURST_LEN;
-	assign m_axi_arsize  = AXI_RDBURST_SIZE;
-	assign m_axi_awburst = 2'b01;          // Always use INCR type
-	assign m_axi_arlock  = 2'b00;
-	assign m_axi_arcache = 4'b0010;        // Normal Non-cacheable Non-bufferable memory
-	assign m_axi_arprot  = 3'h0;
-	assign m_axi_arqos   = 4'h0;
+	// Read address and read signals all hard wired into zero
+    assign m_axi_arvalid = 0;
+    assign m_axi_arid    = 0;
+    assign m_axi_araddr  = 0;
+    assign m_axi_arlen   = 0;
+    assign m_axi_arsize  = 0;
+    assign m_axi_arburst = 0;
+    assign m_axi_arlock  = 0;
+    assign m_axi_arcache = 0;
+    assign m_axi_arprot  = 0;
+    assign m_axi_arqos   = 0;
+    assign m_axi_rready  = 0;
 
 
 
 	/*  Write buffers: Up-Sampling module writes into buffers, then AC
-	 write these data back to DDR. Use multiple buffers for non-blocking.
+	 writes these data back to DDR. Using multiple buffers for non-blocking.
 	 Because every template will compute 16 pixels as 4 4-pixel group,
 	 and address increases only within a group, so we allocate one buffer
 	 for each group. Every group will be sent to DDR as an independent
 	 transaction.
 	 */
-	reg [24*4-1:0] wrtbuf[0:2];
+	reg [24*4-1:0] wrtbuf[0:3];
 	reg [3:0]      wrtbuf_valid;
-	// ID indicates which buffer will be used, in an round-robin fashion.
+	// ID indicates which buffer will be used by upsp, in a round-robin fashion.
 	reg [1:0] upsp_wrtid;
 	// Count indicates which pixel inside a 4-pixel buffer
 	reg [1:0] upsp_wrtcount;
@@ -228,20 +294,19 @@ module access_control # (
 				default: wrtbuf[upsp_wrtid][95:72] <= upsp_ac_wdata;
 			endcase
 
-			// A whole buffer will be ready at next clock advance the
+			// A whole buffer will be ready at next clock, advance the
 			// upsp_wrtid to next
 			if(upsp_wrtcount == 2'b11) begin
 				upsp_wrtcount <= 2'b0;
 				upsp_wrtid <= upsp_wrtid + 1;
-				if(upsp_wrtid == 2'b10) upsp_wrtid <= 2'b0;
+				if(upsp_wrtid == 2'b11) upsp_wrtid <= 2'b0;
 			end
 		end
 	end
 
-	/*  Control for AXI write address and write signals.
-	 When there is a valid buffer data, issue an write transaction.
-	 The buffer size is 3*4=12 bytes, an transaction with len=3
-	 and size=32-bit is suitable.
+	/*  AXI write address and write signals. When there is a valid 
+	 buffer, issue an write transaction. The buffer size is 3*4=12 
+	 bytes, an transaction with len=3 and size=32bit is suitable.
 	 */
 	wire wrtbuf_nonempty = | wrtbuf_valid;
 	reg [1:0] ac_rdid;
@@ -249,12 +314,12 @@ module access_control # (
 
 	// wrtbuf_valid: When upsp writes a whole buffer, set its valid bit.
 	// When ac read a whole buffer, clear its valid bit.
-	always@(posedge axi_clk or negedge axi_rstn) begin: WRTBUF_VALID_PROC
-		if(~axi_rstn) begin
+	always@(posedge clk or negedge rst_n) begin: WRTBUF_VALID_PROC
+		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			wrtbuf_valid <= 4'h0;
-		// End of automatics
+			// End of automatics
 		end else begin
 			if(upsp_ac_wrt && upsp_wrtcount == 2'b11)
 				wrtbuf_valid[upsp_wrtid] <= 1'b1;
@@ -264,26 +329,28 @@ module access_control # (
 		end
 	end
 
-	// If there is a pending write transaction, wait.
+	// AC can issue a write transaction only when there is no pending write 
+	// transaction
 	reg ac_wrten;
-	always@(posedge axi_clk or negedge axi_rstn) begin: WAIT_IDLE_WRT
-		if(~axi_rstn)
+	always@(posedge clk or negedge rst_n) begin: WAIT_IDLE_WRT
+		if(~rst_n)
 			ac_wrten <= 1'h1;
 		else if(~ac_wrten) begin
 			// Wait for the response of the pending write transaction
-			if(m_axi_bvalid & m_axi_bready & m_axi_bresp) ac_wrten <= 1'b1;
-		end else if(wrtbuf_nonempty & ~m_axi_awvalid & ~ac_wrten)
+			if(m_axi_bvalid & m_axi_bready) ac_wrten <= 1'b1;
+		// Deasserted when issue a transaction
+		end else if(wrtbuf_nonempty & ~m_axi_awvalid & ac_wrten)
 			ac_wrten <= 1'b0;
 	end
 
 	// awvalid will be asserted only for one clock, because we always
 	// use the INCR burst type.
-	always@(posedge axi_clk or negedge axi_rstn) begin: AWREADY
-		if(~axi_rstn) begin
+	always@(posedge clk or negedge rst_n) begin: AWREADY
+		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			m_axi_awvalid <= 1'h0;
-		// End of automatics
+			// End of automatics
 		end else if(m_axi_awvalid) begin
 			if(m_axi_awready) m_axi_awvalid <= 1'b0;
 		end else if(wrtbuf_nonempty & ~m_axi_awvalid & ac_wrten)
@@ -292,25 +359,31 @@ module access_control # (
 			m_axi_awvalid <= 1'b0;
 	end
 
-	// The write addresses of bursts step across the target image.
+	// The write address of burst steps across the target image.
 	// Every time a write transaction initiated, advance the address.
-	localparam KERNEL_ADDR_STEP = (UPSP_DATA_WIDTH/8) * 4;
-	localparam WRTBURST_ADDR_STEP = DST_IMG_WIDTH*3;
+	localparam KERNEL_ADDR_ROWSTEP = (UPSP_DATA_WIDTH/8) * 4;
+	localparam KERNEL_ADDR_COLSTEP = 3*DST_IMG_WIDTH*(UPSP_DATA_WIDTH/8);
+	localparam KERNEL_ADDR_MARGIN  = (UPSP_DATA_WIDTH/8) * 4;
+	localparam KERNEL_ADDR_EDGE    = (DST_IMG_WIDTH-4)*(UPSP_DATA_WIDTH/8);
+	localparam WRTBURST_ADDR_STEP  = DST_IMG_WIDTH*(UPSP_DATA_WIDTH/8);
 
 	reg [AXI_ADDR_WIDTH-1:0] kernel_start_addr;
 	reg [AXI_ADDR_WIDTH-1:0] wrtburst_start_addr;
-	always@(posedge ac_wrten or negedge axi_rstn) begin: KADDR_PROC
-		if(~axi_rstn) begin
+	always@(posedge ac_wrten or negedge rst_n) begin: KADDR_PROC
+		if(~rst_n) begin
 			kernel_start_addr <= {AXI_ADDR_WIDTH{1'b0}};
-		end else if(upsp_ac_start)
+		end else if(startup)
 			kernel_start_addr <= UPDSTAR;
-		else if(m_axi_awvalid & m_axi_awready && ac_rdid == 2'b10) begin
-			kernel_start_addr <= kernel_start_addr + KERNEL_ADDR_STEP;
+		else if(m_axi_awvalid & m_axi_awready && ac_rdid == 2'b11) begin
+			if(kernel_start_addr == KERNEL_ADDR_EDGE)
+				kernel_start_addr <= kernel_start_addr + KERNEL_ADDR_MARGIN + KERNEL_ADDR_COLSTEP;
+			else
+				kernel_start_addr <= kernel_start_addr + KERNEL_ADDR_ROWSTEP;
 		end
 	end
 
-	always@(posedge ac_wrten or negedge axi_rstn) begin: WADDR_PROC
-		if(~axi_rstn) begin
+	always@(posedge ac_wrten or negedge rst_n) begin: WADDR_PROC
+		if(~rst_n) begin
 			wrtburst_start_addr <= {AXI_ADDR_WIDTH{1'b0}};
 		end else if(m_axi_awvalid) begin
 			if(m_axi_awready)
@@ -322,14 +395,14 @@ module access_control # (
 	assign m_axi_awaddr = wrtburst_start_addr;
 
 	// wvalid: Send data as soon as there is a valid buffer.
-	always@(posedge axi_clk or negedge axi_rstn) begin: WVALID
-		if(~axi_rstn) begin
+	always@(posedge clk or negedge rst_n) begin: WVALID
+		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			ac_rdcount <= 2'h0;
 			ac_rdid <= 2'h0;
 			m_axi_wvalid <= 1'h0;
-		// End of automatics
+			// End of automatics
 		end else if(m_axi_wvalid) begin
 			if(m_axi_wready) begin
 				ac_rdcount <= ac_rdcount + 1;
@@ -337,7 +410,7 @@ module access_control # (
 					m_axi_wvalid <= 1'b0;
 					ac_rdcount  <= 2'b0;
 					ac_rdid     <= ac_rdid + 1;
-					if(ac_rdid == 2'b10) ac_rdid <= 2'b00;
+					if(ac_rdid == 2'b11) ac_rdid <= 2'b00;
 				end
 			end
 		end else if(wrtbuf_nonempty & ~m_axi_wvalid & ac_wrten) begin
@@ -351,8 +424,8 @@ module access_control # (
 
 	// wdata: Pick 4 bytes from buffer at the beginning of a new write
 	// transaction or when a transfer succeed
-	always@(posedge axi_clk or negedge axi_rstn) begin: WDATA
-		if(~axi_rstn) begin
+	always@(posedge clk or negedge rst_n) begin: WDATA
+		if(~rst_n) begin
 			m_axi_wdata <= {AXI_DATA_WIDTH{1'b0}};
 		end else if(
 				wrtbuf_nonempty & ~m_axi_wvalid & ac_wrten |
@@ -365,23 +438,26 @@ module access_control # (
 				default: m_axi_wdata <= wrtbuf[ac_rdid][95:64];
 			endcase
 
-		end else if(m_axi_wvalid & m_axi_wready && ac_rdcount == 2'b11)
-			m_axi_wdata <= {AXI_DATA_WIDTH{1'b0}};
+		end
 	end
 
 	// wlast: Assert for last write transfer
-	always@(posedge axi_clk or negedge axi_rstn) begin: WLAST
-		if(~axi_rstn) begin
+	always@(posedge clk or negedge rst_n) begin: WLAST
+		if(~rst_n)
 			m_axi_wlast <= 1'h0;
-		end else if(m_axi_wvalid & m_axi_wready && ac_rdcount == 2'b11)
+		else if(~m_axi_wlast) begin
+			if(m_axi_wvalid & m_axi_wready && ac_rdcount == 2'b11)
+				m_axi_wlast <= 1'b0;
+		end
+		else if(m_axi_wvalid & m_axi_wready && ac_rdcount == 2'b10)
 			m_axi_wlast <= 1'b1;
 		else
 			m_axi_wlast <= 1'b0;
 	end
 
 	// bready: Assert bready for one cycle when bvalid is asserted
-	always@(posedge axi_clk or negedge axi_rstn) begin: BREADY
-		if(~axi_rstn) begin
+	always@(posedge clk or negedge rst_n) begin: BREADY
+		if(~rst_n) begin
 			m_axi_bready <= 1'h0;
 		end else if(m_axi_bvalid & ~m_axi_bready)
 			m_axi_bready <= 1'b1;
@@ -391,189 +467,45 @@ module access_control # (
 
 
 
-	/*  Read buffer: AccessControl read pixels from DDR and save them into
-	 read buffer. If read buffer is not empty, Up-Sampling module can read
-	 pixels. The size of read buffer is 128B, AccessControl writes 4B each
-	 time, Up-Sampling module reads 3B each time.
-	 */
-	reg [7:0] rdbuf[0:127];
-	// read/write count
-	reg [7:0] rdbuf_rdcount, rdbuf_wrtcount;
-	// read/write pointer
-	wire [6:0] rdbuf_rdp  = rdbuf_rdcount[6:0];
-	wire [6:0] rdbuf_wrtp = rdbuf_wrtcount[6:0];
-	// Empty and full signals
-	wire rdbuf_empty = (rdbuf_rdcount==rdbuf_wrtcount)?1'b1:1'b0;
-	wire rdbuf_full  = (rdbuf_rdcount[7]!=rdbuf_wrtcount[7]) && (rdbuf_rdp == rdbuf_wrtp);
 
-	// Read/Write enable and data
-	wire rdbuf_ren = upsp_ac_rd;
-	wire rdbuf_wen = m_axi_rvalid & m_axi_rready;
-	wire [31:0] rdbuf_in = m_axi_rdata;
-	reg  [23:0] rdbuf_out;
-
-	// Read buffer acts like a synchronous fifo.
-	always@(posedge axi_clk or negedge axi_rstn) begin: RDBUF_PROC
-		if(~axi_rstn) begin
-			rdbuf_out <= 24'h0;
-			rdbuf_rdcount <= 8'h0;
-			rdbuf_wrtcount <= 8'h0;
-			for(i = 0; i < 128; i++) begin
-				rdbuf[i] <= 8'b0;
-			end
-		end else if(upsp_ac_start) begin
-			rdbuf_rdcount <= 8'h0;
-			rdbuf_wrtcount <= 8'h0;
-		end else if(rdbuf_ren & ~rdbuf_empty) begin
-			rdbuf_rdcount <= rdbuf_rdcount + 3;
-			rdbuf_out <= {rdbuf[rdbuf_rdp+2], rdbuf[rdbuf_rdp+1], rdbuf[rdbuf_rdp]};
-
-		end else if(rdbuf_wen & ~rdbuf_full) begin
-			rdbuf_wrtcount <= rdbuf_wrtcount + 4;
-			{rdbuf[rdbuf_wrtp+3], rdbuf[rdbuf_wrtp+2], rdbuf[rdbuf_wrtp+1], rdbuf[rdbuf_wrtp]} <= rdbuf_in;
-		end
-	end
-
-	assign ac_upsp_rdata = rdbuf_out;
-	always@(posedge axi_clk or negedge axi_rstn) begin: RVALID
-		if(~axi_rstn) begin
-			ac_upsp_rvalid <= 1'h0;
-		end else if(rdbuf_ren & ~rdbuf_empty)
-			ac_upsp_rvalid <= 1'b1;
-		else
-			ac_upsp_rvalid <= 1'b0;
-	end
-
-	// Read address management
-	localparam RDBURST_ADDR_STEP = (AXI_RDBURST_LEN + 1)*3;
-
-	reg [AXI_ADDR_WIDTH-1:0] rdburst_start_addr;
-	always@(posedge ac_wrten or negedge axi_rstn) begin: RADDR_PROC
-		if(~axi_rstn) begin
-			kernel_start_addr <= {AXI_ADDR_WIDTH{1'b0}};
-		end else if(upsp_ac_start)
-			rdburst_start_addr <= UPSRCAR;
-		else if(m_axi_arvalid & m_axi_arready)
-			rdburst_start_addr <= rdburst_start_addr + RDBURST_ADDR_STEP;
-	end
-	assign m_axi_araddr = rdburst_start_addr;
-
-	// Source pixel count management
-	localparam TOTAL_SRCNUM  = SRC_IMG_HEIGHT*SRC_IMG_WIDTH*3;
-	localparam SRC_READ_STEP = (AXI_RDBURST_LEN + 1)*4;
-
-	reg [AXI_ADDR_WIDTH-1:0] srccount;
-	always@(posedge ac_wrten or negedge axi_rstn) begin: SRC_COUNT_PROC
-		if(~axi_rstn) begin
-			srccount <= {AXI_ADDR_WIDTH{1'b0}};
-		end else if(upsp_ac_start)
-			srccount <= {AXI_ADDR_WIDTH{1'b0}};
-		else if(m_axi_arvalid & m_axi_arready)
-			srccount <= srccount + RDBURST_ADDR_STEP;
-	end
-	wire more_pixel = (srccount >= TOTAL_SRCNUM)?1'b0:1'b1;
+// Additional code for easy debugging
+`ifndef DISABLE_DEBUG_CODE
 
 
-	// arvalid: If there is at least a half empty space in read buffer and
-	// some pixels still remain, issue a read transaction. The unsigned difference
-	// of (rdbuf_wrtp - rdbuf_rdp) is always the number of occupied bytes.
-	wire [7:0] rdbuf_remain = 8'd128 - (rdbuf_wrtp - rdbuf_rdp);
 
-	wire rdbuf_revrdy = ~rdbuf_full & rdbuf_remain[6] | rdbuf_remain[7];
+`endif
 
-	reg axi_rden;
-	always@(posedge axi_clk or negedge axi_rstn) begin: WAIT_IDLE_RD
-		if(~axi_rstn) begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			axi_rden <= 1'h0;
-		// End of automatics
-		end else if(axi_rden) begin
-			// Waiting for pending read transaction to finish
-			if(m_axi_rvalid & m_axi_rready & m_axi_rlast)
-				axi_rden <= 0;
-		end else if(rdbuf_revrdy & more_pixel)
-			axi_rden <= 1'b1;
-		else
-			axi_rden <= 1'b0;
-	end
-
-	// arvalid: Asserted only for one cycle
-	always@(posedge axi_clk or negedge axi_rstn) begin: ARVALID
-		if(~axi_rstn) begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			m_axi_arvalid <= 1'h0;
-		// End of automatics
-		end else if(m_axi_arvalid) begin
-			// Wait for arready
-			if(m_axi_arready) m_axi_arvalid <= 1'b1;
-		end else if(axi_rden & ~m_axi_arvalid)
-			m_axi_arvalid <= 1'b1;
-		else
-			m_axi_arvalid <= 1'b0;
-	end
-
-	// rready: Asserted until last read response
-	always@(posedge axi_clk or negedge axi_rstn) begin: RREADY
-		if(~axi_rstn) begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			m_axi_rready <= 1'h0;
-		// End of automatics
-		end else if(m_axi_rready) begin
-			if(m_axi_rvalid & m_axi_rvalid & m_axi_rlast)
-				m_axi_rready <= 1'b0;
-		end else if(m_axi_rvalid)
-			m_axi_rready <= 1'b0;
-	end
-
-
+// SVA for the design features
 `ifndef DISABLE_SV_ASSERTION
+
 	property ps_write_empty_buffer;
-		@(posedge axi_clk) disable iff(~axi_rstn);
+		@(posedge clk) disable iff(~rst_n)
 		upsp_ac_wrt |-> ~wrtbuf_valid[upsp_wrtid];
 	endproperty
 
 	property ac_read_valid_buffer;
-		@(posedge axi_clk) disable iff(~axi_rstn);
+		@(posedge clk) disable iff(~rst_n)
 		m_axi_wvalid |-> wrtbuf_valid[ac_rdid];
 	endproperty
 
-	property upsp_wrtid_lt_three;
-		@(posedge axi_clk) disable iff(~axi_rstn);
-		upsp_wrtid < 2'b11;
-	endproperty
-
-	property ac_rdid_lt_three;
-		@(posedge axi_clk) disable iff(~axi_rstn);
-		ac_rdid < 2'b11;
-	endproperty
-
 	property ac_rdcount_lt_three;
-		@(posedge axi_clk) disable iff(~axi_rstn);
+		@(posedge clk) disable iff(~rst_n)
 		ac_rdcount < 2'b11;
 	endproperty
 
-	property upsampling_start_idle;
-		@(posedge axi_clk) disable iff(~axi_rstn);
-		upsp_ac_start |=>
+	property upsampling_start_correct;
+		@(posedge clk) disable iff(~rst_n)
+		startup |=>
 		wrtbuf_valid == 3'b0 &&
-		kernel_start_addr == UPDSTAR &&
-		rdburst_start_addr == UPSRCAR &&
-		srccount == 0 &&
-		rdbuf_empty;
+		kernel_start_addr == UPDSTAR
+		;
 	endproperty
 
-	always_comb begin
-		assert (ps_write_empty_buffer);
-		assert (ac_read_valid_buffer);
-		assert (upsp_wrtid_lt_three);
-		assert (ac_rdid_lt_three);
-		assert (ac_rdcount_lt_three);
-	end
-	
-	assert (upsampling_start_idle);
+	assert property(ps_write_empty_buffer);
+	assert property(ac_read_valid_buffer);
+	assert property(ac_rdcount_lt_three);
+	assert property(upsampling_start_correct);
+
 `endif
 
 endmodule

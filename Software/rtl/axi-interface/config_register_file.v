@@ -23,17 +23,17 @@ module config_register_file # (
 		parameter CRF_DATA_WIDTH = 32,
 		parameter CRF_ADDR_WIDTH = 32
 	) (/*AUTOARG*/
-		// Outputs
-		s_axi_awready, s_axi_wready, s_axi_bvalid, s_axi_bresp,
-		s_axi_arready, s_axi_rvalid, s_axi_rdata, s_axi_rresp,
-		interrupt_updone, crf_ac_UPSTR, crf_ac_UPENDR, crf_ac_UPSRCAR,
-		crf_ac_UPDSTAR, crf_ac_wbusy,
-		// Inputs
-		s_axi_aclk, s_axi_rstn, s_axi_awvalid, s_axi_awaddr, s_axi_awprot,
-		s_axi_wvalid, s_axi_wdata, s_axi_wstrb, s_axi_bready,
-		s_axi_arvalid, s_axi_araddr, s_axi_arprot, s_axi_rready,
-		ac_crf_wrt, ac_crf_waddr, ac_crf_wdata
-	);
+   // Outputs
+   s_axi_awready, s_axi_wready, s_axi_bvalid, s_axi_bresp,
+   s_axi_arready, s_axi_rvalid, s_axi_rdata, s_axi_rresp,
+   interrupt_updone, crf_ac_UPSTR, crf_ac_UPENDR, crf_ac_UPSRCAR,
+   crf_ac_UPDSTAR, crf_ac_wbusy,
+   // Inputs
+   s_axi_aclk, s_axi_rstn, s_axi_awvalid, s_axi_awaddr, s_axi_awprot,
+   s_axi_wvalid, s_axi_wdata, s_axi_wstrb, s_axi_bready,
+   s_axi_arvalid, s_axi_araddr, s_axi_arprot, s_axi_rready,
+   ac_crf_wrt, ac_crf_waddr, ac_crf_wdata
+   );
 
 	parameter RESP_OKAY = 2'b00;
 
@@ -88,13 +88,13 @@ module config_register_file # (
 
 	/*AUTOREG*/
 	// Beginning of automatic regs (for this module's undeclared outputs)
-	reg     crf_ac_wbusy;
-	reg     s_axi_arready;
-	reg     s_axi_awready;
-	reg     s_axi_bvalid;
+	reg		crf_ac_wbusy;
+	reg		s_axi_arready;
+	reg		s_axi_awready;
+	reg		s_axi_bvalid;
 	reg [AXI_DATA_WIDTH-1:0] s_axi_rdata;
-	reg     s_axi_rvalid;
-	reg     s_axi_wready;
+	reg		s_axi_rvalid;
+	reg		s_axi_wready;
 	// End of automatics
 
 
@@ -131,7 +131,7 @@ module config_register_file # (
 			// Beginning of autoreset for uninitialized flops
 			crf_ac_wbusy <= 1'h0;
 			s_axi_awready <= 1'h0;
-		// End of automatics
+			// End of automatics
 		end else if(ac_crf_wrt) begin
 			s_axi_awready <= 1'b0;
 			crf_ac_wbusy <= 1'b0;
@@ -154,7 +154,7 @@ module config_register_file # (
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			s_axi_wready <= 1'h0;
-		// End of automatics
+			// End of automatics
 		else if(s_axi_awvalid & s_axi_wvalid & ~s_axi_bvalid & s_axi_wready
 				& ~ac_crf_wrt)
 			s_axi_wready <= 1'b1;
@@ -176,7 +176,7 @@ module config_register_file # (
 			UPENDR <= {CRF_DATA_WIDTH{1'b0}};
 			UPSRCAR <= {CRF_DATA_WIDTH{1'b0}};
 			UPSTR <= {CRF_DATA_WIDTH{1'b0}};
-		// End of automatics
+			// End of automatics
 		end else if(ac_wren) begin
 			case(ac_crf_waddr)
 				0: UPSTR   <= ac_crf_wdata;
@@ -217,7 +217,7 @@ module config_register_file # (
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			s_axi_bvalid <= 1'h0;
-		// End of automatics
+			// End of automatics
 
 		end else if(s_axi_bvalid) begin
 			// Wait for bready
@@ -236,7 +236,7 @@ module config_register_file # (
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			s_axi_arready <= 1'h0;
-		// End of automatics
+			// End of automatics
 		else if(s_axi_arvalid & ~s_axi_arready)
 			s_axi_arready <= 1'b1;
 		else
@@ -255,7 +255,7 @@ module config_register_file # (
 			// Beginning of autoreset for uninitialized flops
 			s_axi_rdata <= {AXI_DATA_WIDTH{1'b0}};
 			s_axi_rvalid <= 1'h0;
-		// End of automatics
+			// End of automatics
 
 		end else if(s_axi_rvalid) begin
 			// Wait for rready
