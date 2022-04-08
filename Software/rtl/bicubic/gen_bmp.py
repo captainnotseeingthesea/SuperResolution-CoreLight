@@ -2,9 +2,11 @@
 width=960
 height=540
 f = open("display_verilator.txt")
+
 # width=11
 # height=6
 # f = open("display.txt")
+
 result = []
 cnt = 0
 for line in f.readlines():
@@ -12,13 +14,10 @@ for line in f.readlines():
 f.close()
 
 # if use iverilog, the first line should be poped
-
 # result.pop(0)
 
 while len(result) != width*height*4:
     result.pop()
-
-
 
 des = []
 for i in range(height):

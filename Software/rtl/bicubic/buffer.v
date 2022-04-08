@@ -44,13 +44,22 @@ module buffer #(
 
 
     output wire bf_rsp_ready,
+`ifdef GEN_IN_SIXTEEN
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
 
+`elsif GEN_IN_EIGHT
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data2,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data3,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
 
-`ifdef GEN_IN_TWO
+`elsif GEN_IN_FOUR
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data2,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data3,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
+
+`elsif GEN_IN_TWO
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data5,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data6,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data7,
@@ -99,17 +108,24 @@ module buffer #(
         .data(axi_data),
         .valid(axi_valid)
     );
+`ifdef GEN_IN_SIXTEEN
+    localparam CNT_WIDTH = 4;
+    wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
+    wire cur_cnt_is_15 = (cur_cnt == 4'd15) ? 1'b1 : 1'b0;
+    assign nxt_cnt = cur_cnt_is_15 ? 4'd0 : cur_cnt + 1;
 
-`ifdef GEN_IN_EIGHT
+`elsif GEN_IN_EIGHT
     localparam CNT_WIDTH = 2;
     wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
     wire cur_cnt_is_3 = (cur_cnt == 2'd3) ? 1'b1 : 1'b0;
     assign nxt_cnt = cur_cnt_is_3 ? 2'd0 : cur_cnt + 1;
+
 `elsif GEN_IN_FOUR
     localparam CNT_WIDTH = 2;
     wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
     wire cur_cnt_is_3 = (cur_cnt == 2'd3) ? 1'b1 : 1'b0;
     assign nxt_cnt = cur_cnt_is_3 ? 2'd0 : cur_cnt + 1;
+
 `elsif GEN_IN_TWO
     localparam CNT_WIDTH = 1;
     wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
@@ -120,6 +136,7 @@ module buffer #(
     localparam CNT_WIDTH = 1;
     wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
     assign nxt_cnt = 1'd0;
+
 `else
     localparam CNT_WIDTH = 2;
     wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
@@ -147,7 +164,9 @@ module buffer #(
     wire cur_col_cnt_is_width_plus_2 = (cur_col_cnt == WIDTH+2) ? 1'b1 : 1'b0;
     assign nxt_col_cnt = cur_col_cnt_is_width_plus_2 ? 10'd0 : cur_col_cnt + 1;
 
-`ifdef GEN_IN_EIGHT
+`ifdef GEN_IN_SIXTEEN
+    wire col_cnt_ena = (cur_cnt_is_15 & bcci_2_bf_hsked)  | (~cur_col_cnt_below_width);
+`elsif GEN_IN_EIGHT
     wire col_cnt_ena = (cur_cnt_is_3 & bcci_2_bf_hsked)  | (~cur_col_cnt_below_width);
 `elsif GEN_IN_FOUR
     wire col_cnt_ena = (cur_cnt_is_3 & bcci_2_bf_hsked)  | (~cur_col_cnt_below_width);
@@ -174,7 +193,10 @@ module buffer #(
 
     assign bf_req_valid = init_finished ? cur_col_cnt_below_width : 1'b0;
 
-`ifdef GEN_IN_EIGHT
+
+`ifdef GEN_IN_SIXTEEN
+    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_15 & bcci_2_bf_hsked) | (~cur_col_cnt_below_width);
+`elsif GEN_IN_EIGHT
     wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_3 & bcci_2_bf_hsked) | (~cur_col_cnt_below_width);
 `elsif GEN_IN_FOUR
     wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_3 & bcci_2_bf_hsked) | (~cur_col_cnt_below_width);
@@ -220,13 +242,36 @@ module buffer #(
 
     // wire [BUFFER_WIDTH*4-1:0] axi_req_data;
     localparam OUT_BUFFER_WIDTH = BUFFER_WIDTH*4;
-    wire [OUT_BUFFER_WIDTH-1:0] nxt_out1 = {bcci_rsp_data1, bcci_rsp_data2, bcci_rsp_data3, bcci_rsp_data4};
-`ifdef GEN_IN_TWO
-    wire [OUT_BUFFER_WIDTH-1:0] nxt_out2 = {bcci_rsp_data5, bcci_rsp_data6, bcci_rsp_data7, bcci_rsp_data8};
+
+
+
+
+`ifdef GEN_IN_SIXTEEN
+    wire [BUFFER_WIDTH-1:0] data1, data2, data3;
+
+    wire u_dffl1_ena = (cur_cnt==0) | (cur_cnt==4) | (cur_cnt==8) | (cur_cnt==12) ? 1'b1: 1'b0;
+    wire u_dffl2_ena = (cur_cnt==1) | (cur_cnt==5) | (cur_cnt==9) | (cur_cnt==13) ? 1'b1: 1'b0;
+    wire u_dffl3_ena = (cur_cnt==2) | (cur_cnt==6) | (cur_cnt==10) | (cur_cnt==14) ? 1'b1: 1'b0;
+
+    dffl #(.DW(BUFFER_WIDTH)) u_dffl1_for_16 (.lden(u_dffl1_ena), .dnxt(bcci_rsp_data1), .qout(data1), .clk(clk));
+    dffl #(.DW(BUFFER_WIDTH)) u_dffl2_for_16 (.lden(u_dffl2_ena), .dnxt(bcci_rsp_data1), .qout(data2), .clk(clk));
+    dffl #(.DW(BUFFER_WIDTH)) u_dffl3_for_16 (.lden(u_dffl3_ena), .dnxt(bcci_rsp_data1), .qout(data3), .clk(clk));
+
+    wire [OUT_BUFFER_WIDTH-1:0] out1 = {data1, data2, data3, bcci_rsp_data1};
+
+`elsif GEN_IN_EIGHT
+    wire [OUT_BUFFER_WIDTH-1:0] out1 = {bcci_rsp_data1, bcci_rsp_data2, bcci_rsp_data3, bcci_rsp_data4};
+`elsif GEN_IN_FOUR
+    wire [OUT_BUFFER_WIDTH-1:0] out1 = {bcci_rsp_data1, bcci_rsp_data2, bcci_rsp_data3, bcci_rsp_data4};
+`elsif GEN_IN_TWO
+    wire [OUT_BUFFER_WIDTH-1:0] out1 = {bcci_rsp_data1, bcci_rsp_data2, bcci_rsp_data3, bcci_rsp_data4};
+    wire [OUT_BUFFER_WIDTH-1:0] out2 = {bcci_rsp_data5, bcci_rsp_data6, bcci_rsp_data7, bcci_rsp_data8};
 `elsif GEN_IN_ONE
-    wire [OUT_BUFFER_WIDTH-1:0] nxt_out2 = {bcci_rsp_data5, bcci_rsp_data6, bcci_rsp_data7, bcci_rsp_data8};
-    wire [OUT_BUFFER_WIDTH-1:0] nxt_out3 = {bcci_rsp_data9, bcci_rsp_data10, bcci_rsp_data11, bcci_rsp_data12};
-    wire [OUT_BUFFER_WIDTH-1:0] nxt_out4 = {bcci_rsp_data13, bcci_rsp_data14, bcci_rsp_data15, bcci_rsp_data16};
+    wire [OUT_BUFFER_WIDTH-1:0] out1 = {bcci_rsp_data1, bcci_rsp_data2, bcci_rsp_data3, bcci_rsp_data4};
+    wire [OUT_BUFFER_WIDTH-1:0] out2 = {bcci_rsp_data5, bcci_rsp_data6, bcci_rsp_data7, bcci_rsp_data8};
+    wire [OUT_BUFFER_WIDTH-1:0] out3 = {bcci_rsp_data9, bcci_rsp_data10, bcci_rsp_data11, bcci_rsp_data12};
+    wire [OUT_BUFFER_WIDTH-1:0] out4 = {bcci_rsp_data13, bcci_rsp_data14, bcci_rsp_data15, bcci_rsp_data16};
+
 `endif
 
 
@@ -238,14 +283,22 @@ module buffer #(
         else begin
             if(bcci_2_bf_hsked) begin
                 result_cnt <= result_cnt + 1;
-                // $display("cnt %d %x", result_cnt, nxt_out1);
-                $display("%x", nxt_out1);
-                `ifdef GEN_IN_TWO
-                    $display("%x", nxt_out2);
+                `ifdef GEN_IN_SIXTEEN
+                    if(cur_cnt[1:0] == 2'b11) begin
+                        $display("%x", out1);  
+                    end
+                `elsif GEN_IN_EIGHT
+                    $display("%x", out1);
+                `elsif GEN_IN_FOUR
+                    $display("%x", out1);
+                `elsif GEN_IN_TWO
+                    $display("%x", out1);
+                    $display("%x", out2);
                 `elsif GEN_IN_ONE
-                    $display("%x", nxt_out2);
-                    $display("%x", nxt_out3);   
-                    $display("%x", nxt_out4);
+                    $display("%x", out1);
+                    $display("%x", out2);
+                    $display("%x", out3);   
+                    $display("%x", out4);
                 `endif
             end
         end

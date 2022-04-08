@@ -64,8 +64,8 @@ module bicubic_read_bmp (
         end
         
         // #1
-        
         // bmp_file_id = $fopen("2.bmp", "rb");
+
         bmp_file_id = $fopen("49_1k.bmp", "rb");
         icode = $fread(bmp_data, bmp_file_id);
 

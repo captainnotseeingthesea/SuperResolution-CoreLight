@@ -1,6 +1,6 @@
 ## Structure of the code
 - define.v
-    - Configuring conditional compilation with the following options: ```GEN_IN_EIGHT```, ```GEN_IN_FOUR```, ```GEN_IN_TWO```, ```GEN_IN_ONE```. 
+    - Configuring conditional compilation with the following options: ```GEN_IN_SIXTEEN```, ```GEN_IN_EIGHT```, ```GEN_IN_FOUR```, ```GEN_IN_TWO```, ```GEN_IN_ONE```. 
 - bicubic_mult.v
     - Basic multiplication operator, whose inputs are a weight data and an image pixel data.
 - bicubic_vercotr_mult.v
@@ -9,12 +9,14 @@
     - Pixel vector multiplication weight matrix operator.
 - bicubic_wvector_mult_pmatrix.v
     - Weight vector multiplication pixel matrix operator.
+- bicubic_upsample_16.v
+    - The upsample module, used 16 clocks to generate the 16 interpolations.
 - bicubic_upsample_8.v
-    - The upsample module, used 8 clock to generate the 16 interpolations.
+    - The upsample module, used 8 clocks to generate the 16 interpolations.
 - bicubic_upsample_4.v
-    - The upsample module, used 4 clock to generate the 16 interpolations.
+    - The upsample module, used 4 clocks to generate the 16 interpolations.
 - bicubic_upsample_2.v
-    - The upsample module, used 2 clock to generate the 16 interpolations.
+    - The upsample module, used 2 clocks to generate the 16 interpolations.
 - bicubic_upsample_1.v
     - The upsample module, used 1 clock to generate the 16 interpolations.
 - bicubic_read_bmp.v

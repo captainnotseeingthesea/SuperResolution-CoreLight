@@ -1,2 +1,2 @@
 
-`define GEN_IN_TWO
+`define GEN_IN_SIXTEEN

@@ -2,7 +2,10 @@
 `ifndef BUFFER
     `include "buffer.v"
 `endif
-`ifdef GEN_IN_EIGHT
+
+`ifdef GEN_IN_SIXTEEN
+    `include "bicubic_upsample_16.v"
+`elsif GEN_IN_EIGHT
     `include "bicubic_upsample_8.v"
 `elsif GEN_IN_FOUR
     `include "bicubic_upsample_4.v"
@@ -44,17 +47,37 @@ module bicubic_top
 
     wire bf_rsp_ready;
     wire bcci_rsp_valid;
+`ifdef GEN_IN_SIXTEEN
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
+
+`elsif GEN_IN_EIGHT
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data2;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data3;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data4;
 
-`ifdef GEN_IN_TWO
+`elsif GEN_IN_FOUR
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data2;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data3;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data4;
+
+`elsif GEN_IN_TWO
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data2;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data3;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data4;
+
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data5;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data6;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data7;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data8;
 `elsif GEN_IN_ONE
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data2;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data3;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data4;
+
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data5;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data6;
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data7;
@@ -99,18 +122,38 @@ module bicubic_top
         .out_p16(out_p16),
 
         .bf_rsp_ready(bf_rsp_ready),
+    `ifdef GEN_IN_SIXTEEN
+        .bcci_rsp_data1(bcci_rsp_data1),
+
+    `elsif GEN_IN_EIGHT
         .bcci_rsp_data1(bcci_rsp_data1),
         .bcci_rsp_data2(bcci_rsp_data2),
         .bcci_rsp_data3(bcci_rsp_data3),
         .bcci_rsp_data4(bcci_rsp_data4),
 
-    `ifdef GEN_IN_TWO
+    `elsif GEN_IN_FOUR
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4),
+
+    `elsif GEN_IN_TWO
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4),
+
         .bcci_rsp_data5(bcci_rsp_data5),
         .bcci_rsp_data6(bcci_rsp_data6),
         .bcci_rsp_data7(bcci_rsp_data7),
         .bcci_rsp_data8(bcci_rsp_data8),
 
     `elsif GEN_IN_ONE
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4),
+
         .bcci_rsp_data5(bcci_rsp_data5),
         .bcci_rsp_data6(bcci_rsp_data6),
         .bcci_rsp_data7(bcci_rsp_data7),
@@ -205,7 +248,12 @@ module bicubic_top
     wire [CHANNEL_WIDTH-1:0] G_p16 = out_p16[15:CHANNEL_WIDTH];
     wire [CHANNEL_WIDTH-1:0] B_p16 = out_p16[CHANNEL_WIDTH-1:0];
 
+`ifdef GEN_IN_SIXTEEN
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data1;
 
+`elsif GEN_IN_EIGHT
     wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data1;
     wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data1;
     wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data1;
@@ -219,7 +267,34 @@ module bicubic_top
     wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data4;
     wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data4;
 
-`ifdef GEN_IN_TWO
+`elsif GEN_IN_FOUR
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data2;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data2;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data2;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data3;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data3;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data3;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data4;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data4;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data4;
+
+`elsif GEN_IN_TWO
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data2;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data2;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data2;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data3;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data3;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data3;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data4;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data4;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data4;
+
     wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data5;
     wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data5;
     wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data5;
@@ -233,6 +308,19 @@ module bicubic_top
     wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data8;
     wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data8;
 `elsif GEN_IN_ONE
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data1;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data2;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data2;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data2;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data3;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data3;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data3;
+    wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data4;
+    wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data4;
+    wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data4;
+
     wire [CHANNEL_WIDTH-1:0] R_bcci_rsp_data5;
     wire [CHANNEL_WIDTH-1:0] G_bcci_rsp_data5;
     wire [CHANNEL_WIDTH-1:0] B_bcci_rsp_data5;
@@ -283,7 +371,93 @@ module bicubic_top
     wire G_bf_rsp_ready = bf_rsp_ready;
     wire B_bf_rsp_ready = bf_rsp_ready;
 
-`ifdef GEN_IN_EIGHT
+`ifdef GEN_IN_SIXTEEN
+    bicubic_upsample_16 u_R_bicubic_upsample(
+        .clk(clk),
+        .rst_n(rst_n),
+        .bf_req_valid(R_bf_req_valid),
+        .bcci_req_ready(R_bcci_req_ready),
+        .p1(R_p1),
+        .p2(R_p2),
+        .p3(R_p3),
+        .p4(R_p4),
+        .p5(R_p5),
+        .p6(R_p6),
+        .p7(R_p7),
+        .p8(R_p8),
+        .p9(R_p9),
+        .p10(R_p10),
+        .p11(R_p11),
+        .p12(R_p12),
+        .p13(R_p13),
+        .p14(R_p14),
+        .p15(R_p15),
+        .p16(R_p16),
+
+        .bcci_rsp_valid(R_bcci_rsp_valid),
+        .bf_rsp_ready(R_bf_rsp_ready),
+
+        .bcci_rsp_data1(R_bcci_rsp_data1)
+    );
+
+
+    bicubic_upsample_16 u_G_bicubic_upsample(
+        .clk(clk),
+        .rst_n(rst_n),
+        .bf_req_valid(G_bf_req_valid),
+        .bcci_req_ready(G_bcci_req_ready),
+        .p1(G_p1),
+        .p2(G_p2),
+        .p3(G_p3),
+        .p4(G_p4),
+        .p5(G_p5),
+        .p6(G_p6),
+        .p7(G_p7),
+        .p8(G_p8),
+        .p9(G_p9),
+        .p10(G_p10),
+        .p11(G_p11),
+        .p12(G_p12),
+        .p13(G_p13),
+        .p14(G_p14),
+        .p15(G_p15),
+        .p16(G_p16),
+
+        .bcci_rsp_valid(G_bcci_rsp_valid),
+        .bf_rsp_ready(G_bf_rsp_ready),
+
+        .bcci_rsp_data1(G_bcci_rsp_data1)
+    );
+
+    bicubic_upsample_16 u_B_bicubic_upsample(
+        .clk(clk),
+        .rst_n(rst_n),
+        .bf_req_valid   (B_bf_req_valid),
+        .bcci_req_ready (B_bcci_req_ready),
+        .p1(B_p1),
+        .p2(B_p2),
+        .p3(B_p3),
+        .p4(B_p4),
+        .p5(B_p5),
+        .p6(B_p6),
+        .p7(B_p7),
+        .p8(B_p8),
+        .p9(B_p9),
+        .p10(B_p10),
+        .p11(B_p11),
+        .p12(B_p12),
+        .p13(B_p13),
+        .p14(B_p14),
+        .p15(B_p15),
+        .p16(B_p16),
+
+        .bcci_rsp_valid (B_bcci_rsp_valid),
+        .bf_rsp_ready   (B_bf_rsp_ready),
+
+        .bcci_rsp_data1 (B_bcci_rsp_data1)
+    );
+
+`elsif GEN_IN_EIGHT
     bicubic_upsample_8 u_R_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
@@ -715,17 +889,27 @@ module bicubic_top
 `endif
 
 
+`ifdef GEN_IN_SIXTEEN
+    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
 
+`elsif GEN_IN_EIGHT
     assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
     assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
     assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
     assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
 
-`ifdef GEN_IN_TWO
+`elsif GEN_IN_FOUR
+    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
+    assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
+    assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
+    assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
+
+`elsif GEN_IN_TWO
     assign bcci_rsp_data5 = {B_bcci_rsp_data5, G_bcci_rsp_data5, R_bcci_rsp_data5};
     assign bcci_rsp_data6 = {B_bcci_rsp_data6, G_bcci_rsp_data6, R_bcci_rsp_data6};
     assign bcci_rsp_data7 = {B_bcci_rsp_data7, G_bcci_rsp_data7, R_bcci_rsp_data7};
     assign bcci_rsp_data8 = {B_bcci_rsp_data8, G_bcci_rsp_data8, R_bcci_rsp_data8};
+
 `elsif GEN_IN_ONE
     assign bcci_rsp_data5 = {B_bcci_rsp_data5, G_bcci_rsp_data5, R_bcci_rsp_data5};
     assign bcci_rsp_data6 = {B_bcci_rsp_data6, G_bcci_rsp_data6, R_bcci_rsp_data6};
@@ -778,7 +962,8 @@ endmodule
 
 
 //         // #1320
-//         #4000
+//         // #4000
+//         #6000
 //         #5 $finish;
 //     end
 

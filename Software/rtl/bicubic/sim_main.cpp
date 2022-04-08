@@ -17,7 +17,7 @@ int main(int argc, char** argv, char** env) {
     unsigned int clock = 0;
     #define PERIOD 4
 
-    while (!contextp->gotFinish() && (clock < 20000000)) { 
+    while (!contextp->gotFinish() && (clock < 35000000)) { 
         clock++;
 
         if(clock%PERIOD == 1){
