@@ -17,8 +17,6 @@
  **************************************************/
 module stream_in # (
 		parameter AXIS_DATA_WIDTH = 32,
-		parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8,
-
 		parameter UPSP_DATA_WIDTH = 32
 	) (/*AUTOARG*/
    // Outputs
@@ -29,6 +27,8 @@ module stream_in # (
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user
    );
 
+	localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
+	
 	// Interface for upsp read
 	input                        upsp_ac_rd;
 	output                       ac_upsp_rvalid;
@@ -66,7 +66,6 @@ module stream_in # (
 	reg [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;
 	reg		ac_upsp_rvalid;
 	// End of automatics
-
 
 
 	wire clk = s_axis_aclk;

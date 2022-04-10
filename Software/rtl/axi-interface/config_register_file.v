@@ -19,7 +19,6 @@
 module config_register_file # (
 		parameter AXI_DATA_WIDTH = 32,
 		parameter AXI_ADDR_WIDTH = 32,
-		parameter AXI_STRB_WIDTH = AXI_DATA_WIDTH/8,
 		parameter CRF_DATA_WIDTH = 32,
 		parameter CRF_ADDR_WIDTH = 32
 	) (/*AUTOARG*/
@@ -36,7 +35,7 @@ module config_register_file # (
    );
 
 	localparam RESP_OKAY = 2'b00;
-
+	localparam AXI_STRB_WIDTH = AXI_DATA_WIDTH/8;
 
 	// Common
 	input clk;
