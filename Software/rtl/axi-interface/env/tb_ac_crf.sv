@@ -15,55 +15,32 @@
 
  **************************************************/
 
+`timescale 1ps/1ps
 module tb_ac_crf();
-
-
-    // AXI-Full
-    parameter AXI_DATA_WIDTH = 32;
-    parameter AXI_ADDR_WIDTH = 32;
-    parameter AXI_STRB_WIDTH = AXI_DATA_WIDTH/8;
-    // AXI-Stream
-    parameter AXIS_DATA_WIDTH = 32;
-    parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
-
-    parameter CRF_DATA_WIDTH = 32;
-    parameter CRF_ADDR_WIDTH = 32;
-    parameter UPSP_DATA_WIDTH = 32;
-
-    parameter SRC_IMG_WIDTH  = 1920;
-    parameter SRC_IMG_HEIGHT = 1080;
-    parameter DST_IMG_WIDTH  = 4096;
-    parameter DST_IMG_HEIGHT = 2160;
-
+    
+	localparam AXI_DATA_WIDTH  = `AXI_DATA_WIDTH ;
+	localparam AXI_ADDR_WIDTH  = `AXI_ADDR_WIDTH ;
+	localparam AXIS_DATA_WIDTH = `AXIS_DATA_WIDTH;
+	localparam CRF_DATA_WIDTH  = `CRF_DATA_WIDTH ;
+	localparam CRF_ADDR_WIDTH  = `CRF_ADDR_WIDTH ;
+	localparam UPSP_DATA_WIDTH = `UPSP_DATA_WIDTH;
+	localparam SRC_IMG_WIDTH   = `SRC_IMG_WIDTH  ;
+	localparam SRC_IMG_HEIGHT  = `SRC_IMG_HEIGHT ;
+	localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
+	localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
 
 
     ac_if acif();
 
-    top # (/*AUTOINSTPARAM*/
-	   // Parameters
-	   .AXI_DATA_WIDTH		(AXI_DATA_WIDTH),
-	   .AXI_ADDR_WIDTH		(AXI_ADDR_WIDTH),
-	   .AXI_STRB_WIDTH		(AXI_STRB_WIDTH),
-	   .AXIS_DATA_WIDTH		(AXIS_DATA_WIDTH),
-	   .AXIS_STRB_WIDTH		(AXIS_STRB_WIDTH),
-	   .CRF_DATA_WIDTH		(CRF_DATA_WIDTH),
-	   .CRF_ADDR_WIDTH		(CRF_ADDR_WIDTH),
-	   .UPSP_DATA_WIDTH		(UPSP_DATA_WIDTH),
-	   .SRC_IMG_WIDTH		(SRC_IMG_WIDTH),
-	   .SRC_IMG_HEIGHT		(SRC_IMG_HEIGHT),
-	   .DST_IMG_WIDTH		(DST_IMG_WIDTH),
-	   .DST_IMG_HEIGHT		(DST_IMG_HEIGHT))
-    dut (/*AUTOINST*/
-	    // Interfaces
-	    .acif			(acif));
+    top dut (/*AUTOINST*/
+	     // Interfaces
+	     .acif			(acif));
 
         
     // Clock generation
     initial begin
-        forever begin
-            acif.clk = 0;
-            # 50 acif.clk = ~acif.clk;
-        end
+        acif.clk = 0;
+        forever #50 acif.clk = ~acif.clk;
     end
     
     // Reset signal
@@ -123,7 +100,10 @@ module tb_ac_crf();
         acif.usif);
     end
 
-    
-
+	initial
+	begin
+		$dumpfile("../sim/waveform.vcd");
+        $dumpvars(0, tb_ac_crf);
+	end
 
 endmodule

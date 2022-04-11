@@ -32,15 +32,17 @@
             starting_phase.raise_objection(this);
 
         // Output stream
-        repeat(`SRC_IMG_WIDTH*`SRC_IMG_HEIGHT*4) begin
+        repeat(`DST_IMG_WIDTH*`DST_IMG_HEIGHT) begin
             `uvm_do(t)
             
             i++;
-            if(i % `SRC_IMG_WIDTH)
-            `uvm_info(get_name() ,$sformatf("Send %d", i), UVM_HIGH);
+            if(i % `DST_IMG_WIDTH == 0)
+            `uvm_info(get_name() ,$sformatf("Send %d", i), UVM_HIGH)
             
         end
-        
+
+        `uvm_info(get_name(), "upsp_seq finished", UVM_LOW)
+            
         #1000;
         if(starting_phase != null)
             starting_phase.drop_objection(this);

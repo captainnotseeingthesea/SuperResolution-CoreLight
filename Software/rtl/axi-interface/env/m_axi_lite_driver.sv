@@ -89,7 +89,6 @@ task m_axi_lite_driver::write_one_trans(axi_lite_trans t);
     vif.axi_awvalid <= 0;
 
     // W handshake
-    @(posedge vif.aclk);
     vif.axi_wvalid <= 1'b1;
     vif.axi_wdata  <= t.wdata;
     vif.axi_wstrb  <= t.wstrb;
@@ -101,7 +100,6 @@ task m_axi_lite_driver::write_one_trans(axi_lite_trans t);
     vif.axi_wvalid <= 1'b0;
 
     // B handshake
-    @(posedge vif.aclk);
     vif.axi_bready <= 1'b1;
     for(i = 0; i < t.timeout; i++) begin
         if(vif.axi_bvalid && vif.axi_bready) break;

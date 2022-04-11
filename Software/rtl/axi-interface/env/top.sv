@@ -16,26 +16,19 @@
 
  **************************************************/
 
-module top # (
-    // AXI-Full
-    parameter AXI_DATA_WIDTH = 32,
-    parameter AXI_ADDR_WIDTH = 32,
-    parameter AXI_STRB_WIDTH = AXI_DATA_WIDTH/8,
-    // AXI-Stream
-    parameter AXIS_DATA_WIDTH = 32,
-    parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8,
+module top(ac_if acif);
 
-    parameter CRF_DATA_WIDTH = 32,
-    parameter CRF_ADDR_WIDTH = 32,
-    parameter UPSP_DATA_WIDTH = 32,
+	localparam AXI_DATA_WIDTH  = `AXI_DATA_WIDTH ;
+	localparam AXI_ADDR_WIDTH  = `AXI_ADDR_WIDTH ;
+	localparam AXIS_DATA_WIDTH = `AXIS_DATA_WIDTH;
+	localparam CRF_DATA_WIDTH  = `CRF_DATA_WIDTH ;
+	localparam CRF_ADDR_WIDTH  = `CRF_ADDR_WIDTH ;
+	localparam UPSP_DATA_WIDTH = `UPSP_DATA_WIDTH;
+	localparam SRC_IMG_WIDTH   = `SRC_IMG_WIDTH  ;
+	localparam SRC_IMG_HEIGHT  = `SRC_IMG_HEIGHT ;
+	localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
+	localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
 
-    parameter SRC_IMG_WIDTH  = 1920,
-    parameter SRC_IMG_HEIGHT = 1080,
-    parameter DST_IMG_WIDTH  = 4096,
-    parameter DST_IMG_HEIGHT = 2160
-) (
-    ac_if acif
-);
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -71,7 +64,7 @@ module top # (
 				.s_axi_awprot		(acif.lite_slave.axi_awprot[2:0]),
 				.s_axi_wvalid		(acif.lite_slave.axi_wvalid),
 				.s_axi_wdata		(acif.lite_slave.axi_wdata[AXI_DATA_WIDTH-1:0]),
-				.s_axi_wstrb		(acif.lite_slave.axi_wstrb[AXI_STRB_WIDTH-1:0]),
+				.s_axi_wstrb		(acif.lite_slave.axi_wstrb),
 				.s_axi_bready		(acif.lite_slave.axi_bready),
 				.s_axi_arvalid		(acif.lite_slave.axi_arvalid),
 				.s_axi_araddr		(acif.lite_slave.axi_araddr[AXI_ADDR_WIDTH-1:0]),
@@ -109,7 +102,7 @@ module top # (
 			     .s_axi_awprot	(acif.lite_slave.axi_awprot[2:0]), // Templated
 			     .s_axi_wvalid	(acif.lite_slave.axi_wvalid), // Templated
 			     .s_axi_wdata	(acif.lite_slave.axi_wdata[AXI_DATA_WIDTH-1:0]), // Templated
-			     .s_axi_wstrb	(acif.lite_slave.axi_wstrb[AXI_STRB_WIDTH-1:0]), // Templated
+			     .s_axi_wstrb	(acif.lite_slave.axi_wstrb), // Templated
 			     .s_axi_bready	(acif.lite_slave.axi_bready), // Templated
 			     .s_axi_arvalid	(acif.lite_slave.axi_arvalid), // Templated
 			     .s_axi_araddr	(acif.lite_slave.axi_araddr[AXI_ADDR_WIDTH-1:0]), // Templated
@@ -125,29 +118,29 @@ module top # (
 		       .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid),
 		       .ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]),
 		       .ac_upsp_wready	(acif.usif.ac_upsp_wready),
-		       .s_axis_tready	(acif.stream_master.axis_tready),
-		       .m_axis_tvalid	(acif.stream_master.axis_tvalid),
-		       .m_axis_tid		(acif.stream_master.axis_tid),
-		       .m_axis_tdata	(acif.stream_master.axis_tdata[AXIS_DATA_WIDTH-1:0]),
-		       .m_axis_tkeep	(acif.stream_master.axis_tkeep[AXIS_STRB_WIDTH-1:0]),
-		       .m_axis_tstrb	(acif.stream_master.axis_tstrb[AXIS_STRB_WIDTH-1:0]),
-		       .m_axis_tlast	(acif.stream_master.axis_tlast),
-		       .m_axis_tdest	(acif.stream_master.axis_tdest),
-		       .m_axis_user		(acif.stream_master.axis_user),
+		       .m_axis_tready	(acif.stream_slave.axis_tready),
+		       .m_axis_tvalid	(acif.stream_slave.axis_tvalid),
+		       .m_axis_tid		(acif.stream_slave.axis_tid),
+		       .m_axis_tdata	(acif.stream_slave.axis_tdata[AXIS_DATA_WIDTH-1:0]),
+		       .m_axis_tkeep	(acif.stream_slave.axis_tkeep),
+		       .m_axis_tstrb	(acif.stream_slave.axis_tstrb),
+		       .m_axis_tlast	(acif.stream_slave.axis_tlast),
+		       .m_axis_tdest	(acif.stream_slave.axis_tdest),
+		       .m_axis_user		(acif.stream_slave.axis_user),
 		       .clk				(acif.clk),
 		       .rst_n			(acif.rst_n),
 		       .upsp_ac_rd		(acif.usif.upsp_ac_rd),
 		       .upsp_ac_wrt		(acif.usif.upsp_ac_wrt),
 		       .upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_DATA_WIDTH-1:0]),
-		       .s_axis_tvalid	(acif.stream_slave.axis_tvalid),
-		       .s_axis_tid		(acif.stream_slave.axis_tid),
-		       .s_axis_tdata	(acif.stream_slave.axis_tdata[AXIS_DATA_WIDTH-1:0]),
-		       .s_axis_tstrb	(acif.stream_slave.axis_tstrb[AXIS_STRB_WIDTH-1:0]),
-		       .s_axis_tkeep	(acif.stream_slave.axis_tkeep[AXIS_STRB_WIDTH-1:0]),
-		       .s_axis_tlast	(acif.stream_slave.axis_tlast),
-		       .s_axis_tdest	(acif.stream_slave.axis_tdest),
-		       .s_axis_user		(acif.stream_slave.axis_user),
-		       .m_axis_tready	(acif.stream_slave.axis_tready),
+		       .s_axis_tvalid	(acif.stream_master.axis_tvalid),
+		       .s_axis_tid		(acif.stream_master.axis_tid),
+		       .s_axis_tdata	(acif.stream_master.axis_tdata[AXIS_DATA_WIDTH-1:0]),
+		       .s_axis_tstrb	(acif.stream_master.axis_tstrb),
+		       .s_axis_tkeep	(acif.stream_master.axis_tkeep),
+		       .s_axis_tlast	(acif.stream_master.axis_tlast),
+		       .s_axis_tdest	(acif.stream_master.axis_tdest),
+		       .s_axis_user		(acif.stream_master.axis_user),
+		       .s_axis_tready	(acif.stream_master.axis_tready),
     );
     */
     access_control #(/*AUTOINSTPARAM*/
@@ -171,14 +164,14 @@ module top # (
 		       .ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]), // Templated
 		       .ac_upsp_wready	(acif.usif.ac_upsp_wready), // Templated
 		       .s_axis_tready	(acif.stream_master.axis_tready), // Templated
-		       .m_axis_tvalid	(acif.stream_master.axis_tvalid), // Templated
-		       .m_axis_tid	(acif.stream_master.axis_tid), // Templated
-		       .m_axis_tdata	(acif.stream_master.axis_tdata[AXIS_DATA_WIDTH-1:0]), // Templated
-		       .m_axis_tkeep	(acif.stream_master.axis_tkeep[AXIS_STRB_WIDTH-1:0]), // Templated
-		       .m_axis_tstrb	(acif.stream_master.axis_tstrb[AXIS_STRB_WIDTH-1:0]), // Templated
-		       .m_axis_tlast	(acif.stream_master.axis_tlast), // Templated
-		       .m_axis_tdest	(acif.stream_master.axis_tdest), // Templated
-		       .m_axis_user	(acif.stream_master.axis_user), // Templated
+		       .m_axis_tvalid	(acif.stream_slave.axis_tvalid), // Templated
+		       .m_axis_tid	(acif.stream_slave.axis_tid), // Templated
+		       .m_axis_tdata	(acif.stream_slave.axis_tdata[AXIS_DATA_WIDTH-1:0]), // Templated
+		       .m_axis_tkeep	(acif.stream_slave.axis_tkeep), // Templated
+		       .m_axis_tstrb	(acif.stream_slave.axis_tstrb), // Templated
+		       .m_axis_tlast	(acif.stream_slave.axis_tlast), // Templated
+		       .m_axis_tdest	(acif.stream_slave.axis_tdest), // Templated
+		       .m_axis_user	(acif.stream_slave.axis_user), // Templated
 		       // Inputs
 		       .clk		(acif.clk),		 // Templated
 		       .rst_n		(acif.rst_n),		 // Templated
@@ -190,16 +183,14 @@ module top # (
 		       .upsp_ac_rd	(acif.usif.upsp_ac_rd),	 // Templated
 		       .upsp_ac_wrt	(acif.usif.upsp_ac_wrt), // Templated
 		       .upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_DATA_WIDTH-1:0]), // Templated
-		       .s_axis_tvalid	(acif.stream_slave.axis_tvalid), // Templated
-		       .s_axis_tid	(acif.stream_slave.axis_tid), // Templated
-		       .s_axis_tdata	(acif.stream_slave.axis_tdata[AXIS_DATA_WIDTH-1:0]), // Templated
-		       .s_axis_tstrb	(acif.stream_slave.axis_tstrb[AXIS_STRB_WIDTH-1:0]), // Templated
-		       .s_axis_tkeep	(acif.stream_slave.axis_tkeep[AXIS_STRB_WIDTH-1:0]), // Templated
-		       .s_axis_tlast	(acif.stream_slave.axis_tlast), // Templated
-		       .s_axis_tdest	(acif.stream_slave.axis_tdest), // Templated
-		       .s_axis_user	(acif.stream_slave.axis_user), // Templated
+		       .s_axis_tvalid	(acif.stream_master.axis_tvalid), // Templated
+		       .s_axis_tid	(acif.stream_master.axis_tid), // Templated
+		       .s_axis_tdata	(acif.stream_master.axis_tdata[AXIS_DATA_WIDTH-1:0]), // Templated
+		       .s_axis_tstrb	(acif.stream_master.axis_tstrb), // Templated
+		       .s_axis_tkeep	(acif.stream_master.axis_tkeep), // Templated
+		       .s_axis_tlast	(acif.stream_master.axis_tlast), // Templated
+		       .s_axis_tdest	(acif.stream_master.axis_tdest), // Templated
+		       .s_axis_user	(acif.stream_master.axis_user), // Templated
 		       .m_axis_tready	(acif.stream_slave.axis_tready)); // Templated
-
-
 
 endmodule

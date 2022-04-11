@@ -48,17 +48,18 @@ endfunction: build_phase
 task upsp_monitor::main_phase(uvm_phase phase);
     upsp_trans rt, wt;
     forever begin
-        @(vif.clk);
-        if(vif.ac_upsp_rvalid && vif.ac_upsp_rdata) begin
-            rt = new("rt");
+        if(vif.ac_upsp_rvalid) begin
+            rt = new("upsprt");
             rt.data = vif.ac_upsp_rdata;
             upsp_rdap.write(rt);
+            rt.print();
         end
 
         if(vif.upsp_ac_wrt && vif.ac_upsp_wready) begin
-            wt = new("wt");
+            wt = new("upspwt");
             wt.data = vif.upsp_ac_wdata;
             upsp_wrtap.write(wt); 
         end
+        @(posedge vif.clk);
     end
 endtask: main_phase

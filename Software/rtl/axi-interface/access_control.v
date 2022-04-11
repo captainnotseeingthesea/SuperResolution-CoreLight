@@ -190,11 +190,13 @@ module access_control # (
 	*/
 
 	localparam DST_IMG_WIDTH_LB2 = $clog2(DST_IMG_WIDTH);
-	assign m_axis_tkeep	= {AXIS_STRB_WIDTH{1'b1}};
-	assign m_axis_tstrb = {AXIS_STRB_WIDTH{1'b1}};
+	assign m_axis_tid   = 1'b0;
 	assign m_axis_tdest = 1'b0;
 	assign m_axis_user  = 1'b0;
+	assign m_axis_tkeep	= {AXIS_STRB_WIDTH{1'b1}};
+	assign m_axis_tstrb = {AXIS_STRB_WIDTH{1'b1}};
 	
+
 	// Corresponding buffers are been writing or already valid(empty)
 	reg [1:0] outbuf_writing;
 	reg [1:0] outbuf_valid;
@@ -258,12 +260,6 @@ module access_control # (
 
 
 
-	// Hard wired signals for axi-stream
-	assign m_axis_tkeep  = 1'b1;
-	assign m_axis_tstrb  = 1'b1;
-	assign m_axis_tdest  = 1'b0;
-	assign m_axis_user   = 1'b0;
-
 	reg m_axis_wrten;
 	always @(posedge clk or negedge rst_n) begin: AXIS_WRTEN
 		if(~rst_n)
@@ -278,6 +274,7 @@ module access_control # (
 			m_axis_wrten <= 1'b1;
 	end
 	
+
 	// Transfer data if possible
 	wire last_one = ac_rdcnt[DST_IMG_WIDTH_LB2-1+2:0] == {(DST_IMG_WIDTH_LB2+2){1'b1}};
 

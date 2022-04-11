@@ -55,7 +55,7 @@ function void ac_crf_env::build_phase(uvm_phase phase);
     ostream_board = stream_out_scoreboard::type_id::create("ostream_board", this);
     axil_agt.is_active = UVM_ACTIVE;
     m_axis_agt.is_active = UVM_ACTIVE;
-    s_axis_agt.is_active = UVM_PASSIVE;
+    s_axis_agt.is_active = UVM_ACTIVE;
     upsp_agt.is_active = UVM_ACTIVE;
 
     istream_iboard_fifo = new("istream_iboard_fifo", this);

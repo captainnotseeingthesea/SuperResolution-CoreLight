@@ -87,7 +87,6 @@ module config_register_file # (
 
 	/*AUTOREG*/
 	// Beginning of automatic regs (for this module's undeclared outputs)
-	reg		crf_ac_wbusy;
 	reg		s_axi_arready;
 	reg		s_axi_awready;
 	reg		s_axi_bvalid;
@@ -116,33 +115,44 @@ module config_register_file # (
 
 
 	// Write address channel
-	// Only one of write requests can be processed, PL side has a higher priority.
-	// When processing PS write, set busy signal to PL side. Wait for both awvalid
-	// and wvalid before setting awready to simplify write process.
 	// If there is a pending response, wait until that response finishes.
-	always@(posedge clk or negedge rst_n) begin: AWREADY
-		if(~rst_n) begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			crf_ac_wbusy <= 1'h0;
-			s_axi_awready <= 1'h0;
-			// End of automatics
-		end else if(ac_crf_wrt) begin
-			s_axi_awready <= 1'b0;
-			crf_ac_wbusy <= 1'b0;
-		end else if(s_axi_awvalid & s_axi_wvalid & ~s_axi_bvalid & ~s_axi_awready
-				& ~ac_crf_wrt) begin
-			s_axi_awready <= 1'b1;
-			crf_ac_wbusy <= 1'b1;
-		end else begin
-			crf_ac_wbusy <= 1'h0;
-			s_axi_awready <= 1'h0;
-		end
+	reg wrt_en;
+	assign crf_ac_wbusy = ~wrt_en;
+	always@(posedge clk or negedge rst_n) begin: WRT_EN
+		if(~rst_n)
+			wrt_en <= 1'b1;
+		else if(~wrt_en) begin
+			if(s_axi_bvalid & s_axi_bready) wrt_en <= 1'b1;
+		end else if(wrt_en & s_axi_awvalid & s_axi_awready)
+			wrt_en <= 1'b0;
+		else
+			wrt_en <= 1'b1;
 	end
 
+	always@(posedge clk or negedge rst_n) begin: AWREADY
+		if(~rst_n)
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			s_axi_awready <= 1'h0;
+			// End of automatics
+		else if(wrt_en & s_axi_awvalid  & ~s_axi_awready)
+			s_axi_awready <= 1'b1;
+		else
+			s_axi_awready <= 1'h0;
+	end
+
+	reg [CRF_ADDR_WIDTH-1:0] axi_waddr;
+	always@(posedge clk or negedge rst_n) begin: WADDR
+		if(~rst_n)
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			axi_waddr <= {CRF_ADDR_WIDTH{1'b0}};
+			// End of automatics
+		else if(s_axi_awvalid & s_axi_awready)
+			axi_waddr <= s_axi_awaddr[CRF_ADDR_WIDTH-1:0];
+	end
 
 	// Write data channel
-	// When awvalid and awready are both 1s, the data will be write into register.
 	// Only one of PS and PL can write at the same time.
 	always@(posedge clk or negedge rst_n) begin: WREADY
 		if(~rst_n)
@@ -150,8 +160,7 @@ module config_register_file # (
 			// Beginning of autoreset for uninitialized flops
 			s_axi_wready <= 1'h0;
 			// End of automatics
-		else if(s_axi_awvalid & s_axi_wvalid & ~s_axi_bvalid & s_axi_wready
-				& ~ac_crf_wrt)
+		else if(~wrt_en & s_axi_wvalid & ~s_axi_wready)
 			s_axi_wready <= 1'b1;
 		else
 			s_axi_wready <= 1'h0;
@@ -160,8 +169,7 @@ module config_register_file # (
 	// Write enable signals for PL side and PS side.
 	// We simply ignore the write strobe, just writ all data received.
 	wire ac_wren   = ac_crf_wrt & ~crf_ac_wbusy;
-	wire axi_wren  = s_axi_awvalid & s_axi_awready & s_axi_wvalid & s_axi_wready;
-	wire axi_waddr = s_axi_awaddr[CRF_ADDR_WIDTH-1:0];
+	wire axi_wren  = s_axi_wvalid & s_axi_wready;
 
 	always@(posedge clk or negedge rst_n) begin: WRITE_PROC
 		if(~rst_n) begin

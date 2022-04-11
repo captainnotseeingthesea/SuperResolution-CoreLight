@@ -54,8 +54,9 @@ task axi_stream_monitor::main_phase(uvm_phase phase);
             t.tstrb =  vif.axis_tstrb;
             t.tlast =  vif.axis_tlast;
             t.tdest =  vif.axis_tdest;
-            t.tuser  =  vif.axis_user ;
+            t.tuser =  vif.axis_user ;
             ap.write(t);
+            t.print();
         end
         @(posedge vif.aclk);
     end

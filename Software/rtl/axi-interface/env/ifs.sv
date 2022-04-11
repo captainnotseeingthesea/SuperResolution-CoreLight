@@ -16,12 +16,10 @@
  **************************************************/
 
 // interface for axi-lite
-interface axi_lite_if #(
-    // AXI
-    parameter AXI_DATA_WIDTH = 32,
-    parameter AXI_ADDR_WIDTH = 32
-)();
+interface axi_lite_if();
 
+	localparam AXI_DATA_WIDTH  = `AXI_DATA_WIDTH ;
+	localparam AXI_ADDR_WIDTH  = `AXI_ADDR_WIDTH ;
 	localparam AXI_STRB_WIDTH = AXI_DATA_WIDTH/8;
 
 	logic                      aclk;
@@ -54,10 +52,9 @@ endinterface
 
 
 // interface for axi-stream
-interface axi_stream_if #(
-    parameter AXIS_DATA_WIDTH = 32
-)();
+interface axi_stream_if();
 
+	localparam AXIS_DATA_WIDTH = `AXIS_DATA_WIDTH;
 	localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
 
 	logic aclk;
@@ -77,10 +74,10 @@ endinterface
 
 
 // interface for upsp
-interface upsp_if #(
-    parameter CRF_DATA_WIDTH = 32,
-    parameter UPSP_DATA_WIDTH = 32
-)();
+interface upsp_if();
+
+	localparam CRF_DATA_WIDTH  = `CRF_DATA_WIDTH ;
+	localparam UPSP_DATA_WIDTH = `UPSP_DATA_WIDTH;
 
 	logic clk;
 	logic rst_n;
@@ -99,45 +96,22 @@ endinterface
 
 
 // interface for config register file and access control
-interface ac_if # (
-    // AXI
-    parameter AXI_DATA_WIDTH = 32,
-    parameter AXI_ADDR_WIDTH = 32,
-    // AXI-Stream
-    parameter AXIS_DATA_WIDTH = 32,
-
-    parameter CRF_DATA_WIDTH = 32,
-    parameter UPSP_DATA_WIDTH = 32
-) ();
+interface ac_if();
 
 	logic clk;
 	logic rst_n;
 
 	// Up-Sampling
-	upsp_if #(
-		.CRF_DATA_WIDTH  (CRF_DATA_WIDTH),
-		.UPSP_DATA_WIDTH (UPSP_DATA_WIDTH)
-	)
-	usif();
+	upsp_if usif();
 
 	// AXI-Lite slave for configuration
-	axi_lite_if #(
-		.AXI_DATA_WIDTH	(AXI_DATA_WIDTH),
-		.AXI_ADDR_WIDTH	(AXI_ADDR_WIDTH)
-	) 
-	lite_slave();
+	axi_lite_if lite_slave();
 
 	// AXI-Stream slvae for input
-	axi_stream_if #(
-		.AXIS_DATA_WIDTH	(AXIS_DATA_WIDTH)
-	)
-	stream_slave();
+	axi_stream_if stream_slave();
 
 	// AXI-Stream master for output
-	axi_stream_if #(
-		.AXIS_DATA_WIDTH	(AXIS_DATA_WIDTH)
-	)
-	stream_master();
+	axi_stream_if stream_master();
 
 	// Output for interrupt
 	logic interrupt_updone;

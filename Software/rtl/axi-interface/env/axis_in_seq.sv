@@ -42,8 +42,8 @@
                 t.tuser  == 0;
             })
             i++;
-            if(i % `SRC_IMG_WIDTH)
-            `uvm_info(get_name() ,$sformatf("Send %d", i), UVM_HIGH);
+            if(i % `SRC_IMG_WIDTH == 0)
+            `uvm_info(get_name() ,$sformatf("Send %d", i), UVM_HIGH)
             
         end
         // The last pixel
@@ -55,6 +55,8 @@
             t.tdest  == 0;
             t.tuser  == 0;
         })
+
+        `uvm_info(get_name() ,"axis_in_seq finished", UVM_LOW)
 
         #1000;
         if(starting_phase != null)

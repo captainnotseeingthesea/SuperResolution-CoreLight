@@ -41,7 +41,7 @@ class axil_seq extends uvm_sequence #(axi_lite_trans);
             t.rdata   == 0;
             t.rresp   == 0;
         })
-        `uvm_info(get_name(), "finished", UVM_HIGH)
+        `uvm_info(get_name(), "axil_seq finished", UVM_LOW)
         
         #1000;
         if(starting_phase != null)
