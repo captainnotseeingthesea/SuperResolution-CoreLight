@@ -8,11 +8,11 @@ module bicubic_read_bmp (
 
 );
 
-    localparam HEIGHT = 540;
-    localparam WIDTH  = 960;
+    // localparam HEIGHT = 540;
+    // localparam WIDTH  = 960;
 
-    // localparam HEIGHT = 6;
-    // localparam WIDTH  = 11;
+    localparam HEIGHT = 6;
+    localparam WIDTH  = 11;
 
     localparam OFFSET = 138;
     localparam TOTAL_SIZE = HEIGHT * WIDTH *3 + OFFSET;
@@ -63,10 +63,10 @@ module bicubic_read_bmp (
             shaped_data[ii] = 0;
         end
         
-        // #1
-        // bmp_file_id = $fopen("2.bmp", "rb");
+        #1
+        bmp_file_id = $fopen("2.bmp", "rb");
 
-        bmp_file_id = $fopen("49_1k.bmp", "rb");
+        // bmp_file_id = $fopen("49_1k.bmp", "rb");
         icode = $fread(bmp_data, bmp_file_id);
 
         img_width = {bmp_data[21], bmp_data[20], bmp_data[19], bmp_data[18]};
@@ -80,7 +80,7 @@ module bicubic_read_bmp (
         for (i = img_height - 1; i >= 0; i = i - 1) begin
             for(j = 0; j < img_width; j = j + 1) begin
                 // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
-                index = i * (img_width) * 3 + j * 3 + img_start_index;
+                index = i * (img_width+1) * 3 + j * 3 + img_start_index;
                 shaped_data[shaped_index+com] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
                 shaped_index = shaped_index + 1;
             end

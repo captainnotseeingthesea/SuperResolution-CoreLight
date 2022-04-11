@@ -50,6 +50,13 @@ metircs:
 	python3 lpips_2imgs.py -p0 49_4k.bmp -p1 49.bmp
 
 
+
+sram:
+	make clean
+	iverilog -o vvp.exec sram.v
+	vvp -n vvp.exec wave -lxt2
+	gtkwave wave.vcd
+
 clean:
 	rm -rf vvp.exec wave.vcd out.txt display_verilator.txt obj_dir display.txt
 

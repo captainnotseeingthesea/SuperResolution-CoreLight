@@ -936,35 +936,35 @@ endmodule
 
 
 
-// module bicubic_top_tb();
-//     reg clk_tb;
-//     reg rst_n_tb;
-//     initial begin
-//         clk_tb = 1'b0;
-//         rst_n_tb = 1'b0;
-//         #7 rst_n_tb = 1'b1;
-//     end
+module bicubic_top_tb();
+    reg clk_tb;
+    reg rst_n_tb;
+    initial begin
+        clk_tb = 1'b0;
+        rst_n_tb = 1'b0;
+        #7 rst_n_tb = 1'b1;
+    end
 
-//     always #2 clk_tb = ~clk_tb;
+    always #2 clk_tb = ~clk_tb;
 
-//     initial begin
-//         $dumpfile("wave.vcd");
-//         $dumpvars(0, bicubic_top_tb);
-//     end
+    initial begin
+        $dumpfile("wave.vcd");
+        $dumpvars(0, bicubic_top_tb);
+    end
 
-//     bicubic_top u_bicubic_top(
-//         .clk(clk_tb),
-//         .rst_n(rst_n_tb)
-//     );
-
-
-//     initial begin
+    bicubic_top u_bicubic_top(
+        .clk(clk_tb),
+        .rst_n(rst_n_tb)
+    );
 
 
-//         // #1320
-//         // #4000
-//         #6000
-//         #5 $finish;
-//     end
+    initial begin
 
-// endmodule
+
+        // #1320
+        // #4000
+        #6000
+        #5 $finish;
+    end
+
+endmodule
