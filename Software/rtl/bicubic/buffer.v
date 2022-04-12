@@ -98,7 +98,7 @@ module buffer #(
     input wire bcci_rsp_valid,
 
 // respone data to the ddr
-    input wire ready,
+    input wire ram_ready,
     output wire ram_valid,
     output wire [BUFFER_WIDTH-1:0] ram_out
     
@@ -115,7 +115,7 @@ module buffer #(
 
     wire bf_2_bcci_hsked = bf_req_valid & bcci_req_ready; 
     wire bcci_2_bf_hsked = bcci_rsp_valid & bf_rsp_ready;
-    wire ram_2_ddr_hsked = ram_valid & ready;
+    wire ram_2_ddr_hsked = ram_valid & ram_ready;
     
     assign bf_rsp_ready = 1'b1;
 

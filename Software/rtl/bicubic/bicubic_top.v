@@ -19,7 +19,17 @@
 module bicubic_top
 (
     input clk,
-    input rst_n
+    input rst_n,
+
+    output wire axi_ready,
+    input wire [23:0] axi_data,
+    input wire axi_valid,
+
+    input wire ram_ready,
+    output wire ram_valid,
+    output wire [BUFFER_WIDTH-1:0] ram_out
+
+
 );
     localparam CHANNEL_WIDTH = 8;
     localparam BUFFER_WIDTH = 24;
@@ -94,12 +104,16 @@ module bicubic_top
     wire [BUFFER_WIDTH-1:0] bcci_rsp_data16;
 `endif
 
+
+
     buffer #(.BUFFER_WIDTH(BUFFER_WIDTH)) u_buffer (
         .clk(clk),
         .rst_n(rst_n),
 
-        // .axi_rsp_data(),
-        // .axi_req_data(),
+        .axi_ready(axi_ready),
+        .axi_data(axi_data),
+        .axi_valid(axi_valid),
+
 
         .bf_req_valid(bf_req_valid),
         .bcci_req_ready(bcci_req_ready),
@@ -174,7 +188,7 @@ module bicubic_top
         .bcci_rsp_valid(bcci_rsp_valid),
 
     `ifdef GEN_IN_SIXTEEN
-        .ready(ready),
+        .ram_ready(ram_ready),
         .ram_valid(ram_valid),
         .ram_out(ram_out)
     `endif
