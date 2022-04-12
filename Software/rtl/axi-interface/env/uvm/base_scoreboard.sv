@@ -34,6 +34,7 @@
     extern virtual function void report_phase(uvm_phase phase);
     
     pure virtual function void exp2act(exp_t src, act_t target);
+    pure virtual function int compare(act_t a, act_t b);
     
 endclass
 
@@ -72,7 +73,7 @@ task base_scoreboard::main_phase(uvm_phase phase);
                 tmp_exp = new("expt_after_convert");
                 exp2act(exp_q.pop_front(), tmp_exp);
 
-                if(!tmp_exp.compare(tmp_act)) begin
+                if(!compare(tmp_exp, tmp_act)) begin
                     `uvm_error(get_name(), "compare failed")
                     $display("expected:\n");
                     tmp_exp.print();

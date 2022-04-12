@@ -1,0 +1,8 @@
+"../src/access_control.v"
+"../src/config_register_file.v"
+"../src/stream_in.v"
+
+"../env/ifs.sv"
+"../env/uvm/uvm_objects.sv"
+"../env/top.sv"
+"../env/tb_ac_crf.sv"

@@ -109,7 +109,6 @@ module access_control # (
 	reg [CRF_DATA_WIDTH-1:0] ac_crf_wdata;
 	reg		ac_crf_wrt;
 	reg [AXIS_DATA_WIDTH-1:0] m_axis_tdata;
-	reg		m_axis_tid;
 	reg		m_axis_tlast;
 	reg		m_axis_tvalid;
 	// End of automatics
@@ -147,12 +146,13 @@ module access_control # (
 		end else if(processing & write_done & UPSTR[0]) begin
 			ac_crf_wrt <= 1'b1;
 			ac_crf_waddr <= {CRF_ADDR_WIDTH{1'b0}};
-			ac_crf_wdata <= {{(CRF_DATA_WIDTH-1){1'b0}}, 1'b1};
-		end else if(processing & write_done & ~UPSTR[0] & ~UPENDR[0]) begin
+			ac_crf_wdata <= {CRF_DATA_WIDTH{1'b0}};
+		end else if(processing & ~UPSTR[0] & ~UPENDR[0]) begin
 			ac_crf_wrt <= 1'b1;
 			ac_crf_waddr <= {{(CRF_DATA_WIDTH-1){1'b0}}, 1'b1};
 			ac_crf_wdata <= {{(CRF_DATA_WIDTH-1){1'b0}}, 1'b1};	
-		end
+		end else
+			ac_crf_wrt <= 1'b0;
 	end
 
 
@@ -208,10 +208,25 @@ module access_control # (
 
 	reg [IMG_CNT_WIDTH-1:0] upsp_wrtcnt;
 	reg [IMG_CNT_WIDTH-1:0] ac_rdcnt;
+
+
+
+	// Get access control read position
+	reg [DST_IMG_WIDTH_LB2-1:0] ac_rdnum_inrow;
+	reg [1:0] ac_rdnum_incol;
+	always@(*) begin//TODO: More efficient
+		ac_rdnum_inrow = ac_rdcnt % DST_IMG_WIDTH;
+	end
+
 	wire outbuf_clear = 
-			   ac_rdcnt[DST_IMG_WIDTH_LB2-1+2+1:0] == {1'b1, {(DST_IMG_WIDTH_LB2+2){1'b0}}}
-			   && ac_rdcnt != 0 
+			   ac_rdnum_inrow == (DST_IMG_WIDTH-1)
+			   && ac_rdnum_incol == 2'b11 
 			   && m_axis_tvalid & m_axis_tready;
+
+	// Get the number of written data in the first buffer's first line
+	reg [DST_IMG_WIDTH_LB2-1:0] upsp_wrtnum_inrowfir;
+	reg [DST_IMG_WIDTH_LB2-1:0] upsp_wrtnum_inrowbase;
+	reg [DST_IMG_WIDTH_LB2-1+2:0] upsp_wrtcnt_4line;
 
 	integer i, j, k;
 	always @(posedge clk or negedge rst_n) begin: UPSP_WRITE
@@ -220,45 +235,58 @@ module access_control # (
 			outbuf_writing <= 2'h0;
 			upsp_bufsel <= 1'h0;
 			upsp_wrtcnt <= {IMG_CNT_WIDTH{1'b0}};
-			for(i = 0; i < 1; i++)
-			for(j = 0; j < 3; j++)
+			upsp_wrtnum_inrowfir <= {DST_IMG_WIDTH_LB2{1'b0}};
+			upsp_wrtnum_inrowbase <= {DST_IMG_WIDTH_LB2{1'b0}};
+			upsp_wrtcnt_4line <= {(IMG_CNT_WIDTH-1+2){1'b0}};
+			for(i = 0; i < 2; i++)
+			for(j = 0; j < 4; j++)
 			for(k = 0; k< DST_IMG_WIDTH; k++)
 			outbuf[i][j][k] <= {AXIS_DATA_WIDTH{1'b0}};
 
-		end else if(upsp_ac_wrt & ac_upsp_wready) begin
-			if(~outbuf_writing[upsp_bufsel]) outbuf_writing[upsp_bufsel] <= 1'b1;
-			if(outbuf_writing[~upsp_bufsel]) outbuf_writing[~upsp_bufsel] <= 1'b0;
+		end else if(write_done) begin
+			outbuf_valid <= 2'h0;
+			outbuf_writing <= 2'h0;
+			upsp_bufsel <= 1'h0;
+			upsp_wrtcnt <= {IMG_CNT_WIDTH{1'b0}};
+			upsp_wrtnum_inrowfir <= {DST_IMG_WIDTH_LB2{1'b0}};
+			upsp_wrtnum_inrowbase <= {DST_IMG_WIDTH_LB2{1'b0}};
+			upsp_wrtcnt_4line <= {(IMG_CNT_WIDTH-1+2){1'b0}};
+		end else begin
+			if(upsp_ac_wrt & ac_upsp_wready) begin
+				if(~outbuf_writing[upsp_bufsel]) outbuf_writing[upsp_bufsel] <= 1'b1;
+				if(outbuf_writing[~upsp_bufsel]) outbuf_writing[~upsp_bufsel] <= 1'b0;
 
-			outbuf[upsp_bufsel][upsp_wrtcnt[3:2]][upsp_wrtcnt[1:0]] <= upsp_ac_wdata;
-			upsp_wrtcnt <= upsp_wrtcnt + 1;
+				outbuf[upsp_bufsel][upsp_wrtcnt[3:2]][upsp_wrtnum_inrowbase + upsp_wrtcnt[1:0]] <= upsp_ac_wdata;
 
-			// After writing 4 lines, set outbuf valid
-			if(upsp_wrtcnt[DST_IMG_WIDTH_LB2-1+2:0] == {(DST_IMG_WIDTH_LB2+2){1'b1}}) begin
-				upsp_bufsel <= ~upsp_bufsel;
-				outbuf_valid[upsp_bufsel] <= 1'b1;
+				upsp_wrtcnt <= upsp_wrtcnt + 1;
+				upsp_wrtcnt_4line <= upsp_wrtcnt_4line + 1;
+				// After writing 4 lines, set outbuf valid
+				if(upsp_wrtcnt_4line == 4 * DST_IMG_WIDTH-1) begin
+					upsp_bufsel <= ~upsp_bufsel;
+					outbuf_valid[upsp_bufsel] <= 1'b1;
+					upsp_wrtcnt_4line <= {(IMG_CNT_WIDTH-1+2){1'b0}};
+				end
+				
+				if(upsp_wrtcnt[3:2] == 2'b00) begin
+					upsp_wrtnum_inrowfir <= upsp_wrtnum_inrowfir + 1;
+					if(upsp_wrtnum_inrowfir == DST_IMG_WIDTH - 1) upsp_wrtnum_inrowfir <= {DST_IMG_WIDTH_LB2{1'b0}};
+				end
+
+				if(upsp_wrtcnt[3:0] == 4'hf)
+					upsp_wrtnum_inrowbase <= upsp_wrtnum_inrowfir;
+
 			end
-		
-		// After transfering 4 lines, clear outbuf valid
-		end else if(outbuf_clear)
-			outbuf_valid[~upsp_bufsel] <= 1'b0;
+
+			// After transfering 4 lines, clear outbuf valid
+			if(outbuf_clear)
+				outbuf_valid[~upsp_bufsel] <= 1'b0;
+		end
 	end
 
 
-	// Get the pixel number in a row to determine whether the data is ready 
-	// for transfer or not
-	reg [DST_IMG_WIDTH_LB2-1:0] upsp_wrtnum_inrow;
-	reg [DST_IMG_WIDTH_LB2-1:0] ac_rdnum_inrow;
-	always @(*) begin
-		ac_rdnum_inrow = ac_rdcnt[DST_IMG_WIDTH_LB2-1:0];
-		if(upsp_wrtcnt[3:2] == 2'b00)
-			upsp_wrtnum_inrow = {upsp_wrtcnt[DST_IMG_WIDTH_LB2-1+2:4],upsp_wrtcnt[1:0]};
-		else
-			upsp_wrtnum_inrow = {upsp_wrtcnt[DST_IMG_WIDTH_LB2-1+2:4],2'b11};
-	end
+	// Determine whether the data is ready for transfer or not
 	wire already_written = outbuf_writing[upsp_bufsel] &&
-						   (ac_rdnum_inrow < upsp_wrtnum_inrow);
-
-
+						   (ac_rdnum_inrow < upsp_wrtnum_inrowfir);
 
 	reg m_axis_wrten;
 	always @(posedge clk or negedge rst_n) begin: AXIS_WRTEN
@@ -276,13 +304,14 @@ module access_control # (
 	
 
 	// Transfer data if possible
-	wire last_one = ac_rdcnt[DST_IMG_WIDTH_LB2-1+2:0] == {(DST_IMG_WIDTH_LB2+2){1'b1}};
+	wire last_one = (ac_rdcnt == DST_IMG_WIDTH * DST_IMG_HEIGHT-1);
 
 	always @(posedge clk or negedge rst_n) begin: AIXS_TRANS
 		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			ac_rdcnt <= {IMG_CNT_WIDTH{1'b0}};
+			ac_rdnum_incol <= 2'h0;
 			m_axis_tdata <= {AXIS_DATA_WIDTH{1'b0}};
 			m_axis_tlast <= 1'h0;
 			m_axis_tvalid <= 1'h0;
@@ -292,16 +321,26 @@ module access_control # (
 		end else if(|outbuf_valid) begin
 			if(m_axis_tvalid) begin
 				if(m_axis_tready) begin
-					m_axis_tdata  <= outbuf[~upsp_bufsel][ac_rdcnt[DST_IMG_WIDTH_LB2+1:DST_IMG_WIDTH_LB2]][ac_rdcnt[DST_IMG_WIDTH_LB2-1:0]];
+					m_axis_tdata  <= outbuf[~upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
+					
 					ac_rdcnt <= ac_rdcnt + 1;
-					if(outbuf_clear)
-						m_axis_tvalid <= 1'b0;
+					if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
+						ac_rdnum_incol <= ac_rdnum_incol + 1;
+						if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
+					end
 
 					m_axis_tlast <= last_one;
 				end
 			end else begin
 				m_axis_tvalid <= 1'b1;
-				m_axis_tdata  <= outbuf[~upsp_bufsel][ac_rdcnt[DST_IMG_WIDTH_LB2+1:DST_IMG_WIDTH_LB2]][ac_rdcnt[DST_IMG_WIDTH_LB2-1:0]];
+
+				ac_rdcnt <= ac_rdcnt + 1;
+				if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
+					ac_rdnum_incol <= ac_rdnum_incol + 1;
+					if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
+				end
+				
+				m_axis_tdata  <= outbuf[~upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
 				m_axis_tlast  <= last_one;
 			end
 
@@ -309,16 +348,23 @@ module access_control # (
 		// already written
 		end else if(already_written) begin
 			m_axis_tvalid <= 1'b1;
-			m_axis_tdata  <= outbuf[upsp_bufsel][ac_rdcnt[DST_IMG_WIDTH_LB2+1:DST_IMG_WIDTH_LB2]][ac_rdcnt[DST_IMG_WIDTH_LB2-1:0]];
-			if(m_axis_tvalid & m_axis_tready || ~(|ac_rdcnt))
+			m_axis_tdata  <= outbuf[upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
+
+			if(m_axis_tvalid & m_axis_tready || ~m_axis_tvalid) begin
 				ac_rdcnt <= ac_rdcnt + 1;
-			
+				if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
+					ac_rdnum_incol <= ac_rdnum_incol + 1;
+					if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
+				end
+			end
+
 			m_axis_tlast <= last_one;
 
 		end else if(write_done) begin
 			m_axis_tvalid <= 1'b0;
 			ac_rdcnt <= {IMG_CNT_WIDTH{1'b0}};
-
+			ac_rdnum_incol <= 2'b00;
+			m_axis_tlast <= 1'b0;
 		end else begin
 			m_axis_tvalid <= 1'b0;
 		end

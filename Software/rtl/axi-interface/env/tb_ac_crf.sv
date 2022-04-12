@@ -15,7 +15,6 @@
 
  **************************************************/
 
-`timescale 1ps/1ps
 module tb_ac_crf();
     
 	localparam AXI_DATA_WIDTH  = `AXI_DATA_WIDTH ;

@@ -28,9 +28,14 @@ class upsp_agent extends uvm_agent;
     upsp_driver  drv;
     upsp_monitor mon;
 
+    upsp_ostream_modifier mod;
+
     // Read write aps
     uvm_analysis_port #(upsp_trans) upsp_rdap;
     uvm_analysis_port #(upsp_trans) upsp_wrtap;
+
+    // Fifo for monitor to modifier
+    uvm_tlm_analysis_fifo #(upsp_trans) mon2mod_fifo;
 
     extern virtual function void build_phase(uvm_phase phase);
     extern virtual function void connect_phase(uvm_phase phase);
@@ -46,6 +51,8 @@ function void upsp_agent::build_phase(uvm_phase phase);
         drv = upsp_driver::type_id::create("drv", this);
     end
     mon = upsp_monitor::type_id::create("mon", this);
+    mod = upsp_ostream_modifier::type_id::create("mod", this);
+    mon2mod_fifo = new("mon2mod_fifo", this);
 endfunction: build_phase
 
 
@@ -54,6 +61,10 @@ function void upsp_agent::connect_phase(uvm_phase phase);
     if(is_active == UVM_ACTIVE) begin
         drv.seq_item_port.connect(sqr.seq_item_export);
     end
+
+    mon.upsp_wrtap.connect(mon2mod_fifo.analysis_export);
+    mod.istream.connect(mon2mod_fifo.blocking_get_export);
     upsp_rdap  = mon.upsp_rdap;
-    upsp_wrtap = mon.upsp_wrtap;
+    upsp_wrtap = mod.ostream;
+
 endfunction: connect_phase

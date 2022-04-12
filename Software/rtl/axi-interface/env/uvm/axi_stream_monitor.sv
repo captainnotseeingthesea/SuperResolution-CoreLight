@@ -56,7 +56,6 @@ task axi_stream_monitor::main_phase(uvm_phase phase);
             t.tdest =  vif.axis_tdest;
             t.tuser =  vif.axis_user ;
             ap.write(t);
-            t.print();
         end
         @(posedge vif.aclk);
     end

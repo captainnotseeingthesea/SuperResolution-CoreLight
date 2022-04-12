@@ -82,6 +82,7 @@ endtask
 
 task upsp_driver::write_one_trans(upsp_trans t);
     int i;
+    while(!vif.UPSTR) @(posedge vif.clk);
     vif.upsp_ac_wrt   <= 1'b1;    
     vif.upsp_ac_wdata <= t.data;
 

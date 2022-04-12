@@ -74,14 +74,14 @@ endtask: main_phase
 
 task m_axi_stream_driver::write_one_trans(axi_stream_trans t);
     int i;
-    vif.axis_tvalid <= 1'b1;
+    vif.axis_tvalid <= 1'b1    ;
     vif.axis_tid    <= t.tid   ;
     vif.axis_tdata  <= t.tdata ;
     vif.axis_tkeep  <= t.tkeep ;
     vif.axis_tstrb  <= t.tstrb ;
     vif.axis_tlast  <= t.tlast ;
     vif.axis_tdest  <= t.tdest ;
-    vif.axis_user   <= t.tuser  ;
+    vif.axis_user   <= t.tuser ;
 
     for(i = 0; i < t.timeout; i++) begin
         if(vif.axis_tvalid && vif.axis_tready) break;

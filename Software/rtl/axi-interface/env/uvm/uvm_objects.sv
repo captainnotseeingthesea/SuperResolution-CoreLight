@@ -20,6 +20,7 @@ import uvm_pkg::*;
 `include "upsp_driver.sv"
 `include "upsp_monitor.sv"
 `include "upsp_sqr.sv"
+`include "upsp_ostream_modifier.sv"
 `include "upsp_agent.sv"
 
 `include "base_scoreboard.sv"

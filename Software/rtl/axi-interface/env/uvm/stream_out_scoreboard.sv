@@ -27,6 +27,7 @@ class stream_out_scoreboard extends base_scoreboard
     endfunction
 
     extern function void exp2act(upsp_trans src, axi_stream_trans target);
+    extern function int compare(act_t a, act_t b);
 
 endclass
 
@@ -46,4 +47,9 @@ function void stream_out_scoreboard::exp2act(upsp_trans src, axi_stream_trans ta
 
     target.copy(t);
     target.tdata = src.data;
+endfunction
+
+
+function int stream_out_scoreboard::compare(act_t a, act_t b);
+    return (a.tdata == b.tdata);
 endfunction

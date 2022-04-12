@@ -87,6 +87,7 @@ module config_register_file # (
 
 	/*AUTOREG*/
 	// Beginning of automatic regs (for this module's undeclared outputs)
+	reg [CRF_DATA_WIDTH-1:0] crf_ac_UPDSTAR;
 	reg		s_axi_arready;
 	reg		s_axi_awready;
 	reg		s_axi_bvalid;
@@ -105,10 +106,10 @@ module config_register_file # (
 
 
 	// Directly output registers.
-	assign crf_ac_UPDSTAR   = UPDSTAR;
-	assign crf_ac_UPENDR    = UPENDR ;
-	assign crf_ac_UPSRCAR   = UPSRCAR;
-	assign crf_ac_UPSTR     = UPSTR  ;
+	assign crf_ac_UPSTR   = UPSTR;
+	assign crf_ac_UPENDR  = UPENDR ;
+	assign crf_ac_UPSRCAR = UPSRCAR;
+	assign crf_ac_UPDSTR  = UPDSTAR;
 
 	// Output the LSB of UPENR as an interrupt to PS.
 	assign interrupt_updone = UPENDR[0];

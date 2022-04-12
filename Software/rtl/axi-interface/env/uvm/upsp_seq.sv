@@ -40,10 +40,9 @@
             `uvm_info(get_name() ,$sformatf("Send %d", i), UVM_HIGH)
             
         end
-
         `uvm_info(get_name(), "upsp_seq finished", UVM_LOW)
-            
-        #1000;
+        
+        #10000000;
         if(starting_phase != null)
             starting_phase.drop_objection(this);
     endtask
