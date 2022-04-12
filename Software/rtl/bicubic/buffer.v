@@ -16,11 +16,11 @@ module buffer #(
     input wire clk,
     input wire rst_n,
 
-    // // input wire [BUFFER_WIDTH-1:0] axi_rsp_data,
-    // input wire 
 
-    // output wire [BUFFER_WIDTH*4-1:0] axi_req_data,
-    // output 
+// read data into the buffer
+    output wire axi_ready,
+    input wire [23:0] axi_data,
+    input wire axi_valid,
 
 
     output wire bf_req_valid,
@@ -62,11 +62,22 @@ module buffer #(
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
 
 `elsif GEN_IN_TWO
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data2,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data3,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
+
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data5,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data6,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data7,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data8,
+
 `elsif GEN_IN_ONE
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data2,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data3,
+    input wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
+
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data5,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data6,
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data7,
@@ -84,18 +95,23 @@ module buffer #(
 `endif
 
 
-    input wire bcci_rsp_valid
+    input wire bcci_rsp_valid,
+
+// respone data to the ddr
+    input wire ready,
+    output wire ram_valid,
+    output wire [BUFFER_WIDTH-1:0] ram_out
     
 );
 
-    // localparam WIDTH = 960;
-    // localparam HEIGHT = 540;
+    localparam WIDTH = 960;
+    localparam HEIGHT = 540;
 
-    localparam WIDTH = 11;
-    localparam HEIGHT = 6;
+    // localparam WIDTH = 11;
+    // localparam HEIGHT = 6;
 
-    wire ready = 1'b1;
-    wire ram_valid;
+    // wire ready = 1'b1;
+    // wire ram_valid;
 
     wire bf_2_bcci_hsked = bf_req_valid & bcci_req_ready; 
     wire bcci_2_bf_hsked = bcci_rsp_valid & bf_rsp_ready;
@@ -104,16 +120,18 @@ module buffer #(
     assign bf_rsp_ready = 1'b1;
 
 
-    wire axi_ready;
-    wire [23:0] axi_data;
-    wire axi_valid; 
-    bicubic_read_bmp u_bicubic_read_bmp(
-        .clk(clk), 
-        .rst_n(rst_n),
-        .ready(axi_ready),
-        .data(axi_data),
-        .valid(axi_valid)
-    );
+    // wire axi_ready;
+    // wire [23:0] axi_data;
+    // wire axi_valid; 
+    // bicubic_read_bmp u_bicubic_read_bmp(
+    //     .clk(clk), 
+    //     .rst_n(rst_n),
+    //     .ready(axi_ready),
+    //     .data(axi_data),
+    //     .valid(axi_valid)
+    // );
+
+
 `ifdef GEN_IN_SIXTEEN
     localparam CNT_WIDTH = 4;
     wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
@@ -503,20 +521,19 @@ module buffer #(
     wire ram_valid_ena = (state_s2_exit_ena | state_read_last_exit_ena) ? 1'b1 : 1'b0;
     dfflr #(.DW(1)) u_ram_valid_dff (.lden(ram_valid_ena), .dnxt(nxt_ram_valid), .qout(ram_valid), .clk(clk), .rst_n(rst_n));
 
-  //   dfflr #(.DW(1)) u_ram_valid_dely_dff (.lden(1'b1), .dnxt(nxt_ram_valid), .qout(ram_valid), .clk(clk), .rst_n(rst_n));
 
-    wire [BUFFER_WIDTH-1:0] ram_out = rd_low_ram ? rd_data_t1 : rd_data_t2;
+    assign ram_out = rd_low_ram ? rd_data_t1 : rd_data_t2;
 
 
-    always @(posedge clk or negedge rst_n) begin
-        if(~rst_n) begin
-        end
-        else begin
-            if(ram_2_ddr_hsked) begin
-                $display("%x", ram_out);
-            end
-        end
-    end
+    // always @(posedge clk or negedge rst_n) begin
+    //     if(~rst_n) begin
+    //     end
+    //     else begin
+    //         if(ram_2_ddr_hsked) begin
+    //             $display("%x", ram_out);
+    //         end
+    //     end
+    // end
 
     sram #(
         .DATA_WIDTH(BUFFER_WIDTH),
@@ -609,6 +626,9 @@ module buffer #(
 
 
 `elsif GEN_IN_EIGHT
+
+
+
 
 `elsif GEN_IN_FOUR
 

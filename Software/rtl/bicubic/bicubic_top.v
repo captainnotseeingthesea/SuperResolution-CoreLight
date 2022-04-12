@@ -171,7 +171,13 @@ module bicubic_top
     `endif
 
 
-        .bcci_rsp_valid(bcci_rsp_valid)
+        .bcci_rsp_valid(bcci_rsp_valid),
+
+    `ifdef GEN_IN_SIXTEEN
+        .ready(ready),
+        .ram_valid(ram_valid),
+        .ram_out(ram_out)
+    `endif
     );
 
 
@@ -905,12 +911,22 @@ module bicubic_top
     assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
 
 `elsif GEN_IN_TWO
+    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
+    assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
+    assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
+    assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
+
     assign bcci_rsp_data5 = {B_bcci_rsp_data5, G_bcci_rsp_data5, R_bcci_rsp_data5};
     assign bcci_rsp_data6 = {B_bcci_rsp_data6, G_bcci_rsp_data6, R_bcci_rsp_data6};
     assign bcci_rsp_data7 = {B_bcci_rsp_data7, G_bcci_rsp_data7, R_bcci_rsp_data7};
     assign bcci_rsp_data8 = {B_bcci_rsp_data8, G_bcci_rsp_data8, R_bcci_rsp_data8};
 
 `elsif GEN_IN_ONE
+    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
+    assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
+    assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
+    assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
+
     assign bcci_rsp_data5 = {B_bcci_rsp_data5, G_bcci_rsp_data5, R_bcci_rsp_data5};
     assign bcci_rsp_data6 = {B_bcci_rsp_data6, G_bcci_rsp_data6, R_bcci_rsp_data6};
     assign bcci_rsp_data7 = {B_bcci_rsp_data7, G_bcci_rsp_data7, R_bcci_rsp_data7};
