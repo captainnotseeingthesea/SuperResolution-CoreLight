@@ -13,9 +13,18 @@ if(-d $tmp) {
 }
 mkdir $tmp, 0755 or die "cannot mkdir $tmp:$!";
 
-@srcfiles = glob "src/*.v src/*.sv env/*.v env/*.sv env/uvm/*.v env/uvm/*.sv";
+
+@srcfiles = glob 
+"src/*.v ".
+"env/dut/*.svh ".
+"env/testbench/*.sv ".
+"../bicubic/bicubic_top.v "
+;
+
+
 foreach $src (@srcfiles) {
     $dst = File::Spec->catfile($tmp, basename $src);
+    substr($dst, -1, 1) = "" if substr($dst, -1, 1) eq "h";
     copy $src, $dst or die "cannot copy $src:$!";
 }
 
@@ -24,6 +33,9 @@ system "emacs --batch  $_  -f verilog-batch-auto" foreach @autofiles;
 
 foreach $src (@srcfiles) {
     $dst = File::Spec->catfile($tmp, basename $src);
+    substr($dst, -1, 1) = "" if substr($dst, -1, 1) eq "h";
+
+    next if basename($src) eq "bicubic_top.v";
     copy $dst, $src or die "cannot copy $dst:$!";
 }
 

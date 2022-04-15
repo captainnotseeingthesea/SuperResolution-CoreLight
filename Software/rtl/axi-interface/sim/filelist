@@ -1,8 +1,27 @@
+// Utils
+"../env/utils/utils_pkg.sv"
+
+// Src
 "../src/access_control.v"
 "../src/config_register_file.v"
 "../src/stream_in.v"
 
-"../env/ifs.sv"
-"../env/uvm/uvm_objects.sv"
-"../env/top.sv"
-"../env/tb_ac_crf.sv"
+"../../bicubic/bicubic_top.v"
+
+
+// DUT
+"../env/interface_lib/ifs.sv"
+"../env/dut/duts.sv"
+
+// Env
+"../env/axi_lite/axi_lite_pkg.sv"
+"../env/axi_stream/axi_stream_pkg.sv"
+"../env/up_sampling/upsp_pkg.sv"
+"../env/sequence_lib/sequence_pkg.sv"
+"../env/scoreboard/scoreboard_pkg.sv"
+"../env/environment/env_pkg.sv"
+"../env/test_lib/test_pkg.sv"
+
+
+// TB
+"../env/testbench/tb_bcci_ip.sv"
