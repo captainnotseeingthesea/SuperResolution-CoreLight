@@ -1,2 +1,5 @@
 
 `define GEN_IN_SIXTEEN
+
+`define SRC_IMG_WIDTH=960
+`define SRC_IMG_HEIGHT=540

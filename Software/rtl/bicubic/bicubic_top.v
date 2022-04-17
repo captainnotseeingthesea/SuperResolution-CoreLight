@@ -19,66 +19,34 @@ module bicubic_top
     input clk,
     input rst_n,
 
-    output wire axi_ready,
-    input wire [23:0] axi_data,
-    input wire axi_valid,
+    output wire upsp_ac_rd,
+    input wire [23:0] ac_upsp_rdata,
+    input wire ac_upsp_rvalid,
 
+    input wire ac_upsp_wready,
 
-    input wire bf_rsp_ready,
 `ifdef GEN_IN_SIXTEEN
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
+    output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
 
 `elsif GEN_IN_EIGHT
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data2,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data3,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
+    output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
 
 `elsif GEN_IN_FOUR
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data2,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data3,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
+    output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
 
 `elsif GEN_IN_TWO
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data2,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data3,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
-
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data5,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data6,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data7,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data8,
+    output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
 
 `elsif GEN_IN_ONE
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data2,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data3,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data4,
-
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data5,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data6,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data7,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data8,
-
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data9,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data10,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data11,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data12,
-
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data13,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data14,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data15,
-    output wire [BUFFER_WIDTH-1:0] bcci_rsp_data16,
+    output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
 `endif
 
 
-    output wire bcci_rsp_valid
+    output wire upsp_ac_wrt
 
 );
     localparam CHANNEL_WIDTH = 8;
-    localparam BUFFER_WIDTH = 24;
+    localparam BUFFER_WIDTH = `UPSP_DATA_WIDTH;
 
 
     wire bf_req_valid;
@@ -101,17 +69,65 @@ module bicubic_top
     wire [BUFFER_WIDTH-1:0] out_p15;
     wire [BUFFER_WIDTH-1:0] out_p16;
 
+`ifdef GEN_IN_SIXTEEN
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
+    
+`elsif GEN_IN_EIGHT
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data2;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data3;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data4;
+
+`elsif GEN_IN_FOUR
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data2;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data3;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data4;
+
+`elsif GEN_IN_TWO
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data2;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data3;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data4;
+
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data5;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data6;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data7;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data8;
+
+`elsif GEN_IN_ONE
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data1;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data2;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data3;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data4;
+
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data5;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data6;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data7;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data8;
+
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data9;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data10;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data11;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data12;
+
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data13;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data14;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data15;
+    wire [BUFFER_WIDTH-1:0] bcci_rsp_data16;
+`endif
+
 
     // hsk signal bcci to axi
-    wire bcci_2_bf_hsked = bcci_rsp_valid & bf_rsp_ready;
+    wire bcci_2_bf_hsked = upsp_ac_wrt & ac_upsp_wready;
 
     buffer #(.BUFFER_WIDTH(BUFFER_WIDTH)) u_buffer (
         .clk(clk),
         .rst_n(rst_n),
 
-        .axi_ready(axi_ready),
-        .axi_data(axi_data),
-        .axi_valid(axi_valid),
+        .axi_ready(upsp_ac_rd),
+        .axi_data(ac_upsp_rdata),
+        .axi_valid(ac_upsp_rvalid),
 
 
         .bf_req_valid(bf_req_valid),
@@ -331,9 +347,9 @@ module bicubic_top
     wire G_bcci_rsp_valid;
     wire B_bcci_rsp_valid;
 
-    wire R_bf_rsp_ready = bf_rsp_ready;
-    wire G_bf_rsp_ready = bf_rsp_ready;
-    wire B_bf_rsp_ready = bf_rsp_ready;
+    wire R_ac_upsp_wready = ac_upsp_rvalid;
+    wire G_bf_rsp_ready = ac_upsp_rvalid;
+    wire B_bf_rsp_ready = ac_upsp_rvalid;
 
 `ifdef GEN_IN_SIXTEEN
     bicubic_upsample_16 u_R_bicubic_upsample(
@@ -854,7 +870,7 @@ module bicubic_top
 
 
 `ifdef GEN_IN_SIXTEEN
-    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
+    assign upsp_ac_wdata = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
 
 `elsif GEN_IN_EIGHT
     assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
@@ -862,11 +878,25 @@ module bicubic_top
     assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
     assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
 
+    assign upsp_ac_wdata = {
+        bcci_rsp_data4,
+        bcci_rsp_data3,
+        bcci_rsp_data2,
+        bcci_rsp_data1
+    };
+
 `elsif GEN_IN_FOUR
     assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
     assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
     assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
     assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
+
+    assign upsp_ac_wdata = {
+        bcci_rsp_data4,
+        bcci_rsp_data3,
+        bcci_rsp_data2,
+        bcci_rsp_data1
+    };
 
 `elsif GEN_IN_TWO
     assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
@@ -878,6 +908,18 @@ module bicubic_top
     assign bcci_rsp_data6 = {B_bcci_rsp_data6, G_bcci_rsp_data6, R_bcci_rsp_data6};
     assign bcci_rsp_data7 = {B_bcci_rsp_data7, G_bcci_rsp_data7, R_bcci_rsp_data7};
     assign bcci_rsp_data8 = {B_bcci_rsp_data8, G_bcci_rsp_data8, R_bcci_rsp_data8};
+
+    assign upsp_ac_wdata = {
+        bcci_rsp_data8,
+        bcci_rsp_data7,
+        bcci_rsp_data6,
+        bcci_rsp_data5,
+
+        bcci_rsp_data4,
+        bcci_rsp_data3,
+        bcci_rsp_data2,
+        bcci_rsp_data1
+    };
 
 `elsif GEN_IN_ONE
     assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
@@ -899,10 +941,34 @@ module bicubic_top
     assign bcci_rsp_data14 = {B_bcci_rsp_data14, G_bcci_rsp_data14, R_bcci_rsp_data14};
     assign bcci_rsp_data15 = {B_bcci_rsp_data15, G_bcci_rsp_data15, R_bcci_rsp_data15};
     assign bcci_rsp_data16 = {B_bcci_rsp_data16, G_bcci_rsp_data16, R_bcci_rsp_data16};
+
+    assign upsp_ac_wdata = {
+        bcci_rsp_data16,
+        bcci_rsp_data15,
+        bcci_rsp_data14,
+        bcci_rsp_data13,
+
+        bcci_rsp_data12,
+        bcci_rsp_data11,
+        bcci_rsp_data10,
+        bcci_rsp_data9,
+
+        bcci_rsp_data8,
+        bcci_rsp_data7,
+        bcci_rsp_data6,
+        bcci_rsp_data5,
+
+        bcci_rsp_data4,
+        bcci_rsp_data3,
+        bcci_rsp_data2,
+        bcci_rsp_data1
+    };
+
+
 `endif
 
 
-    assign bcci_rsp_valid = R_bcci_rsp_valid & G_bcci_rsp_valid & B_bcci_rsp_valid;
+    assign upsp_ac_wrt = R_bcci_rsp_valid & G_bcci_rsp_valid & B_bcci_rsp_valid;
 
 
 endmodule

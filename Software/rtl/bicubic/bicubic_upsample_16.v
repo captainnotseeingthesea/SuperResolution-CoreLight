@@ -30,6 +30,7 @@ module bicubic_upsample_16(
 
 );
 
+
     localparam CHANNEL_WIDTH = 8;
     localparam WEIGHT_WIDTH = 4;
           
@@ -139,7 +140,6 @@ module bicubic_upsample_16(
         .inner_product     (bcci_rsp_data1 ),
         .inner_product_sign(   )
     );
-
 
 
     wire bf_req_hsked = bf_req_valid & bcci_req_ready;

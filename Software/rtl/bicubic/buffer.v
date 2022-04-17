@@ -47,16 +47,13 @@ module buffer #(
 
 );
 
-    localparam WIDTH = 960;
-    localparam HEIGHT = 540;
+    localparam WIDTH = `SRC_IMG_WIDTH;
+    localparam HEIGHT = SRC_IMG_HEIGHT;
 
     // localparam WIDTH = 11;
     // localparam HEIGHT = 6;
 
-    // hsk signal axi to bcci
-    wire bf_2_bcci_hsked = bf_req_valid & bcci_req_ready; 
 
-    
     // wire axi_ready;
     // wire [23:0] axi_data;
     // wire axi_valid; 
@@ -67,6 +64,7 @@ module buffer #(
     //     .data(axi_data),
     //     .valid(axi_valid)
     // );
+
 
 
 `ifdef GEN_IN_SIXTEEN
@@ -99,12 +97,12 @@ module buffer #(
     assign nxt_cnt = 1'd0;
 
 `endif
-    wire cnt_ena = bcci_2_bf_hsked;
+    wire cnt_ena;
 
     dfflr #(.DW(CNT_WIDTH)) u_cnt3_dff (.lden(cnt_ena), .dnxt(nxt_cnt), .qout(cur_cnt), .clk(clk), .rst_n(rst_n));
 
 
-    localparam INIT_CNT_WIDTH = 12;
+    localparam INIT_CNT_WIDTH = $clog2((WIDTH+3)*3+5);
     wire [INIT_CNT_WIDTH-1:0] cur_init_cnt, nxt_init_cnt;
     wire init_finished = (cur_init_cnt == (WIDTH+3)*3+5) ? 1'b1 : 1'b0;
     assign nxt_init_cnt = cur_init_cnt + 1;
@@ -113,29 +111,29 @@ module buffer #(
 
 
 
-    localparam COL_CNT_WIDTH = 10;
+    localparam COL_CNT_WIDTH = $clog2(WIDTH+3);
     wire [COL_CNT_WIDTH-1:0] cur_col_cnt, nxt_col_cnt;
     wire cur_col_cnt_below_width = (cur_col_cnt < WIDTH) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width = (cur_col_cnt == WIDTH) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width_plus_2 = (cur_col_cnt == WIDTH+2) ? 1'b1 : 1'b0;
-    assign nxt_col_cnt = cur_col_cnt_is_width_plus_2 ? 10'd0 : cur_col_cnt + 1;
+    assign nxt_col_cnt = cur_col_cnt_is_width_plus_2 ? 0 : cur_col_cnt + 1;
 
 `ifdef GEN_IN_SIXTEEN
-    wire col_cnt_ena = (cur_cnt_is_15 & bcci_2_bf_hsked)  | (~cur_col_cnt_below_width);
+    wire col_cnt_ena = (cur_cnt_is_15 & axi_valid)  | (~cur_col_cnt_below_width & axi_valid);
 `elsif GEN_IN_EIGHT
-    wire col_cnt_ena = (cur_cnt_is_7 & bcci_2_bf_hsked)  | (~cur_col_cnt_below_width);
+    wire col_cnt_ena = (cur_cnt_is_7 & axi_valid)  | (~cur_col_cnt_below_width & axi_valid);
 `elsif GEN_IN_FOUR
-    wire col_cnt_ena = (cur_cnt_is_3 & bcci_2_bf_hsked)  | (~cur_col_cnt_below_width);
+    wire col_cnt_ena = (cur_cnt_is_3 & axi_valid)  | (~cur_col_cnt_below_width & axi_valid);
 `elsif GEN_IN_TWO
-    wire col_cnt_ena = (cur_cnt_is_1 & bcci_2_bf_hsked)  | (~cur_col_cnt_below_width);
+    wire col_cnt_ena = (cur_cnt_is_1 & axi_valid)  | (~cur_col_cnt_below_width & axi_valid);
 `elsif GEN_IN_ONE
-    wire col_cnt_ena = bcci_2_bf_hsked  | (~cur_col_cnt_below_width);
+    wire col_cnt_ena = (axi_valid)  | (~cur_col_cnt_below_width & axi_valid);
 `endif
 
     dfflr #(.DW(COL_CNT_WIDTH)) u_col_dff (.lden(col_cnt_ena), .dnxt(nxt_col_cnt), .qout(cur_col_cnt), .clk(clk), .rst_n(rst_n));
 
 
-    localparam ROW_CNT_WIDTH = 10;
+    localparam ROW_CNT_WIDTH = $clog2(HEIGH+3);
     wire [ROW_CNT_WIDTH-1:0] cur_row_cnt, nxt_row_cnt;
     wire cur_is_last_row = (cur_row_cnt == HEIGHT-1) ? 1'b1 : 1'b0;
     assign nxt_row_cnt = cur_row_cnt + 1;
@@ -149,18 +147,18 @@ module buffer #(
 
 
 `ifdef GEN_IN_SIXTEEN
-    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_15 & bcci_2_bf_hsked) | (~cur_col_cnt_below_width);
+    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_15 & axi_valid) | (~cur_col_cnt_below_width & axi_valid);
 `elsif GEN_IN_EIGHT
-    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_7 & bcci_2_bf_hsked) | (~cur_col_cnt_below_width);
+    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_7 & axi_valid) | (~cur_col_cnt_below_width & axi_valid);
 `elsif GEN_IN_FOUR
-    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_3 & bcci_2_bf_hsked) | (~cur_col_cnt_below_width);
+    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_3 & axi_valid) | (~cur_col_cnt_below_width & axi_valid);
 `elsif GEN_IN_TWO
-    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_1 & bcci_2_bf_hsked) | (~cur_col_cnt_below_width);
+    wire shift_ena = (~init_finished & axi_valid) | (cur_cnt_is_1 & axi_valid) | (~cur_col_cnt_below_width & axi_valid);
 `elsif GEN_IN_ONE
-    wire shift_ena = (~init_finished & axi_valid) |  bcci_2_bf_hsked | (~cur_col_cnt_below_width);
+    wire shift_ena = (~init_finished & axi_valid) |  (axi_valid) | (~cur_col_cnt_below_width & axi_valid);
 `endif
 
-
+    assign cnt_ena = shift_ena;
 
 `ifdef GEN_IN_SIXTEEN
     assign axi_ready = (~init_finished) | (cur_cnt_is_15) | (~cur_col_cnt_below_width);
