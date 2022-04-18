@@ -119,11 +119,11 @@ import utils_pkg::*;
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "height",
-        SRC_IMG_HEIGHT);
+        SRC_IMG_HEIGHT+3);
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "width",
-        SRC_IMG_WIDTH);
+        SRC_IMG_WIDTH+3);
 
         // Output dumper
         uvm_config_db#(string)::set(null, 
@@ -148,7 +148,9 @@ import utils_pkg::*;
 	// initial
 	// begin
 	// 	$dumpfile("../sim/waveform.vcd");
-    //     $dumpvars(0, tb_bcci_ip);
+    //     $dumpvars(2, tb_bcci_ip.dut.AAA_access_control.upsp_wrtcnt, 
+    //     tb_bcci_ip.dut.AAA_access_control.ac_rdcnt, 
+    //     tb_bcci_ip.acif.stream_slave);
 	// end
  
 endmodule

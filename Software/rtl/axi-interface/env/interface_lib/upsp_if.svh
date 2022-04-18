@@ -2,7 +2,7 @@
 
  Copyright: NUDT_CoreLight
 
- File name: axi_lite_if.svh
+ File name: upsp_if.svh
 
  Author: NUDT_CoreLight
 

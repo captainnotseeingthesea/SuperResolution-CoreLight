@@ -54,6 +54,7 @@ function void base_env::build_phase(uvm_phase phase);
     axil_agt.is_active = UVM_ACTIVE;
     m_axis_agt.is_active = UVM_ACTIVE;
     s_axis_agt.is_active = UVM_ACTIVE;
+    s_axis_agt.dump_enable = 1;
     upsp_agt.is_active = UVM_ACTIVE;
 
     istream_iboard_fifo = new("istream_iboard_fifo", this);
