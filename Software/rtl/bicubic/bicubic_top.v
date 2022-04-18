@@ -24,24 +24,17 @@ module bicubic_top
     input wire ac_upsp_rvalid,
 
     input wire ac_upsp_wready,
-
 `ifdef GEN_IN_SIXTEEN
     output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
-
 `elsif GEN_IN_EIGHT
     output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
-
 `elsif GEN_IN_FOUR
     output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
-
 `elsif GEN_IN_TWO
     output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
-
 `elsif GEN_IN_ONE
     output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
 `endif
-
-
     output wire upsp_ac_wrt
 
 );
@@ -125,10 +118,11 @@ module bicubic_top
         .clk(clk),
         .rst_n(rst_n),
 
+    `ifndef SIM_WITHOUT_AXI
         .axi_ready(upsp_ac_rd),
         .axi_data(ac_upsp_rdata),
         .axi_valid(ac_upsp_rvalid),
-
+    `endif
 
         .bf_req_valid(bf_req_valid),
         .bcci_req_ready(bcci_req_ready),
@@ -150,9 +144,54 @@ module bicubic_top
         .out_p15(out_p15),
         .out_p16(out_p16),
 
+
+    `ifdef SIM_WITHOUT_AXI
+    `ifdef GEN_IN_SIXTEEN
+        .bcci_rsp_data1(bcci_rsp_data1),
+    `elsif GEN_IN_EIGHT
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4),   
+    `elsif GEN_IN_FOUR
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4), 
+    `elsif GEN_IN_TWO
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4), 
+        .bcci_rsp_data5(bcci_rsp_data5),
+        .bcci_rsp_data6(bcci_rsp_data6),
+        .bcci_rsp_data7(bcci_rsp_data7),
+        .bcci_rsp_data8(bcci_rsp_data8), 
+    `elsif GEN_IN_ONE
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4), 
+        .bcci_rsp_data5(bcci_rsp_data5),
+        .bcci_rsp_data6(bcci_rsp_data6),
+        .bcci_rsp_data7(bcci_rsp_data7),
+        .bcci_rsp_data8(bcci_rsp_data8), 
+        .bcci_rsp_data9(bcci_rsp_data9),
+        .bcci_rsp_data10(bcci_rsp_data10),
+        .bcci_rsp_data11(bcci_rsp_data11),
+        .bcci_rsp_data12(bcci_rsp_data12), 
+        .bcci_rsp_data13(bcci_rsp_data13),
+        .bcci_rsp_data14(bcci_rsp_data14),
+        .bcci_rsp_data15(bcci_rsp_data15),
+        .bcci_rsp_data16(bcci_rsp_data16), 
+    `endif
+    `endif
+
         .bcci_2_bf_hsked(bcci_2_bf_hsked)
 
     );
+
+
 
 
     wire R_bf_req_valid = bf_req_valid;
@@ -347,9 +386,9 @@ module bicubic_top
     wire G_bcci_rsp_valid;
     wire B_bcci_rsp_valid;
 
-    wire R_ac_upsp_wready = ac_upsp_rvalid;
-    wire G_bf_rsp_ready = ac_upsp_rvalid;
-    wire B_bf_rsp_ready = ac_upsp_rvalid;
+    wire R_bf_rsp_ready = ac_upsp_wready;
+    wire G_bf_rsp_ready = ac_upsp_wready;
+    wire B_bf_rsp_ready = ac_upsp_wready;
 
 `ifdef GEN_IN_SIXTEEN
     bicubic_upsample_16 u_R_bicubic_upsample(
@@ -870,7 +909,8 @@ module bicubic_top
 
 
 `ifdef GEN_IN_SIXTEEN
-    assign upsp_ac_wdata = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
+    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
+    assign upsp_ac_wdata = bcci_rsp_data1;
 
 `elsif GEN_IN_EIGHT
     assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
@@ -975,36 +1015,62 @@ endmodule
 
 
 
+`ifndef SIM_WITH_VERILATOR
+`ifdef SIM_WITHOUT_AXI
+module bicubic_top_tb();
+    reg clk_tb;
+    reg rst_n_tb;
 
-// module bicubic_top_tb();
-//     reg clk_tb;
-//     reg rst_n_tb;
-//     initial begin
-//         clk_tb = 1'b0;
-//         rst_n_tb = 1'b0;
-//         #7 rst_n_tb = 1'b1;
-//     end
+    wire upsp_ac_rd_tb;
+    reg [23:0] ac_upsp_rdata_tb;
+    reg ac_upsp_rvalid_tb;
 
-//     always #2 clk_tb = ~clk_tb;
+    reg ac_upsp_wready_tb;
+    wire [23:0] upsp_ac_wdata_tb;
+    wire upsp_ac_wrt_tb;
 
-//     initial begin
-//         $dumpfile("wave.vcd");
-//         $dumpvars(0, bicubic_top_tb);
-//     end
+    initial begin
+        clk_tb = 1'b0;
+        rst_n_tb = 1'b0;
+        ac_upsp_rdata_tb = 24'd0;
+        ac_upsp_rvalid_tb = 1'b0;
+        ac_upsp_wready_tb = 1'b0;
+        #7 rst_n_tb = 1'b1;
+           ac_upsp_wready_tb = 1'b1;
 
-//     bicubic_top u_bicubic_top(
-//         .clk(clk_tb),
-//         .rst_n(rst_n_tb)
-//     );
+    end
+
+    always #2 clk_tb = ~clk_tb;
+
+    initial begin
+        $dumpfile("wave.vcd");
+        $dumpvars(0, bicubic_top_tb);
+    end
+
+    bicubic_top u_bicubic_top(
+        .clk(clk_tb),
+        .rst_n(rst_n_tb),
+
+        .upsp_ac_rd(upsp_ac_rd_tb),
+        .ac_upsp_rdata(ac_upsp_rdata_tb),
+        .ac_upsp_rvalid(ac_upsp_rvalid_tb),
+
+        .ac_upsp_wready(ac_upsp_wready_tb),
+        .upsp_ac_wdata(upsp_ac_wdata_tb),
+        .upsp_ac_wrt(upsp_ac_wrt_tb)
+    );
 
 
-//     initial begin
+    initial begin
 
 
-//         // #1320
-//         // #4000
-//         #6000
-//         #5 $finish;
-//     end
+        // #1320
+        // #4000
+        #6000
+        #5 $finish;
+    end
 
-// endmodule
+endmodule
+`endif
+`endif
+

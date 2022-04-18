@@ -19,7 +19,9 @@ int main(int argc, char** argv, char** env) {
 
     while (!contextp->gotFinish() && (clock < 35000000)) { 
         clock++;
-
+        top->ac_upsp_wready = 0x0;
+        top->ac_upsp_rvalid = 0x0;
+        top->ac_upsp_rdata = 0x0;
         if(clock%PERIOD == 1){
           top->clk = 0x1;
         }
@@ -31,6 +33,7 @@ int main(int argc, char** argv, char** env) {
         } 
         else {
           top->rst_n = 0x1;
+          top->ac_upsp_wready = 0x1;
         }
 
         top->eval(); 

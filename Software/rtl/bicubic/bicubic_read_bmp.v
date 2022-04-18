@@ -1,4 +1,4 @@
-
+`include "define.v"
 module bicubic_read_bmp (
     input wire clk, 
     input wire rst_n,
@@ -8,11 +8,8 @@ module bicubic_read_bmp (
 
 );
 
-    localparam HEIGHT = 540;
-    localparam WIDTH  = 960;
-
-    // localparam HEIGHT = 6;
-    // localparam WIDTH  = 11;
+    localparam HEIGHT = `SRC_IMG_HEIGHT;
+    localparam WIDTH  = `SRC_IMG_WIDTH;
 
     localparam OFFSET = 138;
     localparam TOTAL_SIZE = HEIGHT * WIDTH *3 + OFFSET;
@@ -62,10 +59,12 @@ module bicubic_read_bmp (
         for (ii = 0; ii < SIZE; ii = ii+1) begin
             shaped_data[ii] = 0;
         end
-        
-        #1
-        // bmp_file_id = $fopen("2.bmp", "rb");
+        `ifndef SIM_WITH_VERILATOR  
+            #1
+        `endif
 
+
+        // bmp_file_id = $fopen("2.bmp", "rb");
         bmp_file_id = $fopen("49_1k.bmp", "rb");
         icode = $fread(bmp_data, bmp_file_id);
 
@@ -116,13 +115,16 @@ module bicubic_read_bmp (
     reg [31:0] ptr;
     reg [23:0] data_reg;
     reg valid_reg;
+    reg [31:0] stime;
     always @(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
             ptr <= 32'd1;
             data_reg <= 24'd0;
             valid_reg <= 1'b0;
+            stime <= 32'd0;
         end
         else begin
+            stime <= #2 $stime;
             valid_reg <= #1 1'b1;
             if(bmp_hsked) begin
                 data_reg <= #1 shaped_data[ptr];
@@ -132,6 +134,11 @@ module bicubic_read_bmp (
 
     end
     wire cur_is_last_data = (ptr % (WIDTH+3)) ? 1'b0 : 1'b1;
+
+
+    // wire delay_input_valid = ((stime==258) | (stime==254))? 1'b1 : 1'b0;
+    // assign valid = delay_input_valid ? 1'b0 : valid_reg;
+
     assign valid = valid_reg;
     assign data = data_reg;
 
