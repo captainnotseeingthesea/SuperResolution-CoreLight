@@ -65,7 +65,7 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
 
     while(1) begin
         dump_port.get(t);
-        data[j][i] = t.tdata;
+        data[j*width+i] = t.tdata;
         
         if(i == width - 1) begin
             i = 0;
@@ -79,7 +79,7 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
         if(t.tlast) begin
             `uvm_info("axis_bmp_dumper", "tlast valid, start dumping file", UVM_LOW)
             $writememh(src_bin, data);
-            $system($sformatf("bin2bmp %s %s %d %d", src_bin, dst_bmp, height, width));
+            BMP::bin2bmp(src_bin, dst_bmp, height, width);
             `uvm_info("axis_bmp_dumper", "dumping over", UVM_LOW)
             break; 
         end
