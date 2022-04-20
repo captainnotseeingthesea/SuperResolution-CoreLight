@@ -37,7 +37,7 @@ module access_control # (
    m_axis_tstrb, m_axis_tlast, m_axis_tdest, m_axis_user,
    // Inputs
    clk, rst_n, crf_ac_UPSTR, crf_ac_UPENDR, crf_ac_UPSRCAR,
-   crf_ac_UPDSTAR, crf_ac_wbusy, upsp_ac_rd, upsp_ac_wrt,
+   crf_ac_UPDSTAR, crf_ac_wbusy, upsp_ac_rready, upsp_ac_wvalid,
    upsp_ac_wdata, s_axis_tvalid, s_axis_tid, s_axis_tdata,
    s_axis_tstrb, s_axis_tkeep, s_axis_tlast, s_axis_tdest,
    s_axis_user, m_axis_tready
@@ -63,11 +63,11 @@ module access_control # (
 	// Interface with upsp
 	output [CRF_DATA_WIDTH-1:0]  UPSTR;
 	output [CRF_DATA_WIDTH-1:0]  UPENDR;
-	input                        upsp_ac_rd;
+	input                        upsp_ac_rready;
 	output                       ac_upsp_rvalid;
 	output [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;
 	output                       ac_upsp_wready;
-	input                        upsp_ac_wrt;
+	input                        upsp_ac_wvalid;
 	input  [UPSP_DATA_WIDTH-1:0] upsp_ac_wdata;
 
 
@@ -172,7 +172,7 @@ module access_control # (
 		      .ac_upsp_rdata	(ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]),
 		      .s_axis_tready	(s_axis_tready),
 		      // Inputs
-		      .upsp_ac_rd	(upsp_ac_rd),
+		      .upsp_ac_rready	(upsp_ac_rready),
 		      .s_axis_tvalid	(s_axis_tvalid),
 		      .s_axis_tid	(s_axis_tid),
 		      .s_axis_tdata	(s_axis_tdata[AXIS_DATA_WIDTH-1:0]),
@@ -253,7 +253,7 @@ module access_control # (
 			upsp_wrtnum_inrowbase <= {DST_IMG_WIDTH_LB2{1'b0}};
 			upsp_wrtcnt_4line <= {(IMG_CNT_WIDTH-1+2){1'b0}};
 		end else begin
-			if(upsp_ac_wrt & ac_upsp_wready) begin
+			if(upsp_ac_wvalid & ac_upsp_wready) begin
 				if(~outbuf_writing[upsp_bufsel]) outbuf_writing[upsp_bufsel] <= 1'b1;
 				if(outbuf_writing[~upsp_bufsel]) outbuf_writing[~upsp_bufsel] <= 1'b0;
 
@@ -355,37 +355,6 @@ module access_control # (
 				m_axis_tdata  <= outbuf[ac_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
 				m_axis_tlast  <= last_one;
 			end
-
-		// No valid buffer, upsp is writing. But we can still transfer data
-		// already written
-		// end else if(already_written) begin
-		// 	if(m_axis_tvalid) begin
-		// 		if(m_axis_tready) begin
-		// 			m_axis_tdata  <= outbuf[upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
-
-		// 			if(m_axis_tvalid & m_axis_tready || ~m_axis_tvalid) begin
-		// 				ac_rdcnt <= ac_rdcnt + 1;
-		// 				if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
-		// 					ac_rdnum_incol <= ac_rdnum_incol + 1;
-		// 					if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
-		// 				end
-		// 			end
-
-		// 		end
-		// 	end else begin
-		// 		m_axis_tvalid <= 1'b1;
-		// 		m_axis_tdata  <= outbuf[upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
-
-		// 		if(m_axis_tvalid & m_axis_tready || ~m_axis_tvalid) begin
-		// 			ac_rdcnt <= ac_rdcnt + 1;
-		// 			if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
-		// 				ac_rdnum_incol <= ac_rdnum_incol + 1;
-		// 				if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
-		// 			end
-		// 		end
-
-		// 		m_axis_tlast <= last_one;
-		// 	end
 
 		end else if(m_axis_tvalid) begin
 			if(m_axis_tready) begin

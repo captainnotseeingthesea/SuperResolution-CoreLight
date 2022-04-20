@@ -22,7 +22,7 @@ module stream_in # (
    // Outputs
    ac_upsp_rvalid, ac_upsp_rdata, s_axis_tready,
    // Inputs
-   upsp_ac_rd, UPSTR, UPENDR, s_axis_aclk, s_axis_arstn,
+   upsp_ac_rready, UPSTR, UPENDR, s_axis_aclk, s_axis_arstn,
    s_axis_tvalid, s_axis_tid, s_axis_tdata, s_axis_tstrb,
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user
    );
@@ -30,7 +30,7 @@ module stream_in # (
 	localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
 	
 	// Interface for upsp read
-	input                        upsp_ac_rd;
+	input                        upsp_ac_rready;
 	output                       ac_upsp_rvalid;
 	output [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;
 
@@ -62,10 +62,6 @@ module stream_in # (
 
 
 	/*AUTOREG*/
-	// Beginning of automatic regs (for this module's undeclared outputs)
-	reg [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;
-	reg		ac_upsp_rvalid;
-	// End of automatics
 
 
 	wire clk = s_axis_aclk;
@@ -90,22 +86,9 @@ module stream_in # (
 	/* Input width of AXI-Stream is 4B, but only LSB 3B are useful.
 	 These 3B will be sent to Up-Sampling module.
 	*/
-	assign s_axis_tready = upsp_ac_rd & ~frame_done;
-
-	always@(posedge clk or negedge rst_n) begin
-		if(~rst_n) begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			ac_upsp_rdata <= {UPSP_DATA_WIDTH{1'b0}};
-			ac_upsp_rvalid <= 1'h0;
-			// End of automatics
-		end else if(s_axis_tvalid & s_axis_tready & ~frame_done) begin
-			ac_upsp_rvalid <= 1'b1;
-			ac_upsp_rdata  <= s_axis_tdata[UPSP_DATA_WIDTH-1:0];
-		end else
-			ac_upsp_rvalid <= 1'b0;
-	end
-
+	assign s_axis_tready = upsp_ac_rready & ~frame_done;
+	assign ac_upsp_rvalid = s_axis_tvalid;
+	assign ac_upsp_rdata  = s_axis_tdata;
 
 
 // Additional code for easy debugging
@@ -134,14 +117,7 @@ module stream_in # (
 		s_axis_tvalid |-> ~frame_done;
 	endproperty
 
-	property valid_upsp_read;
-		@(posedge clk) disable iff(~rst_n)
-		upsp_ac_rd |-> ~frame_done;
-	endproperty
-
-
 	assert property(valid_stream_in);
-	assert property(valid_upsp_read);
 
 `endif
 

@@ -49,13 +49,13 @@ task upsp_monitor::main_phase(uvm_phase phase);
     upsp_trans rt, wt;
 
     forever begin
-        if(vif.ac_upsp_rvalid) begin
+        if(vif.ac_upsp_rvalid & vif.upsp_ac_rready) begin
             rt = new("upsprt");
             rt.data = vif.ac_upsp_rdata;
             upsp_rdap.write(rt);
         end
 
-        if(vif.upsp_ac_wrt && vif.ac_upsp_wready) begin
+        if(vif.upsp_ac_wvalid && vif.ac_upsp_wready) begin
             wt = new("upspwt");
             wt.data = vif.upsp_ac_wdata;
             upsp_wrtap.write(wt);

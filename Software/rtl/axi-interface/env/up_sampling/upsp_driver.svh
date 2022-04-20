@@ -47,9 +47,9 @@ task upsp_driver::reset_phase(uvm_phase phase);
     phase.raise_objection(this);
     `uvm_info(get_name(), "<reset_phase> started, objection raised.", UVM_NONE)
 
-    vif.upsp_ac_rd    <= 0;
-    vif.upsp_ac_wrt   <= 0;    
-    vif.upsp_ac_wdata <= 0;
+    vif.upsp_ac_rready <= 0;
+    vif.upsp_ac_wvalid <= 0;    
+    vif.upsp_ac_wdata  <= 0;
     while(!vif.rst_n) @(posedge vif.clk);
 
     phase.drop_objection(this);
@@ -74,7 +74,7 @@ endtask: main_phase
 
 task upsp_driver::read_forever();
     forever begin
-        vif.upsp_ac_rd <= 1'b1;
+        vif.upsp_ac_rready <= 1'b1;
         @(posedge vif.clk);
     end
 endtask
@@ -83,14 +83,14 @@ endtask
 task upsp_driver::write_one_trans(upsp_trans t);
     int i;
     while(!vif.UPSTR) @(posedge vif.clk);
-    vif.upsp_ac_wrt   <= 1'b1;    
-    vif.upsp_ac_wdata <= t.data;
+    vif.upsp_ac_wvalid <= 1'b1;    
+    vif.upsp_ac_wdata  <= t.data;
 
     for(i = 0; i < t.timeout; i++) begin
-        if(vif.ac_upsp_wready && vif.upsp_ac_wrt) break;
+        if(vif.ac_upsp_wready && vif.upsp_ac_wvalid) break;
         @(posedge vif.clk);
     end
     if(i == t.timeout) `uvm_error(get_name(), "waits ac_upsp_wready for too many cycles")
 
-    vif.upsp_ac_wrt <= 1'b0;
+    vif.upsp_ac_wvalid <= 1'b0;
 endtask

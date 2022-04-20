@@ -180,8 +180,8 @@ module ac_crf_top(ac_if acif);
 		       .crf_ac_UPSRCAR	(crf_ac_UPSRCAR[CRF_DATA_WIDTH-1:0]),
 		       .crf_ac_UPDSTAR	(crf_ac_UPDSTAR[CRF_DATA_WIDTH-1:0]),
 		       .crf_ac_wbusy	(crf_ac_wbusy),
-		       .upsp_ac_rd	(acif.usif.upsp_ac_rd),	 // Templated
-		       .upsp_ac_wrt	(acif.usif.upsp_ac_wrt), // Templated
+		       .upsp_ac_rready	(upsp_ac_rready),
+		       .upsp_ac_wvalid	(upsp_ac_wvalid),
 		       .upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_DATA_WIDTH-1:0]), // Templated
 		       .s_axis_tvalid	(acif.stream_master.axis_tvalid), // Templated
 		       .s_axis_tid	(acif.stream_master.axis_tid), // Templated

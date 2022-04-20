@@ -44,13 +44,7 @@ module bcci_ip_top(ac_if acif);
 
     /*AUTOREG*/
 
-	// assign acif.usif.ac_upsp_wready = ac_upsp_wready;    
-	// assign acif.usif.upsp_ac_wrt    = upsp_ac_wrt   ;
-	// assign acif.usif.upsp_ac_wdata  = upsp_ac_wdata ;  
-	// assign acif.usif.ac_upsp_rdata  = ac_upsp_rdata ;  
-	// assign acif.usif.ac_upsp_rvalid = ac_upsp_rvalid;    
-	// assign acif.usif.upsp_ac_rd     = upsp_ac_rd    ;
- 
+
     /* config_register_file AUTO_TEMPLATE(
 	        .s_axi_awready		(acif.lite_master.axi_awready),
 	        .s_axi_wready		(acif.lite_master.axi_wready),
@@ -133,8 +127,8 @@ module bcci_ip_top(ac_if acif);
 		.m_axis_user		(acif.stream_slave.axis_user),
 		.clk				(acif.clk),
 		.rst_n			(acif.rst_n),
-		.upsp_ac_rd		(acif.usif.upsp_ac_rd),
-		.upsp_ac_wrt		(acif.usif.upsp_ac_wrt),
+		.upsp_ac_rready		(acif.usif.upsp_ac_rready),
+		.upsp_ac_wvalid		(acif.usif.upsp_ac_wvalid),
 		.upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_DATA_WIDTH-1:0]),
 		.s_axis_tvalid	(acif.stream_master.axis_tvalid),
 		.s_axis_tid		(acif.stream_master.axis_tid),
@@ -184,8 +178,8 @@ module bcci_ip_top(ac_if acif);
 		       .crf_ac_UPSRCAR	(crf_ac_UPSRCAR[CRF_DATA_WIDTH-1:0]),
 		       .crf_ac_UPDSTAR	(crf_ac_UPDSTAR[CRF_DATA_WIDTH-1:0]),
 		       .crf_ac_wbusy	(crf_ac_wbusy),
-		       .upsp_ac_rd	(acif.usif.upsp_ac_rd),	 // Templated
-		       .upsp_ac_wrt	(acif.usif.upsp_ac_wrt), // Templated
+		       .upsp_ac_rready	(acif.usif.upsp_ac_rready), // Templated
+		       .upsp_ac_wvalid	(acif.usif.upsp_ac_wvalid), // Templated
 		       .upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_DATA_WIDTH-1:0]), // Templated
 		       .s_axis_tvalid	(acif.stream_master.axis_tvalid), // Templated
 		       .s_axis_tid	(acif.stream_master.axis_tid), // Templated
@@ -199,9 +193,9 @@ module bcci_ip_top(ac_if acif);
      
 	
     /* bicubic_top AUTO_TEMPLATE (
-            .upsp_ac_rd		(acif.usif.upsp_ac_rd),
-            .upsp_ac_wrt(acif.usif.upsp_ac_wrt),
-            .upsp_ac_wdata(acif.usif.upsp_ac_wdata),
+		    .upsp_ac_rready	(acif.usif.upsp_ac_rready),
+		    .upsp_ac_wdata	(acif.usif.upsp_ac_wdata),
+		    .upsp_ac_wvalid	(acif.usif.upsp_ac_wvalid),
 			.clk			(acif.clk),
 			.rst_n			(acif.rst_n),
             .ac_upsp_rdata		(acif.usif.ac_upsp_rdata),
@@ -212,15 +206,15 @@ module bcci_ip_top(ac_if acif);
     bicubic_top #(/*AUTOINSTPARAM*/)
     AAA_bicubic_top(/*AUTOINST*/
 		    // Outputs
-		    .upsp_ac_rd		(acif.usif.upsp_ac_rd),	 // Templated
+		    .upsp_ac_rready	(acif.usif.upsp_ac_rready), // Templated
 		    .upsp_ac_wdata	(acif.usif.upsp_ac_wdata), // Templated
-		    .upsp_ac_wrt	(acif.usif.upsp_ac_wrt), // Templated
+		    .upsp_ac_wvalid	(acif.usif.upsp_ac_wvalid), // Templated
 		    // Inputs
 		    .clk		(acif.clk),		 // Templated
 		    .rst_n		(acif.rst_n),		 // Templated
 		    .ac_upsp_rdata	(acif.usif.ac_upsp_rdata), // Templated
 		    .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid), // Templated
 		    .ac_upsp_wready	(acif.usif.ac_upsp_wready)); // Templated
- 
+
 endmodule
  

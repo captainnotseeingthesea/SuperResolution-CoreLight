@@ -26,11 +26,11 @@ interface upsp_if();
 	// Signals with upsp
 	logic [CRF_DATA_WIDTH-1:0]  UPSTR;
 	logic [CRF_DATA_WIDTH-1:0]  UPENDR;
-	logic                       upsp_ac_rd;
+	logic                       upsp_ac_rready;
 	logic                       ac_upsp_rvalid;
 	logic [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;
 	logic                       ac_upsp_wready;
-	logic                       upsp_ac_wrt;
+	logic                       upsp_ac_wvalid;
 	logic [UPSP_DATA_WIDTH-1:0] upsp_ac_wdata;
 
 endinterface
