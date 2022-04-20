@@ -50,6 +50,8 @@ endfunction: build_phase
 task base_scoreboard::main_phase(uvm_phase phase);
     exp_t exp_trans;
     act_t act_trans, tmp_act, tmp_exp;
+    int count = 0;
+
     fork
         begin: collect_exp
             while (1) begin
@@ -68,18 +70,20 @@ task base_scoreboard::main_phase(uvm_phase phase);
         begin: compare_exp_act
             while(1) begin
                 wait(act_q.size() > 0 && exp_q.size() > 0);
-
                 tmp_act = act_q.pop_front();
                 tmp_exp = new("expt_after_convert");
                 exp2act(exp_q.pop_front(), tmp_exp);
 
                 if(!compare(tmp_exp, tmp_act)) begin
-                    `uvm_error(get_name(), "compare failed")
+                    `uvm_error(get_name(), $sformatf("%d'th compare failed", count))
                     $display("expected:\n");
                     tmp_exp.print();
                     $display("actural:\n");
                     tmp_act.print();
                 end
+
+                count++;
+                
             end
 
         end

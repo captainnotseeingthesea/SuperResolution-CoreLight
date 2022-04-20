@@ -135,7 +135,7 @@ module access_control # (
 
 	// After finish upsampling, clear UPSTR and write UPENDR.
 	wire write_done = m_axis_tvalid & m_axis_tready & m_axis_tlast;
-	always @(posedge clk or negedge rst_n) begin
+	always@(posedge clk or negedge rst_n) begin
 		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -201,6 +201,7 @@ module access_control # (
 	reg [1:0] outbuf_writing;
 	reg [1:0] outbuf_valid;
 	reg upsp_bufsel;
+	reg ac_bufsel;
 	reg [AXIS_DATA_WIDTH-1:0] outbuf[0:1][0:3][0:DST_IMG_WIDTH-1];
 
 	// If there is at least one non-valid buffer, upsp can write.
@@ -229,7 +230,7 @@ module access_control # (
 	reg [DST_IMG_WIDTH_LB2-1+2:0] upsp_wrtcnt_4line;
 
 	integer i, j, k;
-	always @(posedge clk or negedge rst_n) begin: UPSP_WRITE
+	always@(posedge clk or negedge rst_n) begin: UPSP_WRITE
 		if(~rst_n) begin
 			outbuf_valid <= 2'h0;
 			outbuf_writing <= 2'h0;
@@ -279,7 +280,7 @@ module access_control # (
 
 			// After transfering 4 lines, clear outbuf valid
 			if(outbuf_clear)
-				outbuf_valid[~upsp_bufsel] <= 1'b0;
+				outbuf_valid[ac_bufsel] <= 1'b0;
 		end
 	end
 
@@ -289,7 +290,7 @@ module access_control # (
 						   (ac_rdnum_inrow < upsp_wrtnum_inrowfir);
 
 	reg m_axis_wrten;
-	always @(posedge clk or negedge rst_n) begin: AXIS_WRTEN
+	always@(posedge clk or negedge rst_n) begin: AXIS_WRTEN
 		if(~rst_n)
 			m_axis_wrten <= 1'b1;
 
@@ -306,7 +307,16 @@ module access_control # (
 	// Transfer data if possible
 	wire last_one = (ac_rdcnt == DST_IMG_WIDTH * DST_IMG_HEIGHT-1);
 
-	always @(posedge clk or negedge rst_n) begin: AIXS_TRANS
+	always@(posedge clk or negedge rst_n) begin: AC_BUFSEL
+		if(~rst_n) begin
+			ac_bufsel <= 1'b0;
+		end else if(write_done)
+			ac_bufsel <= 1'b0;
+		else if(outbuf_clear)
+			ac_bufsel <= ~ac_bufsel;
+	end
+
+	always@(posedge clk or negedge rst_n) begin: AIXS_TRANS
 		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -317,11 +327,13 @@ module access_control # (
 			m_axis_tvalid <= 1'h0;
 			// End of automatics
 
-		// If there is a valid outbuf, get data from it and send
-		end else if(|outbuf_valid) begin
+		// If there is a valid outbuf, or the could-writeen data are already
+		// inside the buffer, get data and send
+		end else if((|outbuf_valid) | already_written) begin
 			if(m_axis_tvalid) begin
 				if(m_axis_tready) begin
-					m_axis_tdata  <= outbuf[~upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
+
+					m_axis_tdata  <= outbuf[ac_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
 					
 					ac_rdcnt <= ac_rdcnt + 1;
 					if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
@@ -340,31 +352,50 @@ module access_control # (
 					if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
 				end
 				
-				m_axis_tdata  <= outbuf[~upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
+				m_axis_tdata  <= outbuf[ac_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
 				m_axis_tlast  <= last_one;
 			end
 
 		// No valid buffer, upsp is writing. But we can still transfer data
 		// already written
-		end else if(already_written) begin
-			m_axis_tvalid <= 1'b1;
-			m_axis_tdata  <= outbuf[upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
+		// end else if(already_written) begin
+		// 	if(m_axis_tvalid) begin
+		// 		if(m_axis_tready) begin
+		// 			m_axis_tdata  <= outbuf[upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
 
-			if(m_axis_tvalid & m_axis_tready || ~m_axis_tvalid) begin
-				ac_rdcnt <= ac_rdcnt + 1;
-				if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
-					ac_rdnum_incol <= ac_rdnum_incol + 1;
-					if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
+		// 			if(m_axis_tvalid & m_axis_tready || ~m_axis_tvalid) begin
+		// 				ac_rdcnt <= ac_rdcnt + 1;
+		// 				if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
+		// 					ac_rdnum_incol <= ac_rdnum_incol + 1;
+		// 					if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
+		// 				end
+		// 			end
+
+		// 		end
+		// 	end else begin
+		// 		m_axis_tvalid <= 1'b1;
+		// 		m_axis_tdata  <= outbuf[upsp_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
+
+		// 		if(m_axis_tvalid & m_axis_tready || ~m_axis_tvalid) begin
+		// 			ac_rdcnt <= ac_rdcnt + 1;
+		// 			if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
+		// 				ac_rdnum_incol <= ac_rdnum_incol + 1;
+		// 				if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
+		// 			end
+		// 		end
+
+		// 		m_axis_tlast <= last_one;
+		// 	end
+
+		end else if(m_axis_tvalid) begin
+			if(m_axis_tready) begin
+				m_axis_tvalid <= 1'b0;
+				if(m_axis_tlast) begin
+					ac_rdcnt <= {IMG_CNT_WIDTH{1'b0}};
+					ac_rdnum_incol <= 2'b00;
+					m_axis_tlast <= 1'b0;
 				end
 			end
-
-			m_axis_tlast <= last_one;
-
-		end else if(write_done) begin
-			m_axis_tvalid <= 1'b0;
-			ac_rdcnt <= {IMG_CNT_WIDTH{1'b0}};
-			ac_rdnum_incol <= 2'b00;
-			m_axis_tlast <= 1'b0;
 		end else begin
 			m_axis_tvalid <= 1'b0;
 		end

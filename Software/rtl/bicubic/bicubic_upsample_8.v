@@ -1,4 +1,4 @@
-`include "define.v"
+// `include "define.v"
 
 `include "bicubic_vector_mult.v"
 module bicubic_upsample_8  (

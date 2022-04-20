@@ -1,4 +1,4 @@
-`include "define.v"
+// `include "define.v"
 module bicubic_read_bmp (
     input wire clk, 
     input wire rst_n,

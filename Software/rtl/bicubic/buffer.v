@@ -1,4 +1,4 @@
-`include "define.v"
+// `include "define.v"
 `include "bicubic_read_bmp.v"
 `ifndef DFFS
     `include "dffs.v"
