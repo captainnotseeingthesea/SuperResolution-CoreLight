@@ -66,7 +66,7 @@ import utils_pkg::*;
         uvm_config_db#(virtual axi_lite_if)::set(null, 
         "uvm_test_top.env.axil_agt.drv",
         "vif",
-        acif.lite_slave);
+        acif.lite_master);
 
         // in axi-stream driver
         uvm_config_db#(virtual axi_stream_if)::set(null, 
@@ -111,11 +111,11 @@ import utils_pkg::*;
         uvm_config_db#(string)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "src_bmp",
-        "onepiece.bmp");
+        "onepiece54.bmp");
         uvm_config_db#(string)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "dst_bin",
-        "onepiece_tmp_bin");
+        "onepiece54_tmp_bin");
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "height",
@@ -129,11 +129,11 @@ import utils_pkg::*;
         uvm_config_db#(string)::set(null, 
         "uvm_test_top.env.s_axis_agt.dmp",
         "src_bin",
-        "onepiece4_tmp_bin");
+        "onepiece54_4_tmp_bin");
         uvm_config_db#(string)::set(null, 
         "uvm_test_top.env.s_axis_agt.dmp",
         "dst_bmp",
-        "onepiece4.bmp");
+        "onepiece54_4.bmp");
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.s_axis_agt.dmp",
         "height",
@@ -145,12 +145,13 @@ import utils_pkg::*;
 
     end
 
-	// initial
-	// begin
-	// 	$dumpfile("../sim/waveform.vcd");
-    //     $dumpvars(2, tb_bcci_ip.dut.AAA_access_control.upsp_wrtcnt, 
-    //     tb_bcci_ip.dut.AAA_access_control.ac_rdcnt, 
-    //     tb_bcci_ip.acif.stream_slave);
-	// end
+	initial
+	begin
+		$dumpfile("../sim/waveform.vcd");
+        $dumpvars(0, tb_bcci_ip);
+        // $dumpvars(2, tb_bcci_ip.dut.AAA_access_control.upsp_wrtcnt, 
+        // tb_bcci_ip.dut.AAA_access_control.ac_rdcnt, 
+        // tb_bcci_ip.acif.stream_slave);
+	end
  
 endmodule

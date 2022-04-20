@@ -56,6 +56,6 @@ endtask: reset_phase
 task s_axi_stream_driver::main_phase(uvm_phase phase);
     forever begin
         @(posedge vif.aclk);
-        vif.axis_tready <= 1'b1;
+        vif.axis_tready <= {$random}%2;
     end
 endtask: main_phase

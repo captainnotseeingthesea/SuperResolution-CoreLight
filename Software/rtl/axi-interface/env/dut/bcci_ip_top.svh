@@ -34,21 +34,6 @@ module bcci_ip_top(ac_if acif);
     wire [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;	// From AAA_access_control of access_control.v
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data10;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data11;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data12;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data13;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data14;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data15;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data16;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data2;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data3;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data4;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data5;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data6;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data7;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data8;	// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] bcci_rsp_data9;	// From AAA_bicubic_top of bicubic_top.v
     wire [CRF_DATA_WIDTH-1:0] crf_ac_UPDSTAR;	// From AAA_config_register_file of config_register_file.v
     wire [CRF_DATA_WIDTH-1:0] crf_ac_UPENDR;	// From AAA_config_register_file of config_register_file.v
     wire [CRF_DATA_WIDTH-1:0] crf_ac_UPSRCAR;	// From AAA_config_register_file of config_register_file.v
@@ -67,28 +52,28 @@ module bcci_ip_top(ac_if acif);
 	// assign acif.usif.upsp_ac_rd     = upsp_ac_rd    ;
  
     /* config_register_file AUTO_TEMPLATE(
-	        .s_axi_awready		(acif.lite_slave.axi_awready),
-	        .s_axi_wready		(acif.lite_slave.axi_wready),
-	        .s_axi_bvalid		(acif.lite_slave.axi_bvalid),
-	        .s_axi_bresp		(acif.lite_slave.axi_bresp),
-	        .s_axi_arready		(acif.lite_slave.axi_arready),
-	        .s_axi_rvalid		(acif.lite_slave.axi_rvalid),
-	        .s_axi_rdata		(acif.lite_slave.axi_rdata[AXI_DATA_WIDTH-1:0]),
-	        .s_axi_rresp		(acif.lite_slave.axi_rresp[1:0]),
+	        .s_axi_awready		(acif.lite_master.axi_awready),
+	        .s_axi_wready		(acif.lite_master.axi_wready),
+	        .s_axi_bvalid		(acif.lite_master.axi_bvalid),
+	        .s_axi_bresp		(acif.lite_master.axi_bresp),
+	        .s_axi_arready		(acif.lite_master.axi_arready),
+	        .s_axi_rvalid		(acif.lite_master.axi_rvalid),
+	        .s_axi_rdata		(acif.lite_master.axi_rdata[AXI_DATA_WIDTH-1:0]),
+	        .s_axi_rresp		(acif.lite_master.axi_rresp[1:0]),
 	        .interrupt_updone	(acif.interrupt_updone),
 	        .clk				(acif.clk),
 	        .rst_n				(acif.rst_n),
-	        .s_axi_awvalid		(acif.lite_slave.axi_awvalid),
-	        .s_axi_awaddr		(acif.lite_slave.axi_awaddr[AXI_ADDR_WIDTH-1:0]),
-	        .s_axi_awprot		(acif.lite_slave.axi_awprot[2:0]),
-	        .s_axi_wvalid		(acif.lite_slave.axi_wvalid),
-	        .s_axi_wdata		(acif.lite_slave.axi_wdata[AXI_DATA_WIDTH-1:0]),
-	        .s_axi_wstrb		(acif.lite_slave.axi_wstrb),
-	        .s_axi_bready		(acif.lite_slave.axi_bready),
-	        .s_axi_arvalid		(acif.lite_slave.axi_arvalid),
-	        .s_axi_araddr		(acif.lite_slave.axi_araddr[AXI_ADDR_WIDTH-1:0]),
-	        .s_axi_arprot		(acif.lite_slave.axi_arprot[2:0]),
-	        .s_axi_rready		(acif.lite_slave.axi_rready),
+	        .s_axi_awvalid		(acif.lite_master.axi_awvalid),
+	        .s_axi_awaddr		(acif.lite_master.axi_awaddr[AXI_ADDR_WIDTH-1:0]),
+	        .s_axi_awprot		(acif.lite_master.axi_awprot[2:0]),
+	        .s_axi_wvalid		(acif.lite_master.axi_wvalid),
+	        .s_axi_wdata		(acif.lite_master.axi_wdata[AXI_DATA_WIDTH-1:0]),
+	        .s_axi_wstrb		(acif.lite_master.axi_wstrb),
+	        .s_axi_bready		(acif.lite_master.axi_bready),
+	        .s_axi_arvalid		(acif.lite_master.axi_arvalid),
+	        .s_axi_araddr		(acif.lite_master.axi_araddr[AXI_ADDR_WIDTH-1:0]),
+	        .s_axi_arprot		(acif.lite_master.axi_arprot[2:0]),
+	        .s_axi_rready		(acif.lite_master.axi_rready),
     );
     */
     config_register_file #(/*AUTOINSTPARAM*/
@@ -99,14 +84,14 @@ module bcci_ip_top(ac_if acif);
 			   .CRF_ADDR_WIDTH	(CRF_ADDR_WIDTH))
     AAA_config_register_file(/*AUTOINST*/
 			     // Outputs
-			     .s_axi_awready	(acif.lite_slave.axi_awready), // Templated
-			     .s_axi_wready	(acif.lite_slave.axi_wready), // Templated
-			     .s_axi_bvalid	(acif.lite_slave.axi_bvalid), // Templated
-			     .s_axi_bresp	(acif.lite_slave.axi_bresp), // Templated
-			     .s_axi_arready	(acif.lite_slave.axi_arready), // Templated
-			     .s_axi_rvalid	(acif.lite_slave.axi_rvalid), // Templated
-			     .s_axi_rdata	(acif.lite_slave.axi_rdata[AXI_DATA_WIDTH-1:0]), // Templated
-			     .s_axi_rresp	(acif.lite_slave.axi_rresp[1:0]), // Templated
+			     .s_axi_awready	(acif.lite_master.axi_awready), // Templated
+			     .s_axi_wready	(acif.lite_master.axi_wready), // Templated
+			     .s_axi_bvalid	(acif.lite_master.axi_bvalid), // Templated
+			     .s_axi_bresp	(acif.lite_master.axi_bresp), // Templated
+			     .s_axi_arready	(acif.lite_master.axi_arready), // Templated
+			     .s_axi_rvalid	(acif.lite_master.axi_rvalid), // Templated
+			     .s_axi_rdata	(acif.lite_master.axi_rdata[AXI_DATA_WIDTH-1:0]), // Templated
+			     .s_axi_rresp	(acif.lite_master.axi_rresp[1:0]), // Templated
 			     .interrupt_updone	(acif.interrupt_updone), // Templated
 			     .crf_ac_UPSTR	(crf_ac_UPSTR[CRF_DATA_WIDTH-1:0]),
 			     .crf_ac_UPENDR	(crf_ac_UPENDR[CRF_DATA_WIDTH-1:0]),
@@ -116,17 +101,17 @@ module bcci_ip_top(ac_if acif);
 			     // Inputs
 			     .clk		(acif.clk),	 // Templated
 			     .rst_n		(acif.rst_n),	 // Templated
-			     .s_axi_awvalid	(acif.lite_slave.axi_awvalid), // Templated
-			     .s_axi_awaddr	(acif.lite_slave.axi_awaddr[AXI_ADDR_WIDTH-1:0]), // Templated
-			     .s_axi_awprot	(acif.lite_slave.axi_awprot[2:0]), // Templated
-			     .s_axi_wvalid	(acif.lite_slave.axi_wvalid), // Templated
-			     .s_axi_wdata	(acif.lite_slave.axi_wdata[AXI_DATA_WIDTH-1:0]), // Templated
-			     .s_axi_wstrb	(acif.lite_slave.axi_wstrb), // Templated
-			     .s_axi_bready	(acif.lite_slave.axi_bready), // Templated
-			     .s_axi_arvalid	(acif.lite_slave.axi_arvalid), // Templated
-			     .s_axi_araddr	(acif.lite_slave.axi_araddr[AXI_ADDR_WIDTH-1:0]), // Templated
-			     .s_axi_arprot	(acif.lite_slave.axi_arprot[2:0]), // Templated
-			     .s_axi_rready	(acif.lite_slave.axi_rready), // Templated
+			     .s_axi_awvalid	(acif.lite_master.axi_awvalid), // Templated
+			     .s_axi_awaddr	(acif.lite_master.axi_awaddr[AXI_ADDR_WIDTH-1:0]), // Templated
+			     .s_axi_awprot	(acif.lite_master.axi_awprot[2:0]), // Templated
+			     .s_axi_wvalid	(acif.lite_master.axi_wvalid), // Templated
+			     .s_axi_wdata	(acif.lite_master.axi_wdata[AXI_DATA_WIDTH-1:0]), // Templated
+			     .s_axi_wstrb	(acif.lite_master.axi_wstrb), // Templated
+			     .s_axi_bready	(acif.lite_master.axi_bready), // Templated
+			     .s_axi_arvalid	(acif.lite_master.axi_arvalid), // Templated
+			     .s_axi_araddr	(acif.lite_master.axi_araddr[AXI_ADDR_WIDTH-1:0]), // Templated
+			     .s_axi_arprot	(acif.lite_master.axi_arprot[2:0]), // Templated
+			     .s_axi_rready	(acif.lite_master.axi_rready), // Templated
 			     .ac_crf_wrt	(ac_crf_wrt),
 			     .ac_crf_waddr	(ac_crf_waddr[CRF_ADDR_WIDTH-1:0]),
 			     .ac_crf_wdata	(ac_crf_wdata[CRF_DATA_WIDTH-1:0]));
@@ -214,28 +199,28 @@ module bcci_ip_top(ac_if acif);
      
 	
     /* bicubic_top AUTO_TEMPLATE (
-            .axi_ready		(acif.usif.upsp_ac_rd),
-            .bcci_rsp_valid(acif.usif.upsp_ac_wrt),
-            .bcci_rsp_data1(acif.usif.upsp_ac_wdata[BUFFER_WIDTH-1:0]),
+            .upsp_ac_rd		(acif.usif.upsp_ac_rd),
+            .upsp_ac_wrt(acif.usif.upsp_ac_wrt),
+            .upsp_ac_wdata(acif.usif.upsp_ac_wdata),
 			.clk			(acif.clk),
 			.rst_n			(acif.rst_n),
-            .axi_data		(acif.usif.ac_upsp_rdata),
-            .axi_valid		(acif.usif.ac_upsp_rvalid),
-			.bf_rsp_ready   (acif.usif.ac_upsp_wready),
+            .ac_upsp_rdata		(acif.usif.ac_upsp_rdata),
+            .ac_upsp_rvalid		(acif.usif.ac_upsp_rvalid),
+			.ac_upsp_wready   (acif.usif.ac_upsp_wready),
      );
      */
     bicubic_top #(/*AUTOINSTPARAM*/)
     AAA_bicubic_top(/*AUTOINST*/
 		    // Outputs
-		    .axi_ready		(acif.usif.upsp_ac_rd),	 // Templated
-		    .bcci_rsp_data1	(acif.usif.upsp_ac_wdata[BUFFER_WIDTH-1:0]), // Templated
-		    .bcci_rsp_valid	(acif.usif.upsp_ac_wrt), // Templated
+		    .upsp_ac_rd		(acif.usif.upsp_ac_rd),	 // Templated
+		    .upsp_ac_wdata	(acif.usif.upsp_ac_wdata), // Templated
+		    .upsp_ac_wrt	(acif.usif.upsp_ac_wrt), // Templated
 		    // Inputs
 		    .clk		(acif.clk),		 // Templated
 		    .rst_n		(acif.rst_n),		 // Templated
-		    .axi_data		(acif.usif.ac_upsp_rdata), // Templated
-		    .axi_valid		(acif.usif.ac_upsp_rvalid), // Templated
-		    .bf_rsp_ready	(acif.usif.ac_upsp_wready)); // Templated
+		    .ac_upsp_rdata	(acif.usif.ac_upsp_rdata), // Templated
+		    .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid), // Templated
+		    .ac_upsp_wready	(acif.usif.ac_upsp_wready)); // Templated
  
 endmodule
  

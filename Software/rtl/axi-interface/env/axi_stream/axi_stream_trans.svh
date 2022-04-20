@@ -33,6 +33,10 @@ class axi_stream_trans extends uvm_sequence_item;
     rand bit tdest;
     rand bit tuser;
 
+    // Delay for this trans
+    rand int unsigned delay = 0;
+    constraint DELAY;
+
     `uvm_object_utils_begin(axi_stream_trans)
         `uvm_field_int(tdata, UVM_ALL_ON)
         `uvm_field_int(tkeep, UVM_ALL_ON)
@@ -41,6 +45,13 @@ class axi_stream_trans extends uvm_sequence_item;
         `uvm_field_int(tlast, UVM_ALL_ON)
         `uvm_field_int(tdest, UVM_ALL_ON)
         `uvm_field_int(tuser, UVM_ALL_ON)
+        `uvm_field_int(delay, UVM_ALL_ON|UVM_NOCOMPARE)
     `uvm_object_utils_end
     
 endclass
+
+
+constraint axi_stream_trans::DELAY {
+    delay >= 0;
+    delay <= 5;
+}

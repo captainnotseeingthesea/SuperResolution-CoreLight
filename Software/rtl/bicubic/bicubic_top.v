@@ -1,4 +1,4 @@
-`include "define.v"
+// `include "define.v"
 `ifndef BUFFER
     `include "buffer.v"
 `endif
@@ -14,7 +14,10 @@
 `elsif GEN_IN_ONE
     `include "bicubic_upsample_1.v"
 `endif
-module bicubic_top
+module bicubic_top 
+#(localparam BUFFER_WIDTH = `UPSP_DATA_WIDTH, 
+  localparam CHANNEL_WIDTH = 8
+)
 (
     input clk,
     input rst_n,
@@ -38,8 +41,6 @@ module bicubic_top
     output wire upsp_ac_wrt
 
 );
-    localparam CHANNEL_WIDTH = 8;
-    localparam BUFFER_WIDTH = `UPSP_DATA_WIDTH;
 
 
     wire bf_req_valid;

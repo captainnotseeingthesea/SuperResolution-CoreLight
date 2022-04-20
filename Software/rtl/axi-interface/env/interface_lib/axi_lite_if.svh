@@ -34,9 +34,9 @@ interface axi_lite_if();
 	logic [AXI_DATA_WIDTH-1:0] axi_wdata;
 	logic [AXI_STRB_WIDTH-1:0] axi_wstrb;
 	//B
-	logic                 axi_bvalid;
-	logic                 axi_bready;
-	logic                 axi_bresp;
+	logic                 	   axi_bvalid;
+	logic                      axi_bready;
+	logic                      axi_bresp;
 	// AR
 	logic                      axi_arvalid;
 	logic                      axi_arready;

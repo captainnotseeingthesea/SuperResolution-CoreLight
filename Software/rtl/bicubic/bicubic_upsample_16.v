@@ -1,6 +1,8 @@
-`include "define.v"
+// `include "define.v"
 `include "bicubic_vector_mult.v"
-module bicubic_upsample_16(
+module bicubic_upsample_16
+#(localparam CHANNEL_WIDTH = 8)
+(
     input wire clk,
     input wire rst_n,
     input wire bf_req_valid,
@@ -31,7 +33,6 @@ module bicubic_upsample_16(
 );
 
 
-    localparam CHANNEL_WIDTH = 8;
     localparam WEIGHT_WIDTH = 4;
           
     localparam S_U1_1 = 4'd0;         // 0       0

@@ -74,6 +74,9 @@ endtask: main_phase
 
 task m_axi_stream_driver::write_one_trans(axi_stream_trans t);
     int i;
+    vif.axis_tvalid <= 1'b0    ;
+    repeat(t.delay) @(posedge vif.aclk);
+
     vif.axis_tvalid <= 1'b1    ;
     vif.axis_tid    <= t.tid   ;
     vif.axis_tdata  <= t.tdata ;

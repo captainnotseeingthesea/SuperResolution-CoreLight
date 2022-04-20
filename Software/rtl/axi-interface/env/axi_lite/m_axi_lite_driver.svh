@@ -29,8 +29,8 @@ class m_axi_lite_driver extends uvm_driver #(axi_lite_trans);
 
     extern virtual function void build_phase(uvm_phase phase);
     extern virtual task reset_phase(uvm_phase phase);
-    extern virtual task main_phase(uvm_phase phase);
-
+    extern virtual task configure_phase(uvm_phase phase);
+    
     extern task write_one_trans(axi_lite_trans t);
     
 endclass
@@ -58,7 +58,7 @@ task m_axi_lite_driver::reset_phase(uvm_phase phase);
     vif.axi_arvalid <= 0;
     vif.axi_araddr  <= 0;
     vif.axi_arprot  <= 0;
-    vif.axi_rvalid  <= 0;
+    vif.axi_rready  <= 0;
     while(!vif.arstn) @(posedge vif.aclk);
 
     phase.drop_objection(this);
@@ -66,13 +66,15 @@ task m_axi_lite_driver::reset_phase(uvm_phase phase);
 endtask: reset_phase
 
 
-task m_axi_lite_driver::main_phase(uvm_phase phase);
+task m_axi_lite_driver::configure_phase(uvm_phase phase);
+
     while(1) begin
         seq_item_port.get_next_item(req);
         write_one_trans(req);
         seq_item_port.item_done();
     end
-endtask
+
+endtask: configure_phase
 
 
 task m_axi_lite_driver::write_one_trans(axi_lite_trans t);

@@ -58,7 +58,6 @@ class axis_in_seq extends uvm_sequence #(axi_stream_trans);
 
         `uvm_info(get_name() ,"axis_in_seq finished", UVM_LOW)
 
-        #1000;
         if(starting_phase != null)
             starting_phase.drop_objection(this);
     endtask

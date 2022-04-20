@@ -23,22 +23,22 @@ interface ac_if();
 	// Up-Sampling
 	upsp_if usif();
 
-	// AXI-Lite slave for configuration
-	axi_lite_if lite_slave();
+	// AXI-Lite master for configuration
+	axi_lite_if lite_master();
 
-	// AXI-Stream slvae for input
-	axi_stream_if stream_slave();
-
-	// AXI-Stream master for output
+	// AXI-Stream master for input
 	axi_stream_if stream_master();
+
+	// AXI-Stream slvae for output
+	axi_stream_if stream_slave();
 
 	// Output for interrupt
 	logic interrupt_updone;
 
 	assign usif.clk = clk;
 	assign usif.rst_n = rst_n;
-	assign lite_slave.aclk  = clk;
-	assign lite_slave.arstn = rst_n;
+	assign lite_master.aclk  = clk;
+	assign lite_master.arstn = rst_n;
 	assign stream_slave.aclk  = clk;
 	assign stream_slave.arstn = rst_n;
 	assign stream_master.aclk  = clk;
