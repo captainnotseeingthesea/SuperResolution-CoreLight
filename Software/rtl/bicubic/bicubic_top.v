@@ -22,7 +22,7 @@ module bicubic_top
     input clk,
     input rst_n,
 
-    output wire upsp_ac_rd,
+    output wire upsp_ac_rdeady,
     input wire [23:0] ac_upsp_rdata,
     input wire ac_upsp_rvalid,
 
@@ -38,7 +38,7 @@ module bicubic_top
 `elsif GEN_IN_ONE
     output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
 `endif
-    output wire upsp_ac_wrt
+    output wire upsp_ac_wvalid
 
 );
 
@@ -113,14 +113,14 @@ module bicubic_top
 
 
     // hsk signal bcci to axi
-    wire bcci_2_bf_hsked = upsp_ac_wrt & ac_upsp_wready;
+    wire bcci_2_bf_hsked = upsp_ac_wvalid & ac_upsp_wready;
 
     buffer #(.BUFFER_WIDTH(BUFFER_WIDTH)) u_buffer (
         .clk(clk),
         .rst_n(rst_n),
 
     `ifndef SIM_WITHOUT_AXI
-        .axi_ready(upsp_ac_rd),
+        .axi_ready(upsp_ac_rdeady),
         .axi_data(ac_upsp_rdata),
         .axi_valid(ac_upsp_rvalid),
     `endif
@@ -1009,7 +1009,7 @@ module bicubic_top
 `endif
 
 
-    assign upsp_ac_wrt = R_bcci_rsp_valid & G_bcci_rsp_valid & B_bcci_rsp_valid;
+    assign upsp_ac_wvalid = R_bcci_rsp_valid & G_bcci_rsp_valid & B_bcci_rsp_valid;
 
 
 endmodule
@@ -1022,13 +1022,13 @@ module bicubic_top_tb();
     reg clk_tb;
     reg rst_n_tb;
 
-    wire upsp_ac_rd_tb;
+    wire upsp_ac_rdeady_tb;
     reg [23:0] ac_upsp_rdata_tb;
     reg ac_upsp_rvalid_tb;
 
     reg ac_upsp_wready_tb;
     wire [23:0] upsp_ac_wdata_tb;
-    wire upsp_ac_wrt_tb;
+    wire upsp_ac_wvalid_tb;
 
     initial begin
         clk_tb = 1'b0;
@@ -1052,13 +1052,13 @@ module bicubic_top_tb();
         .clk(clk_tb),
         .rst_n(rst_n_tb),
 
-        .upsp_ac_rd(upsp_ac_rd_tb),
+        .upsp_ac_rdeady(upsp_ac_rdeady_tb),
         .ac_upsp_rdata(ac_upsp_rdata_tb),
         .ac_upsp_rvalid(ac_upsp_rvalid_tb),
 
         .ac_upsp_wready(ac_upsp_wready_tb),
         .upsp_ac_wdata(upsp_ac_wdata_tb),
-        .upsp_ac_wrt(upsp_ac_wrt_tb)
+        .upsp_ac_wvalid(upsp_ac_wvalid_tb)
     );
 
 
