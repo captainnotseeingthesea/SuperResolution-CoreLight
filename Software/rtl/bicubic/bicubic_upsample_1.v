@@ -52,7 +52,7 @@ module bicubic_upsample_1(
     wire bf_req_hsked = bf_req_valid & bcci_req_ready;
     wire bcci_rsp_hsked = bcci_rsp_valid & bf_rsp_ready;
 
-    assign bcci_req_ready = 1'b1;
+    assign bcci_req_ready = 1'b1 & bf_rsp_ready;
     assign bcci_rsp_valid = bf_req_valid; 
 
     localparam CHANNEL_WIDTH = 8;

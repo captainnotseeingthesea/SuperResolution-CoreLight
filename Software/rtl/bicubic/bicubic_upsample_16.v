@@ -1,7 +1,7 @@
 // `include "define.v"
 `include "bicubic_vector_mult.v"
 module bicubic_upsample_16
-#(localparam CHANNEL_WIDTH = 8)
+#(parameter CHANNEL_WIDTH = 8)
 (
     input wire clk,
     input wire rst_n,
@@ -200,7 +200,7 @@ module bicubic_upsample_16
     wire cur_is_s15 = (cur_state == STATE_S15) ? 1'b1 : 1'b0;
     wire cur_is_s16 = (cur_state == STATE_S16) ? 1'b1 : 1'b0;
 
-    assign bcci_req_ready = cur_is_s1;
+    assign bcci_req_ready = cur_is_s1 & bf_rsp_ready;
     assign bcci_rsp_valid = bf_req_valid;  
 
     wire state_s1_exit_ena = cur_is_s1 & bf_req_hsked & bcci_rsp_hsked;

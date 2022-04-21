@@ -15,8 +15,10 @@
     `include "bicubic_upsample_1.v"
 `endif
 module bicubic_top 
-#(localparam BUFFER_WIDTH = `UPSP_DATA_WIDTH, 
-  localparam CHANNEL_WIDTH = 8
+#(
+    // localparam BUFFER_WIDTH = `UPSP_DATA_WIDTH, 
+    parameter BUFFER_WIDTH = 24, 
+  parameter CHANNEL_WIDTH = 8
 )
 (
     input clk,
@@ -1038,7 +1040,9 @@ module bicubic_top_tb();
         ac_upsp_wready_tb = 1'b0;
         #7 rst_n_tb = 1'b1;
            ac_upsp_wready_tb = 1'b1;
+        #253 ac_upsp_wready_tb = 1'b0;
 
+        #11 ac_upsp_wready_tb = 1'b1;
     end
 
     always #2 clk_tb = ~clk_tb;

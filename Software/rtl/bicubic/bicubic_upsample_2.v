@@ -54,7 +54,7 @@ module bicubic_upsample_2(
     wire cur_is_s1 = (cur_state == STATE_S1) ? 1'b1 : 1'b0;
     wire cur_is_s2 = (cur_state == STATE_S2) ? 1'b1 : 1'b0;
 
-    assign bcci_req_ready = cur_is_s1;
+    assign bcci_req_ready = cur_is_s1 & bf_rsp_ready;
     assign bcci_rsp_valid = bf_req_valid;    
 
     wire state_s1_exit_ena = cur_is_s1 & bf_req_hsked & bcci_rsp_hsked;

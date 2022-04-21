@@ -196,7 +196,7 @@ module bicubic_upsample_8  (
     wire cur_is_s7 = (cur_state == STATE_S7) ? 1'b1 : 1'b0;
     wire cur_is_s8 = (cur_state == STATE_S8) ? 1'b1 : 1'b0;
 
-    assign bcci_req_ready = cur_is_s1;
+    assign bcci_req_ready = cur_is_s1 & bf_rsp_ready;
     assign bcci_rsp_valid = cur_is_s2 | cur_is_s4
                           | cur_is_s6 | cur_is_s8;
 

@@ -219,15 +219,15 @@ module buffer #(
     dfflr #(.DW(1)) u_lock_dff (.lden(lock_ena), .dnxt(nxt_cnt_ena_lock), .qout(cur_cnt_ena_lock), .clk(clk), .rst_n(rst_n));
 
 `ifdef GEN_IN_SIXTEEN
-    assign cnt_ena = init_finished & cur_col_cnt_below_width & ((~cur_cnt_is_15) | (cur_cnt_is_15 & axi_valid));
+    assign cnt_ena = init_finished & cur_col_cnt_below_width & bcci_2_bf_hsked & ((~cur_cnt_is_15) | (cur_cnt_is_15 & axi_valid));
 `elsif GEN_IN_EIGHT
-    assign cnt_ena = init_finished & cur_col_cnt_below_width & ((~cur_cnt_is_7) | (cur_cnt_is_7 & axi_valid));
+    assign cnt_ena = init_finished & cur_col_cnt_below_width & bcci_2_bf_hsked & ((~cur_cnt_is_7) | (cur_cnt_is_7 & axi_valid));
 `elsif GEN_IN_FOUR
-    assign cnt_ena = init_finished & cur_col_cnt_below_width & ((~cur_cnt_is_3) | (cur_cnt_is_3 & axi_valid));
+    assign cnt_ena = init_finished & cur_col_cnt_below_width & bcci_2_bf_hsked & ((~cur_cnt_is_3) | (cur_cnt_is_3 & axi_valid));
 `elsif GEN_IN_TWO
-    assign cnt_ena = init_finished & cur_col_cnt_below_width & ((~cur_cnt_is_1) | (cur_cnt_is_1 & axi_valid));
+    assign cnt_ena = init_finished & cur_col_cnt_below_width & bcci_2_bf_hsked & ((~cur_cnt_is_1) | (cur_cnt_is_1 & axi_valid));
 `elsif GEN_IN_ONE
-    assign cnt_ena = init_finished & cur_col_cnt_below_width & axi_valid;
+    assign cnt_ena = init_finished & cur_col_cnt_below_width & bcci_2_bf_hsked & axi_valid;
 `endif
 
     assign bf_req_valid = init_finished ? (cur_col_cnt_below_width & (~cur_cnt_ena_lock) & (~end_of_upsample)) : 1'b0;
