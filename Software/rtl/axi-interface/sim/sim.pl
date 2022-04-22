@@ -25,4 +25,5 @@ $xcmd =
 ."-f macros -f filelist -top tb_bcci_ip "
 ."$verbo";
 
+system "rm xcelium.d -r";
 system $xcmd;

@@ -384,15 +384,11 @@ module access_control # (
 			startup <= 1'b0;
 	end
 
-	
-
-
 `endif
+
 
 // SVA for the design features
 `ifndef DISABLE_SV_ASSERTION
-
-
 
 `endif
 

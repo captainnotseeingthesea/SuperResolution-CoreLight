@@ -8,25 +8,37 @@ The structure of this fold is showed below :
 |-- axi-interface
     |-- auto.pl				# script for emacs verilog-mode
     |-- readme.md
-    |-- env		    	# environment for verification.
-    |   |-- ifs.sv			# interface
-    |   |-- tb_ac_crf.sv	# testbench
-    |   |-- top.sv			# top modult, DUT
-    |   |-- uvm				# uvm classes written for env
-    |-- sim				
+    |-- env				    # verification environment based on UVM
+    |   |-- axi_lite
+    |   |-- axi_stream
+    |   |-- dut
+    |   |-- environment
+    |   |-- interface_lib
+    |   |-- scoreboard
+    |   |-- sequence_lib
+    |   |-- test_lib
+    |   |-- testbench
+    |   |-- up_sampling
+    |   |-- utils
+    |
+    |-- sim				    # verification working directory
     |   |-- filelist
     |   |-- macros
-    |   |-- sim.pl			# simulation script
-    |-- src
+    |   |-- onepiece540.bmp
+    |   |-- onepiece540_4.bmp
+    |   |-- sim.pl
+    |
+    |-- src				    # source files
         |-- access_control.v
         |-- config_register_file.v
         |-- stream_in.v
+
 ```
 
 **Source files :**
 
 - config_register_file.v
-  - Configuration registers. Accessed by PS side via the AXI4-Lite interface as the slave, while simple write/busy mechanism for PL side. An interrupt signal is contained.
+  - Configuration registers. Accessed by PS side via the AXI4-Lite interface as the slave, while simple write/busy mechanism for PL side. An interrupt signal `interrupt_updone` is asserted after finishing up-sampling.
 - stream_in.v
   - Stream in, acts as an AXI-Stream slave, receives data from DMA and bypass data to PL side. 
   - Signals ignored in the implementation including: **TID、TSTRB、TKEEP、TDEST and TUSER**.
@@ -52,3 +64,4 @@ $ ./sim.pl
 ```
 
 `xcelium` **MUST BE INSTALLED**
+

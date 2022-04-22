@@ -23,7 +23,9 @@ import axi_lite_pkg::*;
 import axi_stream_pkg::*;
 import upsp_pkg::*;
 
-`include "axil_seq.svh"
+`include "axil_start_seq.svh"
+`include "axil_end_seq.svh"
+
 `include "axis_in_seq.svh"
 `include "upsp_seq.svh"
 

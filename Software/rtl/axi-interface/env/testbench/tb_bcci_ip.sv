@@ -32,7 +32,12 @@ import utils_pkg::*;
 	localparam SRC_IMG_HEIGHT  = `SRC_IMG_HEIGHT ;
 	localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
 	localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
-
+    
+    localparam string SRC_BMP_BASE    = "onepiece54";
+    localparam string SRC_BMP_FILE    = {SRC_BMP_BASE, ".bmp"};
+    localparam string SRC_BIN_FILE    = {SRC_BMP_BASE, "_tmp_bin"};
+    localparam string DST_BMP_FILE    = {SRC_BMP_BASE, "_4.bmp"};
+    localparam string DST_BIN_FILE    = {SRC_BMP_BASE, "_4_tmp_bin"};
 
     ac_if acif();
 
@@ -67,6 +72,11 @@ import utils_pkg::*;
         "uvm_test_top.env.axil_agt.drv",
         "vif",
         acif.lite_master);
+
+        uvm_config_db#(virtual ac_if)::set(null, 
+        "uvm_test_top.env.axil_agt.drv",
+        "acif",
+        acif);
 
         // in axi-stream driver
         uvm_config_db#(virtual axi_stream_if)::set(null, 
@@ -111,11 +121,11 @@ import utils_pkg::*;
         uvm_config_db#(string)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "src_bmp",
-        "onepiece54.bmp");
+        SRC_BMP_FILE);
         uvm_config_db#(string)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "dst_bin",
-        "onepiece54_tmp_bin");
+        SRC_BIN_FILE);
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "height",
@@ -129,11 +139,11 @@ import utils_pkg::*;
         uvm_config_db#(string)::set(null, 
         "uvm_test_top.env.s_axis_agt.dmp",
         "src_bin",
-        "onepiece54_4_tmp_bin");
+        DST_BIN_FILE);
         uvm_config_db#(string)::set(null, 
         "uvm_test_top.env.s_axis_agt.dmp",
         "dst_bmp",
-        "onepiece54_4.bmp");
+        DST_BMP_FILE);
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.s_axis_agt.dmp",
         "height",
@@ -149,6 +159,12 @@ import utils_pkg::*;
 	begin
 		$dumpfile("../sim/waveform.vcd");
         $dumpvars(0, tb_bcci_ip);
+        // wait(tb_bcci_ip.dut.AAA_bicubic_top.u_buffer.cur_row_cnt == 2);
+        // $dumpoff;
+        // wait(tb_bcci_ip.dut.AAA_bicubic_top.u_buffer.cur_row_cnt == 52);
+        // $dumpon;
+        // #10000;
+        // $dumpoff;
         // $dumpvars(2, tb_bcci_ip.dut.AAA_access_control.upsp_wrtcnt, 
         // tb_bcci_ip.dut.AAA_access_control.ac_rdcnt, 
         // tb_bcci_ip.acif.stream_slave);

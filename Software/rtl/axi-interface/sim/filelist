@@ -25,3 +25,6 @@
 
 // TB
 "../env/testbench/tb_bcci_ip.sv"
+
+// IP
+"../../IP/bcci/bcci_ip.v"

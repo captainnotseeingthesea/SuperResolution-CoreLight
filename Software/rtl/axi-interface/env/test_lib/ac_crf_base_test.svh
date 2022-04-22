@@ -37,7 +37,7 @@ function void ac_crf_base_test::build_phase(uvm_phase phase);
     uvm_config_db#(uvm_object_wrapper)::set(this, 
      "env.axil_agt.sqr.main_phase", 
      "default_sequence",
-     axil_seq::type_id::get());
+     axil_start_seq::type_id::get());
 
      uvm_config_db#(uvm_object_wrapper)::set(this, 
      "env.m_axis_agt.sqr.main_phase", 

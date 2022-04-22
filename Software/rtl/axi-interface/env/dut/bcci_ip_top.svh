@@ -28,6 +28,7 @@ module bcci_ip_top(ac_if acif);
     localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
     localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
 	localparam BUFFER_WIDTH    = UPSP_DATA_WIDTH;
+	localparam CHANNEL_WIDTH   = 8;
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -203,7 +204,10 @@ module bcci_ip_top(ac_if acif);
 			.ac_upsp_wready   (acif.usif.ac_upsp_wready),
      );
      */
-    bicubic_top #(/*AUTOINSTPARAM*/)
+    bicubic_top #(/*AUTOINSTPARAM*/
+		  // Parameters
+		  .BUFFER_WIDTH		(BUFFER_WIDTH),
+		  .CHANNEL_WIDTH	(CHANNEL_WIDTH))
     AAA_bicubic_top(/*AUTOINST*/
 		    // Outputs
 		    .upsp_ac_rready	(acif.usif.upsp_ac_rready), // Templated

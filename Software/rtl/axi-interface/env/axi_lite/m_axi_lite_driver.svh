@@ -26,10 +26,12 @@ class m_axi_lite_driver extends uvm_driver #(axi_lite_trans);
     endfunction
 
     virtual axi_lite_if vif;
+    virtual ac_if acif;
 
     extern virtual function void build_phase(uvm_phase phase);
     extern virtual task reset_phase(uvm_phase phase);
     extern virtual task configure_phase(uvm_phase phase);
+    extern virtual task post_main_phase(uvm_phase phase);
     
     extern task write_one_trans(axi_lite_trans t);
     
@@ -41,6 +43,8 @@ function void m_axi_lite_driver::build_phase(uvm_phase phase);
     super.build_phase(phase);
     if(!uvm_config_db#(virtual axi_lite_if)::get(this, "", "vif", vif))
         `uvm_fatal(get_name(), "vif must be set!")
+    if(!uvm_config_db#(virtual ac_if)::get(this, "", "acif", acif))
+        `uvm_fatal(get_name(), "acif must be set!")
 endfunction
 
 
@@ -67,7 +71,7 @@ endtask: reset_phase
 
 
 task m_axi_lite_driver::configure_phase(uvm_phase phase);
-
+    
     while(1) begin
         seq_item_port.get_next_item(req);
         write_one_trans(req);
@@ -75,6 +79,19 @@ task m_axi_lite_driver::configure_phase(uvm_phase phase);
     end
 
 endtask: configure_phase
+
+
+task m_axi_lite_driver::post_main_phase(uvm_phase phase);
+    
+    while(acif.interrupt_updone == 1'b0) @(posedge vif.aclk);
+
+    while(1) begin
+        seq_item_port.get_next_item(req);
+        write_one_trans(req);
+        seq_item_port.item_done();
+    end
+
+endtask: post_main_phase
 
 
 task m_axi_lite_driver::write_one_trans(axi_lite_trans t);
