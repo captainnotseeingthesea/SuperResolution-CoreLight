@@ -18,7 +18,8 @@ mkdir $tmp, 0755 or die "cannot mkdir $tmp:$!";
 "src/*.v ".
 "env/dut/*.svh ".
 "env/testbench/*.sv ".
-"../bicubic/bicubic_top.v "
+"../bicubic/bicubic_top.v ".
+"../IP/bcci/*.v"
 ;
 
 
@@ -36,6 +37,9 @@ foreach $src (@srcfiles) {
     substr($dst, -1, 1) = "" if substr($dst, -1, 1) eq "h";
 
     next if basename($src) eq "bicubic_top.v";
+
+    next if basename($src) eq "bcci_ip.v";
+
     copy $dst, $src or die "cannot copy $dst:$!";
 }
 

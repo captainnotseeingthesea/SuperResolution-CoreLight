@@ -24,6 +24,7 @@ import sequence_pkg::*;
 
 `include "base_test.svh"
 `include "ac_crf_base_test.svh"
+`include "ac_bcci_test.svh"
 `include "bcci_ip_test.svh"
 
 endpackage

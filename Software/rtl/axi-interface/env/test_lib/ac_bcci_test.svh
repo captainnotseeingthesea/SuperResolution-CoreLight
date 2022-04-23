@@ -2,23 +2,23 @@
 
  Copyright: NUDT_CoreLight
 
- File name: bcci_ip_test.svh
+ File name: ac_bcci_test.svh
 
  Author: NUDT_CoreLight
 
- Date: 2021-04-23
+ Date: 2021-04-14
 
 
  Description:
 
  **************************************************/
 
-class bcci_ip_test extends base_test
-#(.env_t(bcci_ip_env));
+class ac_bcci_test extends base_test
+#(.env_t(ac_bcci_env));
     
-    `uvm_component_utils(bcci_ip_test)
+    `uvm_component_utils(ac_bcci_test)
 
-    function new(string name = "bcci_ip_test", uvm_component parent);
+    function new(string name = "ac_bcci_test", uvm_component parent);
         super.new(name, parent);
     endfunction
 
@@ -28,7 +28,7 @@ endclass
 
 
 // Method
-function void bcci_ip_test::build_phase(uvm_phase phase);
+function void ac_bcci_test::build_phase(uvm_phase phase);
     super.build_phase(phase);
     
     uvm_config_db#(uvm_object_wrapper)::set(this, 

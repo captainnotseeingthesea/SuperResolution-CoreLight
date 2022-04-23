@@ -2,18 +2,18 @@
 
  Copyright: NUDT_CoreLight
 
- File name: tb_bcci_ip.sv
+ File name: tb_ac_bcci.sv
 
  Author: NUDT_CoreLight
 
- Date: 2021-04-23
+ Date: 2021-04-15
 
 
  Description:
 
  **************************************************/
 
-module tb_bcci_ip();
+module tb_ac_bcci();
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
@@ -21,11 +21,12 @@ import uvm_pkg::*;
 import test_pkg::*;
 import utils_pkg::*;
 
+
 	localparam SRC_IMG_WIDTH   = `SRC_IMG_WIDTH  ;
 	localparam SRC_IMG_HEIGHT  = `SRC_IMG_HEIGHT ;
 	localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
 	localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
-
+    
     localparam string SRC_BMP_BASE    = "onepiece54";
     localparam string SRC_BMP_FILE    = {SRC_BMP_BASE, ".bmp"};
     localparam string SRC_BIN_FILE    = {SRC_BMP_BASE, "_tmp_bin"};
@@ -34,7 +35,7 @@ import utils_pkg::*;
 
     ac_if acif();
 
-    bcci_ip_top dut (/*AUTOINST*/
+    ac_bcci_top dut (/*AUTOINST*/
 		     // Interfaces
 		     .acif		(acif));
 
@@ -55,7 +56,7 @@ import utils_pkg::*;
     // Run UVM test
     initial begin
         utils_pkg::utils_path = "../env/utils";
-        run_test("bcci_ip_test");
+        run_test("ac_bcci_test");
     end
 
     // Config interfaces
@@ -151,7 +152,16 @@ import utils_pkg::*;
 	initial
 	begin
 		$dumpfile("../sim/waveform.vcd");
-        $dumpvars(0, tb_bcci_ip);
+        $dumpvars(0, tb_ac_bcci);
+        // wait(tb_ac_bcci.dut.AAA_bicubic_top.u_buffer.cur_row_cnt == 2);
+        // $dumpoff;
+        // wait(tb_ac_bcci.dut.AAA_bicubic_top.u_buffer.cur_row_cnt == 52);
+        // $dumpon;
+        // #10000;
+        // $dumpoff;
+        // $dumpvars(2, tb_ac_bcci.dut.AAA_access_control.upsp_wrtcnt, 
+        // tb_ac_bcci.dut.AAA_access_control.ac_rdcnt, 
+        // tb_ac_bcci.acif.stream_slave);
 	end
  
 endmodule

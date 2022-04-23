@@ -13,7 +13,24 @@
 
  **************************************************/
 
-module bcci_ip(/*AUTOARG*/
+module bcci_ip
+#(
+	parameter  AXI_DATA_WIDTH  = `AXI_DATA_WIDTH   ,
+	localparam AXI_STRB_WIDTH  = AXI_DATA_WIDTH/8  ,
+	parameter  AXI_ADDR_WIDTH  = `AXI_ADDR_WIDTH   ,
+	parameter  AXIS_DATA_WIDTH = `AXIS_DATA_WIDTH  ,
+	localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8 ,
+	parameter  CRF_DATA_WIDTH  = `CRF_DATA_WIDTH   ,
+	parameter  CRF_ADDR_WIDTH  = `CRF_ADDR_WIDTH   ,
+	parameter  UPSP_DATA_WIDTH = `UPSP_DATA_WIDTH  ,
+	parameter  SRC_IMG_WIDTH   = `SRC_IMG_WIDTH    ,
+	parameter  SRC_IMG_HEIGHT  = `SRC_IMG_HEIGHT   ,
+	parameter  DST_IMG_WIDTH   = `DST_IMG_WIDTH    ,
+	parameter  DST_IMG_HEIGHT  = `DST_IMG_HEIGHT   ,
+	localparam BUFFER_WIDTH    = UPSP_DATA_WIDTH   ,
+	parameter  CHANNEL_WIDTH   = 8
+)
+(/*AUTOARG*/
    // Outputs
    s_axi_awready, s_axi_wready, s_axi_bvalid, s_axi_bresp,
    s_axi_arready, s_axi_rvalid, s_axi_rdata, s_axi_rresp,
@@ -28,22 +45,6 @@ module bcci_ip(/*AUTOARG*/
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user,
    m_axis_tready
    );
-
-	localparam AXI_DATA_WIDTH  = `AXI_DATA_WIDTH ;
-	localparam AXI_STRB_WIDTH  = AXI_DATA_WIDTH/8;
-	localparam AXI_ADDR_WIDTH  = `AXI_ADDR_WIDTH ;
-	localparam AXIS_DATA_WIDTH = `AXIS_DATA_WIDTH;
-	localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
-	localparam CRF_DATA_WIDTH  = `CRF_DATA_WIDTH ;
-	localparam CRF_ADDR_WIDTH  = `CRF_ADDR_WIDTH ;
-	localparam UPSP_DATA_WIDTH = `UPSP_DATA_WIDTH;
-	localparam SRC_IMG_WIDTH   = `SRC_IMG_WIDTH  ;
-	localparam SRC_IMG_HEIGHT  = `SRC_IMG_HEIGHT ;
-	localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
-	localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
-
-	localparam BUFFER_WIDTH    = UPSP_DATA_WIDTH;
-	localparam CHANNEL_WIDTH   = 8;
 	
 	input clk;
 	input rst_n;

@@ -26,6 +26,7 @@ import upsp_pkg::*;
 
 `include "base_env.svh"
 `include "ac_crf_env.svh"
+`include "ac_bcci_env.svh"
 `include "bcci_ip_env.svh"
 
 endpackage

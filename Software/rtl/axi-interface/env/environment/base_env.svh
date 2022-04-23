@@ -45,17 +45,6 @@ endclass
 // Methods
 function void base_env::build_phase(uvm_phase phase);
     super.build_phase(phase);
-    axil_agt      = m_axi_lite_agent::type_id::create("axil_agt", this);
-    upsp_agt      = upsp_agent::type_id::create("upsp_agt", this);
-    s_axis_agt    = s_axi_stream_agent::type_id::create("s_axis_agt", this);   
-    m_axis_agt    = m_axi_stream_agent::type_id::create("m_axis_agt", this);    
-    istream_board = stream_in_scoreboard::type_id::create("istream_board", this); 
-    ostream_board = stream_out_scoreboard::type_id::create("ostream_board", this);
-
-    istream_iboard_fifo = new("istream_iboard_fifo", this);
-    upsp_iboard_fifo    = new("upsp_iboard_fifo", this);
-    upsp_oboard_fifo    = new("upsp_oboard_fifo", this);
-    ostream_oboard_fifo = new("ostream_oboard_fifo", this);
 endfunction: build_phase
 
 
