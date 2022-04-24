@@ -1,0 +1,17 @@
+# Example
+
+> Only capable of handling 24bpp uncompressed bmp
+
+## Build
+
+```c
+make
+```
+
+## Use
+
+```c
+./bin/upscale_example <filename> <ouput_width> <output_height> [<output_filename>]
+./bin/read_header <filename>
+./bin/downscale <filename> <ouput_width> <output_height> [<output_filename>]
+```

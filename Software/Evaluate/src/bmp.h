@@ -10,6 +10,7 @@ typedef struct {
     uint8_t r;
     uint8_t g;
     uint8_t b;
+    uint8_t a;
 } Pixel;
 
 typedef struct {             // Total: 54 bytes
@@ -37,28 +38,11 @@ typedef struct {
   Pixel    *data;
 } BMPImage;
 
-typedef struct
-{
-    char * filename; // BMP文件路径
-    int rw; // 读写标志: 0/读 1/写
-    int rowCount; // 当前已处理行计数
-    int rowMax;   // rowCount计数目标
-    int rowSize; // 每行像素的字节数
-    BMPImage *img; // BMP图片信息
-} BMP_Private;
-
 
 BMPImage *bmp_read(const char *filename);
 BMPImage *bmp_create(uint32_t width, uint32_t height);
 int32_t   bmp_write(BMPImage *img, const char *filename);
 Pixel    *bmp_pixel_at(BMPImage *img, uint32_t x, uint32_t y);
-
-BMP_Private *bmp_createLine(char *outFile, int width, int height, int pixelBytes, int quality);
-BMP_Private *bmp_getline(char *inFile, int *width, int *height, int *pixelBytes);
-void bmp_closeLine(BMP_Private *bp);
-int bmp_line(BMP_Private *bp, unsigned char *rgbLine, int line);
-
-
 
 void bmp_print_header(BMPImage *img);
 

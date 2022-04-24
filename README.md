@@ -86,12 +86,6 @@ testSRAlgorithms % 运行各类基于小波变换的图像超分辨率算法
     ./app ./in.jpg 0.25 0 // 完成对in.jpg图片使用最近距离插值缩小4倍
     ./app ./in.jpg 5.0 1  // 完成对in.jpg图片使用双线性插值放大5倍
     ```
-  - TEST_MODE = 3 (BMP图片（24bpp、32bpp）的读写操作)
-    ```c++
-    ./app 源BMP文件 目标BMP文件 // 测试BMP(24bpp，32bpp)的读取和写入功能的正确性
-    ./app ./in.bmp ./out.bmp // 读取24bpp的in.bmp文件并将其重新写入到out.bmp文件中
-    ./app ./in_32.bmp ./out_32.bmp // 读取32bpp的in_32.bmp文件并将其重新写入到out_32.bmp文件中
-    ```
 
 ### 硬件模块 (Hardware)
 #### 开发环境
@@ -109,12 +103,12 @@ testSRAlgorithms % 运行各类基于小波变换的图像超分辨率算法
 | Bicubic | 23.659489 | 0.62899595 |
 | NEDI | 26.702093 | 0.70439243 |
 | **NEDI_Sobel** | **26.70276**  | **0.7044268** |
-| NEDI_Lenna | 26.514889 | 0.6937633 | 
+| NEDI_Canny | 26.514889 | 0.6937633 | 
 
 <img src="Software/Edge-Directed_Interpolation/images/lenna.png">
   
 ## Contribution
-此项目由芯光队成员[李宣佚](https://github.com/captainnotseeingthesea)、[高文才]()和[郑康]()共同维护。
+此项目由芯光队成员[李宣佚](https://github.com/captainnotseeingthesea)、[高文才](https://github.com/gao12)和[郑康](https://github.com/AshNameless)共同维护。
 
 
 

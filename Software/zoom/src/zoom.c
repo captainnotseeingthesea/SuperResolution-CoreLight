@@ -38,6 +38,11 @@ typedef struct
     int threadFinsh;
 } Zoom_Info;
 
+/*
+ *  多线程并行的方式来缩放图像(双三次插值算法)
+ */
+void _zoom_bicubic(Zoom_Info *info);
+
 //抛线程工具
 static void new_thread(void *obj, void *callback)
 {
@@ -55,6 +60,94 @@ static void new_thread(void *obj, void *callback)
     pthread_attr_destroy(&attr);
 }
 
+/* 
+    多线程并行的方式来缩放图像(基于opencv的双线性插值算法)
+*/
+void _zoom_linear_opencv(Zoom_Info *info)
+{
+    float fWStep = 0.0f, fHStep = 0.0f;
+    int ii = 0, jj = 0;
+    float fx = 0.0f, fy = 0.0f;
+    int sx = 0, sy = 0;
+    short cbufY[2], cbufX[2];
+    int mm = 0, nn = 0;
+    Zoom_Rgb * pCurr = 0;
+    Zoom_Rgb * pSamp = 0;
+
+    int r_sum = 0, g_sum = 0, b_sum = 0;
+    fWStep = 1.0f * info->width / info->widthOut;
+    fHStep = 1.0f * info->height / info->heightOut;
+    pSamp = info->rgbOut;
+
+    //多线程
+    int startLine, endLine;
+    //多线程,获得自己处理行信息
+    startLine = info->lineDiv * (info->threadCount++);
+    endLine = startLine + info->lineDiv;
+    if (endLine > info->heightOut)
+        endLine = info->heightOut;
+
+    for(ii = startLine; ii < endLine; ii++)
+    {
+        fy = (float)((ii + 0.5) * fHStep - 0.5);
+        sy = (int)fy;
+        fy -= sy;
+        if(sy < 0)
+        {
+            sy = 0;
+        }
+
+        if(sy >= info->heightOut - 2)
+        {
+            sy = info->heightOut - 2;
+        }
+
+        cbufY[0] = (short)((1.f - fy) * 2048);
+        cbufY[1] = 2048 - cbufY[0];
+
+        for(jj = 0; jj < info->widthOut; jj++)
+        {
+            fx = (float)((jj + 0.5) * fWStep - 0.5);
+            sx = (int)fx;
+            fx -= sx;
+
+            if(sx < 1)
+            {
+                fx = 0, sx = 1;
+            }
+
+            if(sx >= info->widthOut - 2)
+            {
+                fx = 0, sx = info->widthOut - 2;
+            }
+
+            cbufX[0] = (short)((1.f - fx) * 2048);
+            cbufX[1] = 2048 - cbufX[0];
+
+            for(mm = 0; mm < 2; mm++) // cols
+            {
+                pCurr = info->rgb + (sy + mm) * info->width;
+                for(nn = 0; nn < 2; nn++) // rows
+                {
+                    r_sum += pCurr[sx + nn].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[sx + nn].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[sx + nn].b * cbufY[mm]*cbufX[nn];
+                }
+            }
+            r_sum >>= 22;
+            g_sum >>= 22;
+            b_sum >>= 22;
+            (pSamp + jj)->r = r_sum;
+            (pSamp + jj)->g = g_sum;
+            (pSamp + jj)->b = b_sum;
+        }
+        pSamp += info->widthOut;
+    }
+}
+
+/* 
+    多线程并行的方式来缩放图像(简单双线性插值算法)
+*/
 void _zoom_linear(Zoom_Info *info)
 {
     float floorX, floorY, ceilX, ceilY;
@@ -77,7 +170,7 @@ void _zoom_linear(Zoom_Info *info)
     yDiv = (float)info->height / info->heightOut;
 
     //列像素遍历
-    for (y = startLine, yStep = startLine * yDiv,
+    for (y = startLine, yStep = (startLine + 0.5) * yDiv - 0.5,
         offsetOut = startLine * info->widthOut;
          y < endLine; y += 1, yStep += yDiv)
     {
@@ -98,7 +191,7 @@ void _zoom_linear(Zoom_Info *info)
         y2 *= info->width;
 
         //行像素遍历
-        for (x = 0, xStep = 0; x < info->widthOut; x += 1, xStep += xDiv, offsetOut += 1)
+        for (x = 0, xStep = (x + 0.5) * xDiv - 0.5; x < info->widthOut; x += 1, xStep += xDiv, offsetOut += 1)
         {
             //左右2个相邻点: 距离计算
             floorX = floor(xStep);
@@ -136,6 +229,119 @@ void _zoom_linear(Zoom_Info *info)
     info->threadFinsh++;
 }
 
+/* 
+    流式输入的方式来缩放图像(基于opencv的双线性插值算法)
+*/
+void _zoom_linear_stream_opencv(
+    Zoom_Info *info,
+    void *objSrc, void *objDist,
+    int (*srcRead)(void *, unsigned char *, int),
+    int (*distWrite)(void *, unsigned char *, int))
+{
+    float fWStep = 0.0f, fHStep = 0.0f;
+    int ii = 0, jj = 0;
+    float fx = 0.0f, fy = 0.0f;
+    int sx = 0, sy = 0;
+    short cbufY[2], cbufX[2];
+    int mm = 0, nn = 0;
+
+    //当前读取行数
+    int readLine = 0;
+    //两行数据的指针,对应y1,y2来使用
+    Zoom_Rgb *line[2];
+    line[0] = &info->rgb[0];
+    line[1] = &info->rgb[info->width];
+    Zoom_Rgb *lineX;
+
+    Zoom_Rgb * pSamp = 0;
+    Zoom_Rgb * pCurr = 0;
+    int r_sum = 0, g_sum = 0, b_sum = 0;
+
+    //步宽计算(注意谁除以谁,这里表示的是在输出图像上每跳动一行、列等价于源图像跳过的行、列量)
+    fWStep = 1.0f * info->width / info->widthOut;
+    fHStep = 1.0f * info->height / info->heightOut;
+    pSamp = info->rgbOut;
+
+    //读取新1行数据
+    srcRead(objSrc, (unsigned char *)line[1], 1);
+    //填充满2行
+    memcpy(line[0], line[1], info->width * 3);
+
+    for(ii = 0; ii < info->heightOut; ii++)
+    {
+        fy = (float)((ii + 0.5) * fHStep - 0.5);
+        sy = (int)fy;
+        fy -= sy;
+        if(sy < 0)
+        {
+            fy = 0, sy = 0;
+        }
+
+        if(sy >= info->heightOut - 2)
+        {
+            fy = 0, sy = info->heightOut - 2;
+        }
+
+        while (readLine < sy + 1)
+        {
+            //后面数据往前挪
+            lineX = line[0];
+            line[0] = line[1];
+            line[1] = lineX;
+            //读取新一行数据
+            if (srcRead(objSrc, (unsigned char *)line[1], 1) == 1)
+                readLine += 1;
+            else
+                break;
+        }
+        
+
+        cbufY[0] = (short)((1.f - fy) * 2048);
+        cbufY[1] = 2048 - cbufY[0];
+
+        for(jj = 0; jj < info->widthOut; jj++)
+        {
+            fx = (float)((jj + 0.5) * fWStep - 0.5);
+            sx = (int)fx;
+            fx -= sx;
+
+            if(sx < 1)
+            {
+                fx = 0, sx = 1;
+            }
+
+            if(sx >= info->widthOut - 2)
+            {
+                fx = 0, sx = info->widthOut - 2;
+            }
+
+            cbufX[0] = (short)((1.f - fx) * 2048);
+            cbufX[1] = 2048 - cbufX[0];
+
+            for(mm = 0; mm < 2; mm++) // cols
+            {
+                pCurr = line[mm];
+                for(nn = 0; nn < 2; nn++) // rows
+                {
+                    r_sum += pCurr[sx + nn].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[sx + nn].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[sx + nn].b * cbufY[mm]*cbufX[nn];
+                }
+            }
+            r_sum >>= 22;
+            g_sum >>= 22;
+            b_sum >>= 22;
+            (pSamp + jj)->r = r_sum;
+            (pSamp + jj)->g = g_sum;
+            (pSamp + jj)->b = b_sum;
+        }
+        distWrite(objDist, (unsigned char *)info->rgbOut, 1);
+    }
+}
+
+/* 
+    流式输入的方式来缩放图像(基于简单双线性插值算法)
+*/
 void _zoom_linear_stream(
     Zoom_Info *info,
     void *objSrc, void *objDist,
@@ -165,7 +371,7 @@ void _zoom_linear_stream(
     memcpy(line1, line2, info->width * 3);
 
     //列像素遍历
-    for (y = 0, yStep = 0 * yDiv; y < info->heightOut; y += 1, yStep += yDiv)
+    for (y = 0, yStep = (y + 0.5) * yDiv - 0.5; y < info->heightOut; y += 1, yStep += yDiv)
     {
         //上下2个相邻点: 距离计算
         floorY = floor(yStep);
@@ -196,7 +402,7 @@ void _zoom_linear_stream(
         // printf("y1 %d y2 %d - readLine %d \r\n", y1, y2, readLine);
 
         //行像素遍历
-        for (x = 0, xStep = 0; x < info->widthOut; x += 1, xStep += xDiv)
+        for (x = 0, xStep = (x + 0.5) * xDiv - 0.5; x < info->widthOut; x += 1, xStep += xDiv)
         {
             //左右2个相邻点: 距离计算
             floorX = floor(xStep);
@@ -395,10 +601,17 @@ unsigned char *zoom(
 
     //缩放方式
     if (zt == ZT_LINEAR)
-        callback = &_zoom_linear;
-    else
+        callback = &_zoom_linear_opencv;
+    else if(zt == ZT_NEAR)
         callback = &_zoom_near;
-
+    else if(zt == ZT_BICUBIC)
+        callback = &_zoom_bicubic;
+    else
+    {
+        printf("Unsupported upscaling method!!\r\n");
+        return 0;
+    }
+    
     //多线程处理(输出图像大于320x240时)
     if (outSize > 76800)
     {
@@ -429,7 +642,6 @@ unsigned char *zoom(
         while (info.threadFinsh != threadCount)
             usleep(1000);
     }
-
     //返回
     if (retWidth)
         *retWidth = info.widthOut;
@@ -544,6 +756,306 @@ void _zoom_bicubic_stream(
     }
 }
 
+/* 
+    按照数据流的方式缩放图像(基于opencv的双三次插值算法)
+*/
+void _zoom_bicubic_stream_opencv(
+    Zoom_Info *info,
+    void *objSrc, void *objDist,
+    int (*srcRead)(void *, unsigned char *, int),
+    int (*distWrite)(void *, unsigned char *, int))
+{
+    float fWStep = 0.0f, fHStep = 0.0f;
+    int ii = 0, jj = 0;
+    Zoom_Rgb * pCurr = 0;
+    Zoom_Rgb * pSamp = 0;
+
+    const float A = -0.75f;
+    float coeffsX[4], coeffsY[4];
+    float fx = 0.0f, fy = 0.0f;
+    int sx = 0, sy = 0;
+    short cbufX[4], cbufY[4];
+
+    int mm = 0, nn = 0;
+    int r_sum = 0, g_sum = 0, b_sum = 0;
+
+    //当前读取行数
+    int readLine = 0;
+    //两行数据的指针,对应y1,y2来使用
+    Zoom_Rgb *line[4];
+    for (int i = 0; i < 4; i++)
+    {
+        line[i] = &info->rgb[info->width * i];
+    }
+    Zoom_Rgb *lineX;
+
+    //读取新1行数据
+    srcRead(objSrc, (unsigned char *)line[3], 1);
+    for (int i = 0; i < 3; i++)
+    {
+        memcpy(line[i], line[3], info->width * 3);
+    }
+
+    fWStep = 1.0f * info->width / info->widthOut;
+    fHStep = 1.0f * info->height / info->heightOut;
+    pSamp = info->rgbOut;
+
+    for(ii = 0; ii < info->heightOut; ii++)
+    {
+        fy = (float)((ii + 0.5) * fHStep - 0.5);
+        sy = (int)fy;
+        fy -= sy;
+
+        if(sy < 1)
+        {
+            sy = 1;
+        }
+
+        if(sy >= info->heightOut - 3)
+        {
+            sy = info->heightOut - 3;
+        }
+
+        //读取足够的行数据(移动info->rgb中的行数据到能覆盖y1,y2所在行)
+        while (readLine < sy + 2)
+        {
+            //后面数据往前挪
+            for (int i = 0; i < 3; i++)
+            {
+                lineX = line[i + 1];
+                line[i + 1] = line[i];
+                line[i] = lineX;
+            }
+            //读取新一行数据
+            if (srcRead(objSrc, (unsigned char *)line[3], 1) == 1)
+                readLine += 1;
+            else
+                break;
+        }
+
+        coeffsY[0] = ((A*(fy + 1) - 5*A)*(fy + 1) + 8 * A)*(fy + 1) - 4 * A;
+		coeffsY[1] = ((A + 2)*fy - (A + 3))*fy*fy + 1;
+		coeffsY[2] = ((A + 2)*(1 - fy) - (A + 3))*(1 - fy)*(1 - fy) + 1;
+		coeffsY[3] = 1.f - coeffsY[0] - coeffsY[1] - coeffsY[2];
+
+        cbufY[0] = (short)(coeffsY[0] * 2048);
+		cbufY[1] = (short)(coeffsY[1] * 2048);
+		cbufY[2] = (short)(coeffsY[2] * 2048);
+		cbufY[3] = (short)(coeffsY[3] * 2048);
+
+        for(jj = 0; jj < info->widthOut; jj++)
+        {
+            fx = (float)((jj + 0.5) * fWStep - 0.5);
+            sx = (int)fx;
+            fx -= sx;
+
+            if(sx < 1)
+            {
+                fx = 0, sx = 1;
+            }
+
+            if(sx >= info->widthOut - 3)
+            {
+                fx = 0, sx = info->widthOut - 3;
+            }
+
+            coeffsX[0] = ((A*(fx + 1) - 5*A)*(fx + 1) + 8*A)*(fx + 1) - 4*A;
+			coeffsX[1] = ((A + 2)*fx - (A + 3))*fx*fx + 1;
+			coeffsX[2] = ((A + 2)*(1 - fx) - (A + 3))*(1 - fx)*(1 - fx) + 1;
+			coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
+			
+			cbufX[0] = (short)(coeffsX[0] * 2048);
+			cbufX[1] = (short)(coeffsX[1] * 2048);
+			cbufX[2] = (short)(coeffsX[2] * 2048);
+			cbufX[3] = (short)(coeffsX[3] * 2048);
+
+            for(mm = 0; mm < 4; mm++) // rows
+            {
+                pCurr = line[mm];
+                for(nn = 0; nn < 4; nn++) // cols
+                { 
+                    r_sum += pCurr[sx + nn - 1].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[sx + nn - 1].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[sx + nn - 1].b * cbufY[mm]*cbufX[nn];
+                }
+            }
+            r_sum >>= 22;
+            g_sum >>= 22;
+            b_sum >>= 22;
+            (pSamp + jj)->r = r_sum;
+            (pSamp + jj)->g = g_sum;
+            (pSamp + jj)->b = b_sum;
+        }
+        //输出一行数据
+        distWrite(objDist, (unsigned char *)info->rgbOut, 1);
+    }
+
+}
+
+/*
+ *  多线程并行的方式来缩放图像(OpenCV的双三次插值算法)
+ */
+void _zoom_bicubic_opencv(Zoom_Info *info)
+{
+    float fWStep = 0.0f, fHStep = 0.0f;
+    int ii = 0, jj = 0;
+    Zoom_Rgb * pCurr = 0;
+    Zoom_Rgb * pSamp = 0;
+
+    const float A = -0.75f;
+    float coeffsX[4], coeffsY[4];
+    float fx = 0.0f, fy = 0.0f;
+    int sx = 0, sy = 0;
+    short cbufX[4], cbufY[4];
+
+    int mm = 0, nn = 0;
+    int r_sum = 0, g_sum = 0, b_sum = 0;
+
+    fWStep = 1.0f * info->width / info->widthOut;
+    fHStep = 1.0f * info->height / info->heightOut;
+    pSamp = info->rgbOut;
+
+    //多线程
+    int startLine, endLine;
+    //多线程,获得自己处理行信息
+    startLine = info->lineDiv * (info->threadCount++);
+    endLine = startLine + info->lineDiv;
+    if (endLine > info->heightOut)
+        endLine = info->heightOut;
+
+    for(ii = startLine; ii < endLine; ii++)
+    {
+        fy = (float)((ii + 0.5) * fHStep - 0.5);
+        sy = (int)fy;
+        fy -= sy;
+
+        if(sy < 1)
+        {
+            sy = 1;
+        }
+
+        if(sy >= info->heightOut - 3)
+        {
+            sy = info->heightOut - 3;
+        }
+
+        coeffsY[0] = ((A*(fy + 1) - 5*A)*(fy + 1) + 8 * A)*(fy + 1) - 4 * A;
+		coeffsY[1] = ((A + 2)*fy - (A + 3))*fy*fy + 1;
+		coeffsY[2] = ((A + 2)*(1 - fy) - (A + 3))*(1 - fy)*(1 - fy) + 1;
+		coeffsY[3] = 1.f - coeffsY[0] - coeffsY[1] - coeffsY[2];
+
+        cbufY[0] = (short)(coeffsY[0] * 2048);
+		cbufY[1] = (short)(coeffsY[1] * 2048);
+		cbufY[2] = (short)(coeffsY[2] * 2048);
+		cbufY[3] = (short)(coeffsY[3] * 2048);
+
+        for(jj = 0; jj < info->widthOut; jj++)
+        {
+            fx = (float)((jj + 0.5) * fWStep - 0.5);
+            sx = (int)fx;
+            fx -= sx;
+
+            if(sx < 1)
+            {
+                fx = 0, sx = 1;
+            }
+
+            if(sx >= info->widthOut - 3)
+            {
+                fx = 0, sx = info->widthOut - 3;
+            }
+
+            coeffsX[0] = ((A*(fx + 1) - 5*A)*(fx + 1) + 8*A)*(fx + 1) - 4*A;
+			coeffsX[1] = ((A + 2)*fx - (A + 3))*fx*fx + 1;
+			coeffsX[2] = ((A + 2)*(1 - fx) - (A + 3))*(1 - fx)*(1 - fx) + 1;
+			coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
+			
+			cbufX[0] = (short)(coeffsX[0] * 2048);
+			cbufX[1] = (short)(coeffsX[1] * 2048);
+			cbufX[2] = (short)(coeffsX[2] * 2048);
+			cbufX[3] = (short)(coeffsX[3] * 2048);
+
+            for(mm = 0; mm < 4; mm++) // rows
+            {
+                pCurr = info->rgb + (sy + mm - 1) * info->width;
+                for(nn = 0; nn < 4; nn++) // cols
+                { 
+                    r_sum += pCurr[sx + nn - 1].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[sx + nn - 1].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[sx + nn - 1].b * cbufY[mm]*cbufX[nn];
+                }
+            }
+            r_sum >>= 22;
+            g_sum >>= 22;
+            b_sum >>= 22;
+            (pSamp + jj)->r = r_sum;
+            (pSamp + jj)->g = g_sum;
+            (pSamp + jj)->b = b_sum;
+        }
+        pSamp += info->widthOut;
+    }
+}
+
+/*
+ *  多线程并行的方式来缩放图像(双三次插值算法)
+ */
+void _zoom_bicubic(Zoom_Info *info)
+{
+    float xStep, yStep, xDiv, yDiv;
+    int x, y;
+
+    float dx, dy; // delta_x and delta_y
+    float Bmdx;   // Bspline m-dx
+    float Bndy;   // Bspline dy-n
+    int i_original_img_hnum, i_original_img_wnum; // Corresponding -y and -x of the original img
+    int x_point, y_point;
+
+    //多线程
+    int startLine, endLine;
+    //多线程,获得自己处理行信息
+    startLine = info->lineDiv * (info->threadCount++);
+    endLine = startLine + info->lineDiv;
+    if (endLine > info->heightOut)
+        endLine = info->heightOut;
+
+    //步宽计算(注意谁除以谁,这里表示的是在输出图像上每跳动一行、列等价于源图像跳过的行、列量)
+    xDiv = (float)info->width / info->widthOut;
+    yDiv = (float)info->height / info->heightOut;
+
+    //列像素遍历
+    for (y = startLine, yStep = startLine * yDiv;
+         y < endLine; y += 1, yStep += yDiv)
+    {
+        i_original_img_hnum = (int)yStep;
+        dx = yStep - (int)yStep;
+
+        // 行像素遍历
+        for(x = 0, xStep = 0; x < info->widthOut; x += 1, xStep += xDiv)
+        {
+            i_original_img_wnum = (int)xStep;
+            dy = xStep - (int)xStep;
+            for(int i = 0; i < 4; i++)
+            {
+                Bmdx = BSpline(i - dx - 1);
+                x_point = i_original_img_hnum + i - 1;
+                x_point = (x_point < info->height) ? (x_point < 0 ? 0 : x_point) : info->height - 1;
+                for(int j = 0; j < 4; j++)
+                {
+                    Bndy = BSpline(j - dy - 1);
+                    y_point = i_original_img_wnum + j - 1;
+                    y_point = (y_point < info->width) ? (y_point < 0 ? 0 : y_point ) : info->width - 1;
+                    info->rgbOut[y * info->widthOut + x].r += info->rgb[x_point * info->width + y_point].r * Bmdx * Bndy;
+                    info->rgbOut[y * info->widthOut + x].g += info->rgb[x_point * info->width + y_point].g * Bmdx * Bndy;
+                    info->rgbOut[y * info->widthOut + x].b += info->rgb[x_point * info->width + y_point].b * Bmdx * Bndy;
+                }
+            }
+        }
+    }
+    //多线程,处理完成行数
+    info->threadFinsh++;
+}
+
+
 /*
  *  数据流处理(为避免大张图片占用巨大内存空间)
  *  参数:
@@ -581,11 +1093,11 @@ void zoom_stream(
 
     //开始缩放
     if (zt == ZT_LINEAR)
-        _zoom_linear_stream(&info, objSrc, objDist, srcRead, distWrite);
+        _zoom_linear_stream_opencv(&info, objSrc, objDist, srcRead, distWrite);
     else if (zt == ZT_NEAR)
         _zoom_near_stream(&info, objSrc, objDist, srcRead, distWrite);
     else if (zt == ZT_BICUBIC)
-        _zoom_bicubic_stream(&info, objSrc, objDist, srcRead, distWrite);
+        _zoom_bicubic_stream_opencv(&info, objSrc, objDist, srcRead, distWrite);
     //返回
     if (retWidth)
         *retWidth = info.widthOut;
