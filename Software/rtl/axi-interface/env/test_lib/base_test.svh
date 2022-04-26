@@ -47,8 +47,8 @@ function void base_test::report_phase(uvm_phase phase);
     err_num = server.get_severity_count(UVM_ERROR);
 
     if(err_num == 0) begin
-        $display("\n TESET PASSED");
+        $display("\n TEST PASSED");
     end else begin
-        $display("\n TESET FAILED");
+        $display("\n TEST FAILED");
     end 
 endfunction: report_phase

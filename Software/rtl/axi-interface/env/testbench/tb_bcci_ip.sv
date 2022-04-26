@@ -26,7 +26,7 @@ import utils_pkg::*;
 	localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
 	localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
 
-    localparam string SRC_BMP_BASE    = "onepiece54";
+    localparam string SRC_BMP_BASE    = "src_img/0";
     localparam string SRC_BMP_FILE    = {SRC_BMP_BASE, ".bmp"};
     localparam string SRC_BIN_FILE    = {SRC_BMP_BASE, "_tmp_bin"};
     localparam string DST_BMP_FILE    = {SRC_BMP_BASE, "_4.bmp"};
@@ -151,7 +151,12 @@ import utils_pkg::*;
 	initial
 	begin
 		$dumpfile("../sim/waveform.vcd");
-        $dumpvars(0, tb_bcci_ip);
+        // $dumpvars(0, tb_bcci_ip);
+        $dumpvars(3, tb_bcci_ip.dut.AAA_bcci.AAA_access_control.upsp_wrtcnt, 
+        tb_bcci_ip.dut.AAA_bcci.AAA_access_control.ac_rdcnt, 
+        tb_bcci_ip.dut.acif.stream_slave.axis_tvalid,
+        tb_bcci_ip.dut.acif.stream_slave.axis_tready,
+        tb_bcci_ip.dut.acif.stream_slave.axis_tlast);
 	end
  
 endmodule

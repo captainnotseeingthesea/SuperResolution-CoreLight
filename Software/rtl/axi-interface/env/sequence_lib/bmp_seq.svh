@@ -75,7 +75,8 @@ task bmp_seq::body();
             t.tlast  == (i == width*height - 1);
             t.tdest  == 0;
             t.tuser  == 0;
-            t.tdata   == img[i];
+            t.tdata  == img[i];
+            t.delay  == 0;
         })
         i++;
         if(i % width == 0)

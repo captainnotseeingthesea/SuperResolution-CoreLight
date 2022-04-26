@@ -14,21 +14,31 @@ def bmp2bin(bmpname = "", binname = ""):
     for j in range(height):
         for i in range(width):
             apaddig[j+1][i+1] = a[j][i];
+    
+    for i in range(width):
+        apaddig[0][i+1] = a[0][i];
+        apaddig[height+1][i+1] = a[height-1][i];
+        apaddig[height+2][i+1] = a[height-1][i];
 
-    print("Transform "+bmpname+" to "+binname);
+    for j in range(height):
+        apaddig[j+1][0] = a[j][0];
+        apaddig[j+1][width+1] = a[j][width-1];
+        apaddig[j+2][width+2] = a[j][width-1];
 
     with open(binname, "w") as f:
         for j in range(height+3):
             for i in range(width+3):
                 r,g,b = format(apaddig[j,i,0], "02x"), format(apaddig[j,i,1], "02x"), format(apaddig[j,i,2], "02x");
                 f.writelines([r, g, b, os.linesep]);
+    
+    print("\nTransformed "+bmpname+" to "+binname+"\n");
 
 
 def bin2bmp(binname = "", bmpname = "", height=None, width=None):
     lines = [];
     with open(binname, "r") as f:
         lines = f.readlines();
-    print("Transform "+binname+" to "+bmpname);
+
     a = np.zeros((height, width, 3), dtype=np.uint8);
     i = 0;
     j = 0;
@@ -46,10 +56,14 @@ def bin2bmp(binname = "", bmpname = "", height=None, width=None):
     img = Image.fromarray(a);
     img.save(bmpname)
 
+    print("\nTransformed "+binname+" to "+bmpname+"\n");
+
 
 if(sys.argv[1] == "bmp2bin"):
     bmp2bin(bmpname=sys.argv[2], binname=sys.argv[3]);
 elif(sys.argv[1] == "bin2bmp"):
     bin2bmp(binname=sys.argv[2], bmpname=sys.argv[3], height=int(sys.argv[4]), width=int(sys.argv[5]));
 else:
-    print("bmp_bin: error, no such funtion called %s", sys.argv[1]);
+    print("\nbmp_bin: error, no such funtion called %s\n", sys.argv[1]);
+
+print("\nbmp_bin processing finished\n");
