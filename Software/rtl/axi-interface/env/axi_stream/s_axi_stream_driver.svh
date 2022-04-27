@@ -26,6 +26,8 @@ class s_axi_stream_driver extends uvm_driver #(axi_stream_trans);
     
     virtual axi_stream_if vif;
 
+    int receive_random = 0;
+
     extern virtual function void build_phase(uvm_phase phase);
     extern virtual task reset_phase(uvm_phase phase);
     extern virtual task main_phase(uvm_phase phase);
@@ -56,6 +58,6 @@ endtask: reset_phase
 task s_axi_stream_driver::main_phase(uvm_phase phase);
     forever begin
         @(posedge vif.aclk);
-        vif.axis_tready <= {$random}%2;
+        vif.axis_tready <= receive_random? {$random}%2: 1'b1;
     end
 endtask: main_phase
