@@ -1,4 +1,4 @@
-// `include "define.v"
+`include "define.v"
 `include "bicubic_vector_mult.v"
 module bicubic_upsample_16
 #(parameter CHANNEL_WIDTH = 8)
@@ -69,6 +69,11 @@ module bicubic_upsample_16
 
     wire [WEIGHT_WIDTH-1:0] w1_t, w2_t, w3_t, w4_t;
 
+    wire [CHANNEL_WIDTH-1:0] bcci_rsp_data1_t;
+    wire bcci_rsp_data1_sign;
+
+    assign bcci_rsp_data1 = bcci_rsp_data1_sign ? 0 : bcci_rsp_data1_t;
+
     bicubic_vector_mult u_bicubic_vector_mult1(
         .weight_1           (w1_1               ),
         .weight_2           (w1_2               ),
@@ -138,8 +143,8 @@ module bicubic_upsample_16
         .pixel_3           (product3_t         ),
         .pixel_4           (product4_t         ),
 
-        .inner_product     (bcci_rsp_data1 ),
-        .inner_product_sign(   )
+        .inner_product     (bcci_rsp_data1_t   ),
+        .inner_product_sign(bcci_rsp_data1_sign )
     );
 
 

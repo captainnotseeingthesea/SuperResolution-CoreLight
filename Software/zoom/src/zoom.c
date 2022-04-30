@@ -799,7 +799,8 @@ void _zoom_bicubic_stream_opencv(
     fWStep = 1.0f * info->width / info->widthOut;
     fHStep = 1.0f * info->height / info->heightOut;
     pSamp = info->rgbOut;
-
+    int t = 0;
+    int tt = 0;
     for(ii = 0; ii < info->heightOut; ii++)
     {
         fy = (float)((ii + 0.5) * fHStep - 0.5);
@@ -863,7 +864,13 @@ void _zoom_bicubic_stream_opencv(
 			coeffsX[1] = ((A + 2)*fx - (A + 3))*fx*fx + 1;
 			coeffsX[2] = ((A + 2)*(1 - fx) - (A + 3))*(1 - fx)*(1 - fx) + 1;
 			coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
-			
+            if(tt!=32) {            
+                printf("h: %f \n", coeffsX[0]*128);
+                printf("h: %f \n", coeffsX[1]*128);
+                printf("h: %f \n", coeffsX[2]*128);
+                printf("h: %f \n", coeffsX[3]*128);
+                tt = tt+1; 
+            }
 			cbufX[0] = (short)(coeffsX[0] * 2048);
 			cbufX[1] = (short)(coeffsX[1] * 2048);
 			cbufX[2] = (short)(coeffsX[2] * 2048);

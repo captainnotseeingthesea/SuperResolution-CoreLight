@@ -12,7 +12,7 @@
  *      1: 使用 jpeg + zoom 流模式缩放(临近点插值、双线性插值、双三次插值)
  *      2: 使用 jpeg + zoom 整图加载多线程处理模式(临近点插值、双线性插值)
  */
-// #define TEST_MODE 2
+// #define TEST_MODE 1
 
 #include <sys/time.h>
 long getTickUs(void)

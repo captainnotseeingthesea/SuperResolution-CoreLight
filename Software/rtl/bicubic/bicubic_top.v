@@ -1,4 +1,4 @@
-// `include "define.v"
+`include "define.v"
 `ifndef BUFFER
     `include "buffer.v"
 `endif
@@ -1071,7 +1071,7 @@ module bicubic_top_tb();
 
         // #1320
         // #4000
-        #6000
+        #60000
         #5 $finish;
     end
 
