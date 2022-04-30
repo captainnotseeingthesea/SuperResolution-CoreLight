@@ -4,7 +4,7 @@
 
 # 编译器配置
 CC:=gcc
-TEST_MODE = 1
+TEST_MODE = 2
 ARGS += "-DTEST_MODE = ${TEST_MODE}"
 ARGS += "-g"
 
