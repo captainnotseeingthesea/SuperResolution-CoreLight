@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "bmp.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "random": "c",
+        "cmath": "c"
     }
 }
