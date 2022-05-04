@@ -108,7 +108,6 @@ module access_control # (
 	reg [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;
 	reg [CRF_DATA_WIDTH-1:0] ac_crf_wdata;
 	reg		ac_crf_wrt;
-	reg [AXIS_DATA_WIDTH-1:0] m_axis_tdata;
 	reg		m_axis_tlast;
 	reg		m_axis_tvalid;
 	// End of automatics
@@ -196,13 +195,13 @@ module access_control # (
 	assign m_axis_tkeep	= {AXIS_STRB_WIDTH{1'b1}};
 	assign m_axis_tstrb = {AXIS_STRB_WIDTH{1'b1}};
 	
-
-	// Corresponding buffers are been writing or already valid(empty)
+	
+	// Corresponding buffers are under written, already valid or empty
 	reg [1:0] outbuf_writing;
 	reg [1:0] outbuf_valid;
 	reg upsp_bufsel;
 	reg ac_bufsel;
-	reg [AXIS_DATA_WIDTH-1:0] outbuf[0:1][0:3][0:DST_IMG_WIDTH-1];
+
 
 	// If there is at least one non-valid buffer, upsp can write.
 	assign ac_upsp_wready = ~(&outbuf_valid);
@@ -224,12 +223,92 @@ module access_control # (
 			   && ac_rdnum_incol == 2'b11 
 			   && m_axis_tvalid & m_axis_tready;
 
+
 	// Get the number of written data in the first buffer's first line
 	reg [DST_IMG_WIDTH_LB2-1:0] upsp_wrtnum_inrowfir;
 	reg [DST_IMG_WIDTH_LB2-1:0] upsp_wrtnum_inrowbase;
 	reg [DST_IMG_WIDTH_LB2-1+2:0] upsp_wrtcnt_4line;
 
-	integer i, j, k;
+	// Determine whether the data is ready for transfer or not
+	wire already_written = outbuf_writing[upsp_bufsel] &&
+						   (ac_rdnum_inrow < upsp_wrtnum_inrowfir);
+
+
+	wire outbuf0_we = ~upsp_bufsel & upsp_ac_wvalid & ac_upsp_wready;
+	wire outbuf1_we =  upsp_bufsel & upsp_ac_wvalid & ac_upsp_wready;
+	wire [DST_IMG_WIDTH_LB2-1:0] outbuf_waddr = upsp_wrtnum_inrowbase + upsp_wrtcnt[1:0];
+
+	wire outbuf_re  = ((|outbuf_valid) | already_written) & ((~m_axis_tvalid) | m_axis_tready);
+	wire outbuf0_re = ~ac_bufsel & outbuf_re;
+	wire outbuf1_re =  ac_bufsel & outbuf_re;
+
+	wire [AXIS_DATA_WIDTH-1:0] outbuf0_dout, outbuf1_dout;
+
+	reg [1:0] outbuf_re_r;
+	assign m_axis_tdata =   ({AXIS_DATA_WIDTH{outbuf_re_r[0]}} & outbuf0_dout)
+						  | ({AXIS_DATA_WIDTH{outbuf_re_r[1]}} & outbuf1_dout);
+
+	always@(posedge clk or negedge rst_n) begin
+		if(~rst_n)
+			outbuf_re_r <= 2'b0;
+		else
+			outbuf_re_r <= {outbuf1_re, outbuf0_re};
+	end
+
+	/*axis_outbuf AUTO_TEMPLATE(
+	      // Outputs
+	      .rdout		(outbuf@_dout),
+	      // Inputs
+	      .clk			(clk),
+	      .rst_n		(rst_n),
+	      .raddr		(ac_rdnum_inrow),
+	      .rcs			(ac_rdnum_incol),
+	      .re			(outbuf@_re),
+	      .wdin			(upsp_ac_wdata),
+	      .waddr		(outbuf_waddr),
+	      .wcs			(upsp_wrtcnt[3:2]),
+	      .we			(outbuf@_we),
+	)*/
+
+	axis_outbuf #(
+		  // Parameters
+		  .DATA_WIDTH	(AXIS_DATA_WIDTH),
+		  .DEPTH		(DST_IMG_WIDTH),
+		  .ADDR_WIDTH	(DST_IMG_WIDTH_LB2))
+	outbuf0(/*AUTOINST*/
+		// Outputs
+		.rdout			(outbuf0_dout),		 // Templated
+		// Inputs
+		.clk			(clk),			 // Templated
+		.rst_n			(rst_n),		 // Templated
+		.raddr			(ac_rdnum_inrow),	 // Templated
+		.rcs			(ac_rdnum_incol),	 // Templated
+		.re			(outbuf0_re),		 // Templated
+		.wdin			(upsp_ac_wdata),	 // Templated
+		.waddr			(outbuf_waddr),		 // Templated
+		.wcs			(upsp_wrtcnt[3:2]),	 // Templated
+		.we			(outbuf0_we));		 // Templated
+
+	axis_outbuf #(
+		  // Parameters
+		  .DATA_WIDTH	(AXIS_DATA_WIDTH),
+		  .DEPTH		(DST_IMG_WIDTH),
+		  .ADDR_WIDTH	(DST_IMG_WIDTH_LB2))
+	outbuf1(/*AUTOINST*/
+		// Outputs
+		.rdout			(outbuf1_dout),		 // Templated
+		// Inputs
+		.clk			(clk),			 // Templated
+		.rst_n			(rst_n),		 // Templated
+		.raddr			(ac_rdnum_inrow),	 // Templated
+		.rcs			(ac_rdnum_incol),	 // Templated
+		.re			(outbuf1_re),		 // Templated
+		.wdin			(upsp_ac_wdata),	 // Templated
+		.waddr			(outbuf_waddr),		 // Templated
+		.wcs			(upsp_wrtcnt[3:2]),	 // Templated
+		.we			(outbuf1_we));		 // Templated
+
+
 	always@(posedge clk or negedge rst_n) begin: UPSP_WRITE
 		if(~rst_n) begin
 			outbuf_valid <= 2'h0;
@@ -239,11 +318,6 @@ module access_control # (
 			upsp_wrtnum_inrowfir <= {DST_IMG_WIDTH_LB2{1'b0}};
 			upsp_wrtnum_inrowbase <= {DST_IMG_WIDTH_LB2{1'b0}};
 			upsp_wrtcnt_4line <= {(IMG_CNT_WIDTH-1+2){1'b0}};
-			for(i = 0; i < 2; i++)
-			for(j = 0; j < 4; j++)
-			for(k = 0; k< DST_IMG_WIDTH; k++)
-			outbuf[i][j][k] <= {AXIS_DATA_WIDTH{1'b0}};
-
 		end else if(write_done) begin
 			outbuf_valid <= 2'h0;
 			outbuf_writing <= 2'h0;
@@ -256,8 +330,6 @@ module access_control # (
 			if(upsp_ac_wvalid & ac_upsp_wready) begin
 				if(~outbuf_writing[upsp_bufsel]) outbuf_writing[upsp_bufsel] <= 1'b1;
 				if(outbuf_writing[~upsp_bufsel]) outbuf_writing[~upsp_bufsel] <= 1'b0;
-
-				outbuf[upsp_bufsel][upsp_wrtcnt[3:2]][upsp_wrtnum_inrowbase + upsp_wrtcnt[1:0]] <= upsp_ac_wdata;
 
 				upsp_wrtcnt <= upsp_wrtcnt + 1;
 				upsp_wrtcnt_4line <= upsp_wrtcnt_4line + 1;
@@ -283,25 +355,6 @@ module access_control # (
 				outbuf_valid[ac_bufsel] <= 1'b0;
 		end
 	end
-
-
-	// Determine whether the data is ready for transfer or not
-	wire already_written = outbuf_writing[upsp_bufsel] &&
-						   (ac_rdnum_inrow < upsp_wrtnum_inrowfir);
-
-	reg m_axis_wrten;
-	always@(posedge clk or negedge rst_n) begin: AXIS_WRTEN
-		if(~rst_n)
-			m_axis_wrten <= 1'b1;
-
-		else if(~m_axis_wrten) begin
-			if(write_done) m_axis_wrten <= 1'b1;
-
-		end else if(m_axis_tvalid & m_axis_tready)
-			m_axis_wrten <= 1'b0;
-		else
-			m_axis_wrten <= 1'b1;
-	end
 	
 
 	// Transfer data if possible
@@ -322,7 +375,6 @@ module access_control # (
 			// Beginning of autoreset for uninitialized flops
 			ac_rdcnt <= {IMG_CNT_WIDTH{1'b0}};
 			ac_rdnum_incol <= 2'h0;
-			m_axis_tdata <= {AXIS_DATA_WIDTH{1'b0}};
 			m_axis_tlast <= 1'h0;
 			m_axis_tvalid <= 1'h0;
 			// End of automatics
@@ -332,8 +384,6 @@ module access_control # (
 		end else if((|outbuf_valid) | already_written) begin
 			if(m_axis_tvalid) begin
 				if(m_axis_tready) begin
-
-					m_axis_tdata  <= outbuf[ac_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
 					
 					ac_rdcnt <= ac_rdcnt + 1;
 					if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
@@ -352,7 +402,6 @@ module access_control # (
 					if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
 				end
 				
-				m_axis_tdata  <= outbuf[ac_bufsel][ac_rdnum_incol][ac_rdnum_inrow];
 				m_axis_tlast  <= last_one;
 			end
 

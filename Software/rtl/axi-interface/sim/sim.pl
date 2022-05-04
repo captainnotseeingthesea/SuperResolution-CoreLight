@@ -18,12 +18,19 @@ $incdir =
 '-incdir ../env/utils '.
 '-incdir ../../bicubic ';
 
-# $verbo = "+UVM_VERBOSITY=UVM_HIGH";
+$verbo = "+UVM_VERBOSITY=UVM_LOW";
+$top = "tb_bcci_ip";
+
+# Multicore simulation support. 
+# -mce_top and -top must be specified simultaneously
+$mceoption = "-mce -mce_top $top";
 
 $xcmd = 
-"xrun -sv -UVM -access rwc $incdir "
-."-f macros -f filelist -top tb_bcci_ip "
-."$verbo";
+"xrun -64bit -top $top "
+."$mceoption "
+."-sv -UVM -access rwc $incdir "
+."-f macros -f filelist "
+."$verbo ";
 
 system "rm xcelium.d -r";
 system $xcmd;
