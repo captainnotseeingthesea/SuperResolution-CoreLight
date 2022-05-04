@@ -5,6 +5,8 @@
 "../src/access_control.v"
 "../src/config_register_file.v"
 "../src/stream_in.v"
+"../src/bram_subbank.v"
+"../src/axis_outbuf.v"
 
 "../../bicubic/bicubic_top.v"
 
