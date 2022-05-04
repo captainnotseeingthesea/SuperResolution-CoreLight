@@ -32,6 +32,8 @@ The structure of this fold is showed below :
         |-- access_control.v
         |-- config_register_file.v
         |-- stream_in.v
+        |-- bram_subbank.v
+        |-- axis_outbuf.v
 
 ```
 
@@ -43,7 +45,12 @@ The structure of this fold is showed below :
   - Stream in, acts as an AXI-Stream slave, receives data from DMA and bypass data to PL side. 
   - Signals ignored in the implementation including: **TID、TSTRB、TKEEP、TDEST and TUSER**.
 - access_control.v
-  - Access control, contains stream_in to serve read requests from Up-Sampling and transforms Up-Sampling write requests into AXI4 requests to DDR in PS side as the AXI4 master.
+  - Access control, contains stream_in to serve read requests from Up-Sampling and transforms Up-Sampling write requests into AXI-Stream requests to DDR in PS side as the AXI4 master.
+  - There is a ping-pong buffer ( contains 2 axis_outbuf ) for output.
+- bram_subbank.v
+  - one-dimensional array, using the `(*ram_style = "block"*)`  synthesis attribute to employ the bram in FPGA.
+- axis_outbuf.v
+  - Output buffer for AXI-Stream in `access_control.v`. Each buffer has 4 subbanks.
 
 
 
@@ -64,4 +71,3 @@ $ ./sim.pl
 ```
 
 `xcelium` **MUST BE INSTALLED**
-
