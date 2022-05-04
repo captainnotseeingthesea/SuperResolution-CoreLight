@@ -38,16 +38,39 @@ typedef struct
     int threadFinsh;
 } Zoom_Info;
 
+typedef struct
+{
+    Zoom_Info *info; // 进行高斯滤波的原图片
+    Zoom_Rgb *dst_img; // 高斯滤波后的图片
+    float **weight; // 高斯核权值矩阵
+    int _size; //高斯核的大小
+} Gaussian_blur_info;
+
+typedef struct
+{
+    Zoom_Info *info; // 原图片
+    float alpha; // 原图片的权重
+    Zoom_Rgb *src_img; // 要叠加图片的信息
+    float beta; // 叠加图片的权重
+    float gama; // 附加的值
+} addWeighted_info;
+
+
 /*
  *  多线程并行的方式来缩放图像(双三次插值算法)
  */
 void _zoom_bicubic(Zoom_Info *info);
 
+/*
+ *  多线程并行的方式来缩放图像(基于Opencv的双三次插值算法)
+ */
+void _zoom_bicubic_opencv(Zoom_Info *info);
+
 //抛线程工具
 static void new_thread(void *obj, void *callback)
 {
-    pthread_t th;
     pthread_attr_t attr;
+    pthread_t th;
     int ret;
     //禁用线程同步,线程运行结束后自动释放
     pthread_attr_init(&attr);
@@ -58,6 +81,240 @@ static void new_thread(void *obj, void *callback)
         printf("new_thread failed !! %s\r\n", strerror(ret));
     // attr destroy
     pthread_attr_destroy(&attr);
+}
+
+// 对x进行截断处理
+static inline int clip(int x, int a, int b)
+{
+    return x >= a ? (x < b ? x : b-1) : a;
+}
+
+/************************************************
+函  数  名: getGaussianArray
+功       能 : 获取高斯分布数组 
+输入参数 :
+arr_size   :矩阵大小
+sigma      : 标准差
+输出参数 :
+array      :二维数组
+**********************************************/
+float **getGaussianArray(int arr_size, float sigma)
+{
+    int i, j;
+    // [1] 初始化权值数组
+    float ** array = (float **)calloc(arr_size, sizeof(float *));
+    for(int i = 0; i < arr_size; i++)
+    {
+        array[i] = (float *)calloc(arr_size, sizeof(float));
+    }
+    // [2] 高斯分布计算
+    int center_i, center_j;
+    center_i = center_j = arr_size / 2;
+    float pi = 3.141592653589793;
+    float sum = 0.0f;
+    // [2-1] 高斯函数
+    for (i = 0; i < arr_size; i++ ) {
+        for (j = 0; j < arr_size; j++) {
+            array[i][j] = 
+                1.0 / (2 * pi * sigma * sigma) *
+                exp( -1.0f* ( ((i-center_i)*(i-center_i)+(j-center_j)*(j-center_j)) / (2.0f*sigma*sigma) ));
+            sum += array[i][j];
+        }
+    }
+    // [2-2] 归一化求权值
+    for (i = 0; i < arr_size; i++) {
+        for (j = 0; j < arr_size; j++) {
+            array[i][j] /= sum;
+        }
+    }
+    return array;
+}
+
+/* 
+* 通过高斯模糊完成对图片的模糊处理
+* 参数：
+*   info: 保存要进行模糊处理的图片信息
+*   _size: 高斯核的大小
+*   sigma: 标准差
+* 返回：
+*   进行高斯模糊处理后的图片
+*/
+
+void Gaussian_blur(Gaussian_blur_info *blur_info)
+{
+    Zoom_Info *info = blur_info->info;
+    Zoom_Rgb *dst_img = blur_info->dst_img;
+    float ** weight = blur_info->weight;
+    int _size = blur_info->_size;
+    float r_sum, g_sum, b_sum;
+    int center = _size / 2;
+    int pix_x, pix_y;
+    int ii, jj;
+
+    //多线程
+    int startLine, endLine;
+    //多线程,获得自己处理行信息
+    startLine = info->lineDiv * (info->threadCount++);
+    endLine = startLine + info->lineDiv;
+    if (endLine > info->heightOut)
+        endLine = info->heightOut;
+
+    for(ii = startLine; ii < endLine; ii++)
+    {
+        for(jj = 0; jj < info->widthOut; jj++)
+        {
+
+            // 计算每个像素对应的值
+            r_sum = 0, g_sum = 0, b_sum = 0;
+            for(int u = 0; u < _size; u++)
+            {
+                // 采用BORDER_REFLECT_101的边缘填充方式，opencv的默认填充方式
+                pix_y = (ii - center + u) < 0 ? (center - u - ii) : (ii - center + u) >= info->heightOut ? (2 * info->heightOut - ii + center - u - 2) : (ii - center + u);
+                for(int v = 0; v < _size; v++)
+                {
+                    pix_x = (jj - center + v) < 0 ? (center - v - jj) : (jj - center + v) >= info->widthOut ? (2 * info->widthOut - jj + center - v - 2) : (jj - center + v);
+                    r_sum += info->rgbOut[pix_y * info->widthOut + pix_x].r * weight[u][v];
+                    g_sum += info->rgbOut[pix_y * info->widthOut + pix_x].g * weight[u][v];
+                    b_sum += info->rgbOut[pix_y * info->widthOut + pix_x].b * weight[u][v];
+                }
+            }
+            dst_img[ii * info->widthOut + jj].r = r_sum;
+            dst_img[ii * info->widthOut + jj].g = g_sum;
+            dst_img[ii * info->widthOut + jj].b = b_sum;
+        }
+    }
+    //多线程,处理完成行数
+    info->threadFinsh++;
+}
+
+/* 
+* 完成两幅图的加权叠加，对原图片进行修改 (alpga * src1 + beta * src2 + gama)
+*/
+
+void addWeighted(addWeighted_info *weight_info)
+{
+    //多线程
+    int startLine, endLine;
+    int ii, jj;
+    int r, g, b;
+    Zoom_Info *info = weight_info->info;
+    Zoom_Rgb *src_img = weight_info->src_img;
+    float alpha = weight_info->alpha;
+    float beta = weight_info->beta;
+    float gama = weight_info->gama;
+
+    //多线程,获得自己处理行信息
+    startLine = info->lineDiv * (info->threadCount++);
+    endLine = startLine + info->lineDiv;
+    if (endLine > info->heightOut)
+        endLine = info->heightOut;
+    for(ii = startLine; ii < endLine; ii++)
+    {
+        for(jj = 0; jj < info->widthOut; jj++)
+        {
+            r = alpha * info->rgbOut[ii * info->widthOut + jj].r + beta * src_img[ii * info->widthOut + jj].r + gama;
+            g = alpha * info->rgbOut[ii * info->widthOut + jj].g + beta * src_img[ii * info->widthOut + jj].g + gama;
+            b = alpha * info->rgbOut[ii * info->widthOut + jj].b + beta * src_img[ii * info->widthOut + jj].b + gama;
+            info->rgbOut[ii * info->widthOut + jj].r = clip(r, 0, 256);
+            info->rgbOut[ii * info->widthOut + jj].g = clip(g, 0, 256);
+            info->rgbOut[ii * info->widthOut + jj].b = clip(b, 0, 256);
+        }
+    }
+    //多线程,处理完成行数
+    info->threadFinsh++;
+}
+
+/* 
+* 使用USM(Unsharp masking)对图像进行锐化增强（高斯滤波+图片叠加）
+* 参数：
+*   info: 保存原图片的信息
+*   _size: 高斯核的大小
+*   sigma: 标准差
+*   alpha: 原图片的权重
+*   beta: 叠加图片的权重
+*   gama: 附加的值
+*   processor: 并行的线程数
+*/
+
+void usm(Zoom_Info *info, int _size, float sigma, float alpha, float beta, float gama, int processor)
+{
+    //获得高斯核
+	float ** weight;
+	weight = getGaussianArray(_size, sigma);
+    int i, threadCount;
+
+    // 重置info中有关多线程的变量
+    info->threadCount = 0;
+    info->threadFinsh = 0;
+    
+    // 分配高斯滤波后的图片存储空间
+    Zoom_Rgb *dst_img = (Zoom_Rgb *)calloc(info->widthOut * info->heightOut, sizeof(Zoom_Rgb));
+
+    // 初始化高斯滤波的参数结构体
+    Gaussian_blur_info blur_info = 
+    {
+        .dst_img = dst_img,
+        .info = info,
+        .weight = weight,
+        ._size = _size
+    };
+
+    // 初始化图片权值叠加的参数结构体
+    addWeighted_info weight_info = 
+    {
+        .info = info,
+        .alpha = alpha,
+        .src_img = dst_img,
+        .beta = beta,
+        .gama = gama
+    };
+
+     //普通处理
+    if (processor < 2)
+    {
+        info->lineDiv = info->heightOut;
+        Gaussian_blur(&blur_info);
+        info->threadCount = 0;
+        info->threadFinsh = 0;
+        addWeighted(&weight_info);
+    }
+    //多线程处理
+    else
+    {
+        /* 
+        * 进行高斯滤波处理
+        */
+        info->lineDiv = info->heightOut / processor; //每核心处理行数
+        if (info->lineDiv < 1)
+            info->lineDiv = 1;
+        //多线程
+        for (i = threadCount = 0; i < info->heightOut; i += info->lineDiv)
+        {            
+            new_thread(&blur_info, Gaussian_blur);
+            threadCount += 1;
+        }
+        //等待各线程处理完毕
+        while (info->threadFinsh != threadCount)
+            usleep(1000);
+
+        /* 
+        * 进行图像叠加处理
+        */
+        info->threadCount = 0;
+        info->threadFinsh = 0;
+
+        for (i = threadCount = 0; i < info->heightOut; i += info->lineDiv)
+        {
+            new_thread(&weight_info, &addWeighted);
+            threadCount += 1;
+        }
+        //等待各线程处理完毕
+        while (info->threadFinsh != threadCount)
+            usleep(1000);
+    }
+
+    free(weight); // 释放权重矩阵
+    free(dst_img); // 释放高斯滤波图片空间
 }
 
 /* 
@@ -72,12 +329,10 @@ void _zoom_linear_opencv(Zoom_Info *info)
     short cbufY[2], cbufX[2];
     int mm = 0, nn = 0;
     Zoom_Rgb * pCurr = 0;
-    Zoom_Rgb * pSamp = 0;
 
     int r_sum = 0, g_sum = 0, b_sum = 0;
     fWStep = 1.0f * info->width / info->widthOut;
     fHStep = 1.0f * info->height / info->heightOut;
-    pSamp = info->rgbOut;
 
     //多线程
     int startLine, endLine;
@@ -90,17 +345,8 @@ void _zoom_linear_opencv(Zoom_Info *info)
     for(ii = startLine; ii < endLine; ii++)
     {
         fy = (float)((ii + 0.5) * fHStep - 0.5);
-        sy = (int)fy;
+        sy = (int)floor(fy);
         fy -= sy;
-        if(sy < 0)
-        {
-            sy = 0;
-        }
-
-        if(sy >= info->heightOut - 2)
-        {
-            sy = info->heightOut - 2;
-        }
 
         cbufY[0] = (short)((1.f - fy) * 2048);
         cbufY[1] = 2048 - cbufY[0];
@@ -108,17 +354,17 @@ void _zoom_linear_opencv(Zoom_Info *info)
         for(jj = 0; jj < info->widthOut; jj++)
         {
             fx = (float)((jj + 0.5) * fWStep - 0.5);
-            sx = (int)fx;
+            sx = (int)floor(fx);
             fx -= sx;
 
-            if(sx < 1)
+            if(sx < 0)
             {
-                fx = 0, sx = 1;
+                fx = 0, sx = 0;
             }
 
-            if(sx >= info->widthOut - 2)
+            if(sx >= info->width - 1)
             {
-                fx = 0, sx = info->widthOut - 2;
+                fx = 0, sx = info->width - 1;
             }
 
             cbufX[0] = (short)((1.f - fx) * 2048);
@@ -126,23 +372,24 @@ void _zoom_linear_opencv(Zoom_Info *info)
 
             for(mm = 0; mm < 2; mm++) // cols
             {
-                pCurr = info->rgb + (sy + mm) * info->width;
+                pCurr = info->rgb + clip((sy + mm), 0, info->height) * info->width;
                 for(nn = 0; nn < 2; nn++) // rows
                 {
-                    r_sum += pCurr[sx + nn].r * cbufY[mm]*cbufX[nn];
-                    g_sum += pCurr[sx + nn].g * cbufY[mm]*cbufX[nn];
-                    b_sum += pCurr[sx + nn].b * cbufY[mm]*cbufX[nn];
+                    r_sum += pCurr[clip(sx + nn, 0, info->width)].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[clip(sx + nn, 0, info->width)].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[clip(sx + nn, 0, info->width)].b * cbufY[mm]*cbufX[nn];
                 }
             }
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;
-            (pSamp + jj)->r = r_sum;
-            (pSamp + jj)->g = g_sum;
-            (pSamp + jj)->b = b_sum;
+            info->rgbOut[ii * info->widthOut + jj].r = clip(r_sum, 0, 256);
+            info->rgbOut[ii * info->widthOut + jj].g = clip(g_sum, 0, 256);
+            info->rgbOut[ii * info->widthOut + jj].b = clip(b_sum, 0, 256);
         }
-        pSamp += info->widthOut;
     }
+    //多线程,处理完成行数
+    info->threadFinsh++;
 }
 
 /* 
@@ -270,49 +517,47 @@ void _zoom_linear_stream_opencv(
     for(ii = 0; ii < info->heightOut; ii++)
     {
         fy = (float)((ii + 0.5) * fHStep - 0.5);
-        sy = (int)fy;
+        sy = (int)floor(fy);
         fy -= sy;
-        if(sy < 0)
+        
+        if(sy + 1 < info->height)
         {
-            fy = 0, sy = 0;
+            while (readLine < sy + 1)
+            {
+                //后面数据往前挪
+                lineX = line[0];
+                line[0] = line[1];
+                line[1] = lineX;
+                //读取新一行数据
+                if (srcRead(objSrc, (unsigned char *)line[1], 1) == 1)
+                    readLine += 1;
+                else
+                    break;
+            }
         }
-
-        if(sy >= info->heightOut - 2)
-        {
-            fy = 0, sy = info->heightOut - 2;
-        }
-
-        while (readLine < sy + 1)
+        else
         {
             //后面数据往前挪
-            lineX = line[0];
-            line[0] = line[1];
-            line[1] = lineX;
-            //读取新一行数据
-            if (srcRead(objSrc, (unsigned char *)line[1], 1) == 1)
-                readLine += 1;
-            else
-                break;
+            memcpy(line[0], line[1], info->width * 3);
         }
         
-
         cbufY[0] = (short)((1.f - fy) * 2048);
         cbufY[1] = 2048 - cbufY[0];
 
         for(jj = 0; jj < info->widthOut; jj++)
         {
             fx = (float)((jj + 0.5) * fWStep - 0.5);
-            sx = (int)fx;
+            sx = (int)floor(fx);
             fx -= sx;
 
-            if(sx < 1)
+            if(sx < 0)
             {
-                fx = 0, sx = 1;
+                fx = 0, sx = 0;
             }
 
-            if(sx >= info->widthOut - 2)
+            if(sx >= info->width - 1)
             {
-                fx = 0, sx = info->widthOut - 2;
+                fx = 0, sx = info->width - 1;
             }
 
             cbufX[0] = (short)((1.f - fx) * 2048);
@@ -323,17 +568,17 @@ void _zoom_linear_stream_opencv(
                 pCurr = line[mm];
                 for(nn = 0; nn < 2; nn++) // rows
                 {
-                    r_sum += pCurr[sx + nn].r * cbufY[mm]*cbufX[nn];
-                    g_sum += pCurr[sx + nn].g * cbufY[mm]*cbufX[nn];
-                    b_sum += pCurr[sx + nn].b * cbufY[mm]*cbufX[nn];
+                    r_sum += pCurr[clip(sx + nn, 0, info->width)].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[clip(sx + nn, 0, info->width)].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[clip(sx + nn, 0, info->width)].b * cbufY[mm]*cbufX[nn];
                 }
             }
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;
-            (pSamp + jj)->r = r_sum;
-            (pSamp + jj)->g = g_sum;
-            (pSamp + jj)->b = b_sum;
+            (pSamp + jj)->r = clip(r_sum, 0, 256);
+            (pSamp + jj)->g = clip(g_sum, 0, 256);
+            (pSamp + jj)->b = clip(b_sum, 0, 256);
         }
         distWrite(objDist, (unsigned char *)info->rgbOut, 1);
     }
@@ -605,7 +850,7 @@ unsigned char *zoom(
     else if(zt == ZT_NEAR)
         callback = &_zoom_near;
     else if(zt == ZT_BICUBIC)
-        callback = &_zoom_bicubic;
+        callback = &_zoom_bicubic_opencv;
     else
     {
         printf("Unsupported upscaling method!!\r\n");
@@ -616,7 +861,7 @@ unsigned char *zoom(
     if (outSize > 76800)
     {
         //获取cpu可用核心数
-        processor = get_nprocs();
+        processor = 4;
     }
 
     //普通处理
@@ -647,6 +892,10 @@ unsigned char *zoom(
         *retWidth = info.widthOut;
     if (retHeight)
         *retHeight = info.heightOut;
+    
+    // 使用高斯滤波进行锐化处理 (USM(Unshrpen Mask)算法)
+    usm(&info, 5, 6, 2, -1, 0, processor);
+
     return (unsigned char *)info.rgbOut;
 }
 
@@ -803,18 +1052,8 @@ void _zoom_bicubic_stream_opencv(
     for(ii = 0; ii < info->heightOut; ii++)
     {
         fy = (float)((ii + 0.5) * fHStep - 0.5);
-        sy = (int)fy;
+        sy = (int)floor(fy);
         fy -= sy;
-
-        if(sy < 1)
-        {
-            sy = 1;
-        }
-
-        if(sy >= info->heightOut - 3)
-        {
-            sy = info->heightOut - 3;
-        }
 
         //读取足够的行数据(移动info->rgb中的行数据到能覆盖y1,y2所在行)
         while (readLine < sy + 2)
@@ -827,12 +1066,20 @@ void _zoom_bicubic_stream_opencv(
                 line[i] = lineX;
             }
             //读取新一行数据
-            if (srcRead(objSrc, (unsigned char *)line[3], 1) == 1)
-                readLine += 1;
+            if((sy + 2) < info->height)
+            {
+                if (srcRead(objSrc, (unsigned char *)line[3], 1) == 1)
+                    readLine += 1;
+                else
+                    break;
+            }
             else
-                break;
+            {
+                memcpy(line[3], line[2], info->width * 3);
+                readLine++;
+            }
         }
-
+        
         coeffsY[0] = ((A*(fy + 1) - 5*A)*(fy + 1) + 8 * A)*(fy + 1) - 4 * A;
 		coeffsY[1] = ((A + 2)*fy - (A + 3))*fy*fy + 1;
 		coeffsY[2] = ((A + 2)*(1 - fy) - (A + 3))*(1 - fy)*(1 - fy) + 1;
@@ -842,22 +1089,18 @@ void _zoom_bicubic_stream_opencv(
 		cbufY[1] = (short)(coeffsY[1] * 2048);
 		cbufY[2] = (short)(coeffsY[2] * 2048);
 		cbufY[3] = (short)(coeffsY[3] * 2048);
+        // printf("cbufY:");
+        // for(int i = 0; i < 4; i++)
+        // {
+        //     printf("%d\t", (short)(coeffsY[i] * 128));
+        // }
+        // printf("\r\n");
 
         for(jj = 0; jj < info->widthOut; jj++)
         {
             fx = (float)((jj + 0.5) * fWStep - 0.5);
-            sx = (int)fx;
+            sx = (int)floor(fx);
             fx -= sx;
-
-            if(sx < 1)
-            {
-                fx = 0, sx = 1;
-            }
-
-            if(sx >= info->widthOut - 3)
-            {
-                fx = 0, sx = info->widthOut - 3;
-            }
 
             coeffsX[0] = ((A*(fx + 1) - 5*A)*(fx + 1) + 8*A)*(fx + 1) - 4*A;
 			coeffsX[1] = ((A + 2)*fx - (A + 3))*fx*fx + 1;
@@ -869,27 +1112,35 @@ void _zoom_bicubic_stream_opencv(
 			cbufX[2] = (short)(coeffsX[2] * 2048);
 			cbufX[3] = (short)(coeffsX[3] * 2048);
 
+            // printf("cbufX:");
+            // for(int i = 0; i < 4; i++)
+            // {
+            //     printf("%d\t", (short)(coeffsX[i] * 128));
+            // }
+            // printf("\r\n");
+
             for(mm = 0; mm < 4; mm++) // rows
             {
                 pCurr = line[mm];
                 for(nn = 0; nn < 4; nn++) // cols
                 { 
-                    r_sum += pCurr[sx + nn - 1].r * cbufY[mm]*cbufX[nn];
-                    g_sum += pCurr[sx + nn - 1].g * cbufY[mm]*cbufX[nn];
-                    b_sum += pCurr[sx + nn - 1].b * cbufY[mm]*cbufX[nn];
+                    r_sum += pCurr[clip(sx + nn - 1, 0, info->width)].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[clip(sx + nn - 1, 0, info->width)].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[clip(sx + nn - 1, 0, info->width)].b * cbufY[mm]*cbufX[nn];
+                    // printf("axis_x: %d", clip(sx + nn - 1, 0, info->width));
                 }
+                // printf("\r\n");
             }
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;
-            (pSamp + jj)->r = r_sum;
-            (pSamp + jj)->g = g_sum;
-            (pSamp + jj)->b = b_sum;
+            (pSamp + jj)->r = clip(r_sum, 0, 256);
+            (pSamp + jj)->g = clip(g_sum, 0, 256);
+            (pSamp + jj)->b = clip(b_sum, 0, 256);
         }
         //输出一行数据
         distWrite(objDist, (unsigned char *)info->rgbOut, 1);
     }
-
 }
 
 /*
@@ -900,7 +1151,6 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
     float fWStep = 0.0f, fHStep = 0.0f;
     int ii = 0, jj = 0;
     Zoom_Rgb * pCurr = 0;
-    Zoom_Rgb * pSamp = 0;
 
     const float A = -0.75f;
     float coeffsX[4], coeffsY[4];
@@ -913,7 +1163,6 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
 
     fWStep = 1.0f * info->width / info->widthOut;
     fHStep = 1.0f * info->height / info->heightOut;
-    pSamp = info->rgbOut;
 
     //多线程
     int startLine, endLine;
@@ -926,18 +1175,8 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
     for(ii = startLine; ii < endLine; ii++)
     {
         fy = (float)((ii + 0.5) * fHStep - 0.5);
-        sy = (int)fy;
+        sy = (int)floor(fy);
         fy -= sy;
-
-        if(sy < 1)
-        {
-            sy = 1;
-        }
-
-        if(sy >= info->heightOut - 3)
-        {
-            sy = info->heightOut - 3;
-        }
 
         coeffsY[0] = ((A*(fy + 1) - 5*A)*(fy + 1) + 8 * A)*(fy + 1) - 4 * A;
 		coeffsY[1] = ((A + 2)*fy - (A + 3))*fy*fy + 1;
@@ -952,18 +1191,8 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
         for(jj = 0; jj < info->widthOut; jj++)
         {
             fx = (float)((jj + 0.5) * fWStep - 0.5);
-            sx = (int)fx;
+            sx = (int)floor(fx);
             fx -= sx;
-
-            if(sx < 1)
-            {
-                fx = 0, sx = 1;
-            }
-
-            if(sx >= info->widthOut - 3)
-            {
-                fx = 0, sx = info->widthOut - 3;
-            }
 
             coeffsX[0] = ((A*(fx + 1) - 5*A)*(fx + 1) + 8*A)*(fx + 1) - 4*A;
 			coeffsX[1] = ((A + 2)*fx - (A + 3))*fx*fx + 1;
@@ -977,23 +1206,24 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
 
             for(mm = 0; mm < 4; mm++) // rows
             {
-                pCurr = info->rgb + (sy + mm - 1) * info->width;
+                pCurr = info->rgb + clip((sy + mm - 1), 0, info->height) * info->width;
                 for(nn = 0; nn < 4; nn++) // cols
                 { 
-                    r_sum += pCurr[sx + nn - 1].r * cbufY[mm]*cbufX[nn];
-                    g_sum += pCurr[sx + nn - 1].g * cbufY[mm]*cbufX[nn];
-                    b_sum += pCurr[sx + nn - 1].b * cbufY[mm]*cbufX[nn];
+                    r_sum += pCurr[clip(sx + nn - 1, 0, info->width)].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[clip(sx + nn - 1, 0, info->width)].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[clip(sx + nn - 1, 0, info->width)].b * cbufY[mm]*cbufX[nn];
                 }
             }
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;
-            (pSamp + jj)->r = r_sum;
-            (pSamp + jj)->g = g_sum;
-            (pSamp + jj)->b = b_sum;
+            info->rgbOut[ii * info->widthOut + jj].r = clip(r_sum, 0, 256);
+            info->rgbOut[ii * info->widthOut + jj].g = clip(g_sum, 0, 256);
+            info->rgbOut[ii * info->widthOut + jj].b = clip(b_sum, 0, 256);
         }
-        pSamp += info->widthOut;
     }
+    //多线程,处理完成行数
+    info->threadFinsh++;
 }
 
 /*
