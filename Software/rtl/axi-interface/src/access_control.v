@@ -43,8 +43,9 @@ module access_control # (
    s_axis_user, m_axis_tready
    );
 
-	localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
-	localparam IMG_CNT_WIDTH   = $clog2(DST_IMG_WIDTH*DST_IMG_HEIGHT);
+	localparam AXIS_STRB_WIDTH    = AXIS_DATA_WIDTH/8;
+	localparam IMG_CNT_WIDTH      = $clog2(DST_IMG_WIDTH*DST_IMG_HEIGHT);
+	localparam DST_IMG_HEIGHT_LB2 = $clog2(DST_IMG_HEIGHT);
 
 	input clk;
 	input rst_n;
@@ -133,7 +134,8 @@ module access_control # (
 	end
 
 	// After finish upsampling, clear UPSTR and write UPENDR.
-	wire write_done = m_axis_tvalid & m_axis_tready & m_axis_tlast;
+	wire last_one_sent;
+	wire write_done = m_axis_tvalid & m_axis_tready & m_axis_tlast & last_one_sent;
 	always@(posedge clk or negedge rst_n) begin
 		if(~rst_n) begin
 			/*AUTORESET*/
@@ -159,7 +161,8 @@ module access_control # (
 	stream_in #(/*AUTOINSTPARAM*/
 		    // Parameters
 		    .AXIS_DATA_WIDTH	(AXIS_DATA_WIDTH),
-		    .UPSP_DATA_WIDTH	(UPSP_DATA_WIDTH))
+		    .UPSP_DATA_WIDTH	(UPSP_DATA_WIDTH),
+		    .SRC_IMG_HEIGHT	(SRC_IMG_HEIGHT))
 	AAA_stream_in(
 			  .s_axis_aclk	(clk),
 			  .s_axis_arstn	(rst_n),
@@ -212,15 +215,15 @@ module access_control # (
 
 
 	// Get access control read position
-	reg [DST_IMG_WIDTH_LB2-1:0] ac_rdnum_inrow;
-	reg [1:0] ac_rdnum_incol;
+	reg [DST_IMG_WIDTH_LB2-1:0]  ac_rdnum_inrow;
+	reg [DST_IMG_HEIGHT_LB2-1:0] ac_rdnum_incol;
 	always@(*) begin//TODO: More efficient
 		ac_rdnum_inrow = ac_rdcnt % DST_IMG_WIDTH;
 	end
 
 	wire outbuf_clear = 
 			   ac_rdnum_inrow == (DST_IMG_WIDTH-1)
-			   && ac_rdnum_incol == 2'b11 
+			   && ac_rdnum_incol[1:0] == 2'b11 
 			   && m_axis_tvalid & m_axis_tready;
 
 
@@ -262,7 +265,7 @@ module access_control # (
 	      .clk			(clk),
 	      .rst_n		(rst_n),
 	      .raddr		(ac_rdnum_inrow),
-	      .rcs			(ac_rdnum_incol),
+	      .rcs			(ac_rdnum_incol[1:0]),
 	      .re			(outbuf@_re),
 	      .wdin			(upsp_ac_wdata),
 	      .waddr		(outbuf_waddr),
@@ -282,7 +285,7 @@ module access_control # (
 		.clk			(clk),			 // Templated
 		.rst_n			(rst_n),		 // Templated
 		.raddr			(ac_rdnum_inrow),	 // Templated
-		.rcs			(ac_rdnum_incol),	 // Templated
+		.rcs			(ac_rdnum_incol[1:0]),	 // Templated
 		.re			(outbuf0_re),		 // Templated
 		.wdin			(upsp_ac_wdata),	 // Templated
 		.waddr			(outbuf_waddr),		 // Templated
@@ -301,7 +304,7 @@ module access_control # (
 		.clk			(clk),			 // Templated
 		.rst_n			(rst_n),		 // Templated
 		.raddr			(ac_rdnum_inrow),	 // Templated
-		.rcs			(ac_rdnum_incol),	 // Templated
+		.rcs			(ac_rdnum_incol[1:0]),	 // Templated
 		.re			(outbuf1_re),		 // Templated
 		.wdin			(upsp_ac_wdata),	 // Templated
 		.waddr			(outbuf_waddr),		 // Templated
@@ -358,7 +361,8 @@ module access_control # (
 	
 
 	// Transfer data if possible
-	wire last_one = (ac_rdcnt == DST_IMG_WIDTH * DST_IMG_HEIGHT-1);
+	wire last_of_row = (ac_rdnum_inrow == DST_IMG_WIDTH - 1);
+	assign last_one_sent = (ac_rdnum_incol == DST_IMG_HEIGHT);
 
 	always@(posedge clk or negedge rst_n) begin: AC_BUFSEL
 		if(~rst_n) begin
@@ -374,7 +378,7 @@ module access_control # (
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			ac_rdcnt <= {IMG_CNT_WIDTH{1'b0}};
-			ac_rdnum_incol <= 2'h0;
+			ac_rdnum_incol <= {DST_IMG_HEIGHT_LB2{1'b0}};
 			m_axis_tlast <= 1'h0;
 			m_axis_tvalid <= 1'h0;
 			// End of automatics
@@ -386,31 +390,31 @@ module access_control # (
 				if(m_axis_tready) begin
 					
 					ac_rdcnt <= ac_rdcnt + 1;
-					if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
+					if(last_of_row) begin
 						ac_rdnum_incol <= ac_rdnum_incol + 1;
-						if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
+						// if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
 					end
 
-					m_axis_tlast <= last_one;
+					m_axis_tlast <= last_of_row;
 				end
 			end else begin
 				m_axis_tvalid <= 1'b1;
 
 				ac_rdcnt <= ac_rdcnt + 1;
-				if(ac_rdnum_inrow == DST_IMG_WIDTH - 1) begin
+				if(last_of_row) begin
 					ac_rdnum_incol <= ac_rdnum_incol + 1;
-					if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
+					// if(ac_rdnum_incol == 2'b11) ac_rdnum_incol <= 0;
 				end
 				
-				m_axis_tlast  <= last_one;
+				m_axis_tlast  <= last_of_row;
 			end
 
 		end else if(m_axis_tvalid) begin
 			if(m_axis_tready) begin
 				m_axis_tvalid <= 1'b0;
-				if(m_axis_tlast) begin
+				if(m_axis_tlast && last_one_sent) begin
 					ac_rdcnt <= {IMG_CNT_WIDTH{1'b0}};
-					ac_rdnum_incol <= 2'b00;
+					ac_rdnum_incol <= {DST_IMG_HEIGHT_LB2{1'b0}};
 					m_axis_tlast <= 1'b0;
 				end
 			end

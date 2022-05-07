@@ -27,7 +27,7 @@ import utils_pkg::*;
 	localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
 	localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
     
-    localparam string SRC_BMP_BASE    = "onepiece540";
+    localparam string SRC_BMP_BASE    = "onepiece54";
     localparam string SRC_BMP_FILE    = {SRC_BMP_BASE, ".bmp"};
     localparam string SRC_BIN_FILE    = {SRC_BMP_BASE, "_tmp_bin"};
     localparam string DST_BMP_FILE    = {SRC_BMP_BASE, "_4.bmp"};

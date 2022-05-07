@@ -17,7 +17,8 @@
  **************************************************/
 module stream_in # (
 		parameter AXIS_DATA_WIDTH = 32,
-		parameter UPSP_DATA_WIDTH = 32
+		parameter UPSP_DATA_WIDTH = 32,
+		parameter SRC_IMG_HEIGHT = 2160
 	) (/*AUTOARG*/
    // Outputs
    ac_upsp_rvalid, ac_upsp_rdata, s_axis_tready,
@@ -27,7 +28,8 @@ module stream_in # (
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user
    );
 
-	localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
+	localparam AXIS_STRB_WIDTH    = AXIS_DATA_WIDTH/8;
+	localparam DST_IMG_HEIGHT_LB2 = $clog2(SRC_IMG_HEIGHT);
 	
 	// Interface for upsp read
 	input                        upsp_ac_rready;
@@ -66,28 +68,40 @@ module stream_in # (
 
 	wire clk = s_axis_aclk;
 	wire rst_n = s_axis_arstn;
+	wire one_row_hsked = s_axis_tvalid & s_axis_tready & s_axis_tlast;
+
+	// Because VDMA in xilinx will send a tlast signal for every row. So we need to track it.
+	reg [DST_IMG_HEIGHT_LB2-1:0] input_row_cnt;
+	always@(posedge clk or negedge rst_n) begin
+		if(~rst_n)
+			input_row_cnt <= {DST_IMG_HEIGHT_LB2{1'b0}};
+		else if(one_row_hsked)
+			input_row_cnt <= input_row_cnt + 1;
+		else if(UPENDR)
+			input_row_cnt <= {DST_IMG_HEIGHT_LB2{1'b0}};
+	end
 
 	// Track whether a whole image has been transmitted or not
 	reg frame_done;
 	always@(posedge clk or negedge rst_n) begin
+		// If UPSTR didn't be set, frame_done will be asserted, not data will
+		// be transmitted.
 		if(~rst_n)
-			frame_done <= 1'b0;
-		// DMA sends the last data
-		else if(s_axis_tvalid & s_axis_tready & s_axis_tlast)
+			frame_done <= 1'b1;
+		// VDMA sends the last data
+		else if(one_row_hsked && input_row_cnt == SRC_IMG_HEIGHT - 1)
 			frame_done <= 1'b1;
 		// Up-Sampling finished the operation, which means no further data needed
 		else if(UPENDR)
 			frame_done <= 1'b1;
-		// reset when next stream begins
+		// reset when next stream begins.
 		else if(frame_done & UPSTR)
 			frame_done <= 1'b0;
 	end
 
-	/* Input width of AXI-Stream is 4B, but only LSB 3B are useful.
-	 These 3B will be sent to Up-Sampling module.
-	*/
-	assign s_axis_tready = upsp_ac_rready & ~frame_done;
-	assign ac_upsp_rvalid = s_axis_tvalid;
+	// If not frame_done, bypass the signals.
+	assign s_axis_tready  = upsp_ac_rready & ~frame_done;
+	assign ac_upsp_rvalid = s_axis_tvalid & ~frame_done;
 	assign ac_upsp_rdata  = s_axis_tdata;
 
 
@@ -117,7 +131,10 @@ module stream_in # (
 		s_axis_tvalid |-> ~frame_done;
 	endproperty
 
-	assert property(valid_stream_in);
+	assert property(valid_stream_in) else begin 
+		$display("stream_in: tvalid is asserted when frame_done is asserted\n");
+		// $finish;
+	end;
 
 `endif
 
