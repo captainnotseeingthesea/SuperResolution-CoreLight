@@ -912,14 +912,14 @@ module bicubic_top
 
 
 `ifdef GEN_IN_SIXTEEN
-    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
+    assign bcci_rsp_data1 = {R_bcci_rsp_data1, G_bcci_rsp_data1, B_bcci_rsp_data1};
     assign upsp_ac_wdata = bcci_rsp_data1;
 
 `elsif GEN_IN_EIGHT
-    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
-    assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
-    assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
-    assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
+    assign bcci_rsp_data1 = {R_bcci_rsp_data1, G_bcci_rsp_data1, B_bcci_rsp_data1};
+    assign bcci_rsp_data2 = {R_bcci_rsp_data2, G_bcci_rsp_data2, B_bcci_rsp_data2};
+    assign bcci_rsp_data3 = {R_bcci_rsp_data3, G_bcci_rsp_data3, B_bcci_rsp_data3};
+    assign bcci_rsp_data4 = {R_bcci_rsp_data4, G_bcci_rsp_data4, B_bcci_rsp_data4};
 
     assign upsp_ac_wdata = {
         bcci_rsp_data4,
@@ -929,10 +929,10 @@ module bicubic_top
     };
 
 `elsif GEN_IN_FOUR
-    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
-    assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
-    assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
-    assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
+    assign bcci_rsp_data1 = {R_bcci_rsp_data1, G_bcci_rsp_data1, B_bcci_rsp_data1};
+    assign bcci_rsp_data2 = {R_bcci_rsp_data2, G_bcci_rsp_data2, B_bcci_rsp_data2};
+    assign bcci_rsp_data3 = {R_bcci_rsp_data3, G_bcci_rsp_data3, B_bcci_rsp_data3};
+    assign bcci_rsp_data4 = {R_bcci_rsp_data4, G_bcci_rsp_data4, B_bcci_rsp_data4};
 
     assign upsp_ac_wdata = {
         bcci_rsp_data4,
@@ -942,15 +942,15 @@ module bicubic_top
     };
 
 `elsif GEN_IN_TWO
-    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
-    assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
-    assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
-    assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
+    assign bcci_rsp_data1 = {R_bcci_rsp_data1, G_bcci_rsp_data1, B_bcci_rsp_data1};
+    assign bcci_rsp_data2 = {R_bcci_rsp_data2, G_bcci_rsp_data2, B_bcci_rsp_data2};
+    assign bcci_rsp_data3 = {R_bcci_rsp_data3, G_bcci_rsp_data3, B_bcci_rsp_data3};
+    assign bcci_rsp_data4 = {R_bcci_rsp_data4, G_bcci_rsp_data4, B_bcci_rsp_data4};
 
-    assign bcci_rsp_data5 = {B_bcci_rsp_data5, G_bcci_rsp_data5, R_bcci_rsp_data5};
-    assign bcci_rsp_data6 = {B_bcci_rsp_data6, G_bcci_rsp_data6, R_bcci_rsp_data6};
-    assign bcci_rsp_data7 = {B_bcci_rsp_data7, G_bcci_rsp_data7, R_bcci_rsp_data7};
-    assign bcci_rsp_data8 = {B_bcci_rsp_data8, G_bcci_rsp_data8, R_bcci_rsp_data8};
+    assign bcci_rsp_data5 = {R_bcci_rsp_data5, G_bcci_rsp_data5, B_bcci_rsp_data5};
+    assign bcci_rsp_data6 = {R_bcci_rsp_data6, G_bcci_rsp_data6, B_bcci_rsp_data6};
+    assign bcci_rsp_data7 = {R_bcci_rsp_data7, G_bcci_rsp_data7, B_bcci_rsp_data7};
+    assign bcci_rsp_data8 = {R_bcci_rsp_data8, G_bcci_rsp_data8, B_bcci_rsp_data8};
 
     assign upsp_ac_wdata = {
         bcci_rsp_data8,
@@ -965,25 +965,25 @@ module bicubic_top
     };
 
 `elsif GEN_IN_ONE
-    assign bcci_rsp_data1 = {B_bcci_rsp_data1, G_bcci_rsp_data1, R_bcci_rsp_data1};
-    assign bcci_rsp_data2 = {B_bcci_rsp_data2, G_bcci_rsp_data2, R_bcci_rsp_data2};
-    assign bcci_rsp_data3 = {B_bcci_rsp_data3, G_bcci_rsp_data3, R_bcci_rsp_data3};
-    assign bcci_rsp_data4 = {B_bcci_rsp_data4, G_bcci_rsp_data4, R_bcci_rsp_data4};
+    assign bcci_rsp_data1 = {R_bcci_rsp_data1, G_bcci_rsp_data1, B_bcci_rsp_data1};
+    assign bcci_rsp_data2 = {R_bcci_rsp_data2, G_bcci_rsp_data2, B_bcci_rsp_data2};
+    assign bcci_rsp_data3 = {R_bcci_rsp_data3, G_bcci_rsp_data3, B_bcci_rsp_data3};
+    assign bcci_rsp_data4 = {R_bcci_rsp_data4, G_bcci_rsp_data4, B_bcci_rsp_data4};
 
-    assign bcci_rsp_data5 = {B_bcci_rsp_data5, G_bcci_rsp_data5, R_bcci_rsp_data5};
-    assign bcci_rsp_data6 = {B_bcci_rsp_data6, G_bcci_rsp_data6, R_bcci_rsp_data6};
-    assign bcci_rsp_data7 = {B_bcci_rsp_data7, G_bcci_rsp_data7, R_bcci_rsp_data7};
-    assign bcci_rsp_data8 = {B_bcci_rsp_data8, G_bcci_rsp_data8, R_bcci_rsp_data8};
+    assign bcci_rsp_data5 = {R_bcci_rsp_data5, G_bcci_rsp_data5, B_bcci_rsp_data5};
+    assign bcci_rsp_data6 = {R_bcci_rsp_data6, G_bcci_rsp_data6, B_bcci_rsp_data6};
+    assign bcci_rsp_data7 = {R_bcci_rsp_data7, G_bcci_rsp_data7, B_bcci_rsp_data7};
+    assign bcci_rsp_data8 = {R_bcci_rsp_data8, G_bcci_rsp_data8, B_bcci_rsp_data8};
 
-    assign bcci_rsp_data9 = {B_bcci_rsp_data9, G_bcci_rsp_data9, R_bcci_rsp_data9};
-    assign bcci_rsp_data10 = {B_bcci_rsp_data10, G_bcci_rsp_data10, R_bcci_rsp_data10};
-    assign bcci_rsp_data11 = {B_bcci_rsp_data11, G_bcci_rsp_data11, R_bcci_rsp_data11};
-    assign bcci_rsp_data12 = {B_bcci_rsp_data12, G_bcci_rsp_data12, R_bcci_rsp_data12};
+    assign bcci_rsp_data9 = {R_bcci_rsp_data9, G_bcci_rsp_data9, B_bcci_rsp_data9};
+    assign bcci_rsp_data10 = {R_bcci_rsp_data10, G_bcci_rsp_data10, B_bcci_rsp_data10};
+    assign bcci_rsp_data11 = {R_bcci_rsp_data11, G_bcci_rsp_data11, B_bcci_rsp_data11};
+    assign bcci_rsp_data12 = {R_bcci_rsp_data12, G_bcci_rsp_data12, B_bcci_rsp_data12};
 
-    assign bcci_rsp_data13 = {B_bcci_rsp_data13, G_bcci_rsp_data13, R_bcci_rsp_data13};
-    assign bcci_rsp_data14 = {B_bcci_rsp_data14, G_bcci_rsp_data14, R_bcci_rsp_data14};
-    assign bcci_rsp_data15 = {B_bcci_rsp_data15, G_bcci_rsp_data15, R_bcci_rsp_data15};
-    assign bcci_rsp_data16 = {B_bcci_rsp_data16, G_bcci_rsp_data16, R_bcci_rsp_data16};
+    assign bcci_rsp_data13 = {R_bcci_rsp_data13, G_bcci_rsp_data13, B_bcci_rsp_data13};
+    assign bcci_rsp_data14 = {R_bcci_rsp_data14, G_bcci_rsp_data14, B_bcci_rsp_data14};
+    assign bcci_rsp_data15 = {R_bcci_rsp_data15, G_bcci_rsp_data15, B_bcci_rsp_data15};
+    assign bcci_rsp_data16 = {R_bcci_rsp_data16, G_bcci_rsp_data16, B_bcci_rsp_data16};
 
     assign upsp_ac_wdata = {
         bcci_rsp_data16,
