@@ -37,7 +37,7 @@ task axil_end_seq::body();
     
     // Clear UPENDR
     `uvm_do_with(t, {
-        t.awaddr  == 1;
+        t.awaddr  == 0;
         t.awprot  == 0;
         t.wdata   == 0;
         &t.wstrb  == 1;

@@ -25,8 +25,7 @@ module config_register_file # (
    // Outputs
    s_axi_awready, s_axi_wready, s_axi_bvalid, s_axi_bresp,
    s_axi_arready, s_axi_rvalid, s_axi_rdata, s_axi_rresp,
-   interrupt_updone, crf_ac_UPSTR, crf_ac_UPENDR, crf_ac_UPSRCAR,
-   crf_ac_UPDSTAR, crf_ac_wbusy,
+   interrupt_updone, crf_ac_UPSTART, crf_ac_UPEND, crf_ac_wbusy,
    // Inputs
    clk, rst_n, s_axi_awvalid, s_axi_awaddr, s_axi_awprot,
    s_axi_wvalid, s_axi_wdata, s_axi_wstrb, s_axi_bready,
@@ -77,17 +76,14 @@ module config_register_file # (
 	input                       ac_crf_wrt;
 	input  [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;
 	input  [CRF_DATA_WIDTH-1:0] ac_crf_wdata;
-	output [CRF_DATA_WIDTH-1:0] crf_ac_UPSTR;
-	output [CRF_DATA_WIDTH-1:0] crf_ac_UPENDR;
-	output [CRF_DATA_WIDTH-1:0] crf_ac_UPSRCAR;
-	output [CRF_DATA_WIDTH-1:0] crf_ac_UPDSTAR;
+	output                      crf_ac_UPSTART;
+	output                      crf_ac_UPEND;
 	output                      crf_ac_wbusy;
 
 	/*AUTOWIRE*/
 
 	/*AUTOREG*/
 	// Beginning of automatic regs (for this module's undeclared outputs)
-	reg [CRF_DATA_WIDTH-1:0] crf_ac_UPDSTAR;
 	reg		s_axi_arready;
 	reg		s_axi_awready;
 	reg		s_axi_bvalid;
@@ -97,22 +93,16 @@ module config_register_file # (
 	// End of automatics
 
 
-	// Up-Sampling start and end register.
-	reg [CRF_DATA_WIDTH-1:0] UPSTR;
-	reg [CRF_DATA_WIDTH-1:0] UPENDR;
-	// Source and destination address.
-	reg [CRF_DATA_WIDTH-1:0] UPSRCAR;
-	reg [CRF_DATA_WIDTH-1:0] UPDSTAR;
+	// Up-Sampling status register.
+	reg [CRF_DATA_WIDTH-1:0] UPSTAT;
 
 
 	// Directly output registers.
-	assign crf_ac_UPSTR   = UPSTR;
-	assign crf_ac_UPENDR  = UPENDR ;
-	assign crf_ac_UPSRCAR = UPSRCAR;
-	assign crf_ac_UPDSTR  = UPDSTAR;
+	assign crf_ac_UPSTART = UPSTAT[0];
+	assign crf_ac_UPEND  = UPSTAT[1];
 
 	// Output the LSB of UPENR as an interrupt to PS.
-	assign interrupt_updone = UPENDR[0];
+	assign interrupt_updone = UPSTAT[1];
 
 
 	// Write address channel
@@ -176,35 +166,20 @@ module config_register_file # (
 		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			UPDSTAR <= {CRF_DATA_WIDTH{1'b0}};
-			UPENDR <= {CRF_DATA_WIDTH{1'b0}};
-			UPSRCAR <= {CRF_DATA_WIDTH{1'b0}};
-			UPSTR <= {CRF_DATA_WIDTH{1'b0}};
+			UPSTAT <= {CRF_DATA_WIDTH{1'b0}};
 			// End of automatics
 		end else if(ac_wren) begin
 			case(ac_crf_waddr)
-				0: UPSTR   <= ac_crf_wdata;
-				1: UPENDR  <= ac_crf_wdata;
-				2: UPSRCAR <= ac_crf_wdata;
-				3: UPDSTAR <= ac_crf_wdata;
+				0: UPSTAT   <= ac_crf_wdata;
 				default: begin
-					UPSTR   <= UPSTR  ;
-					UPENDR  <= UPENDR ;
-					UPSRCAR <= UPSRCAR;
-					UPDSTAR <= UPDSTAR;
+					UPSTAT   <= UPSTAT  ;
 				end
 			endcase
 		end else if(axi_wren) begin
 			case(axi_waddr)
-				0: UPSTR   <= s_axi_wdata;
-				1: UPENDR  <= s_axi_wdata;
-				2: UPSRCAR <= s_axi_wdata;
-				3: UPDSTAR <= s_axi_wdata;
+				0: UPSTAT  <= s_axi_wdata;
 				default: begin
-					UPSTR   <= UPSTR  ;
-					UPENDR  <= UPENDR ;
-					UPSRCAR <= UPSRCAR;
-					UPDSTAR <= UPDSTAR;
+					UPSTAT   <= UPSTAT  ;
 				end
 			endcase
 		end
@@ -270,10 +245,7 @@ module config_register_file # (
 		end else if(axi_read) begin
 			s_axi_rvalid <= 1'b1;
 			case(axi_raddr)
-				0: s_axi_rdata <= UPSTR  ;
-				1: s_axi_rdata <= UPENDR ;
-				2: s_axi_rdata <= UPSRCAR;
-				3: s_axi_rdata <= UPDSTAR;
+				0: s_axi_rdata <= UPSTAT  ;
 				default: s_axi_rdata <= {AXI_DATA_WIDTH{1'b0}};
 			endcase
 		end else begin

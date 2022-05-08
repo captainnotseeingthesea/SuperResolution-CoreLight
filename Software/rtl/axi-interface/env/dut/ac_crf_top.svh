@@ -35,10 +35,8 @@ module ac_crf_top(ac_if acif);
     wire [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;	// From AAA_access_control of access_control.v
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPDSTAR;	// From AAA_config_register_file of config_register_file.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPENDR;	// From AAA_config_register_file of config_register_file.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPSRCAR;	// From AAA_config_register_file of config_register_file.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPSTR;	// From AAA_config_register_file of config_register_file.v
+    wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
+    wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
     // End of automatics
 
@@ -89,10 +87,8 @@ module ac_crf_top(ac_if acif);
 			     .s_axi_rdata	(acif.lite_slave.axi_rdata[AXI_DATA_WIDTH-1:0]), // Templated
 			     .s_axi_rresp	(acif.lite_slave.axi_rresp[1:0]), // Templated
 			     .interrupt_updone	(acif.interrupt_updone), // Templated
-			     .crf_ac_UPSTR	(crf_ac_UPSTR[CRF_DATA_WIDTH-1:0]),
-			     .crf_ac_UPENDR	(crf_ac_UPENDR[CRF_DATA_WIDTH-1:0]),
-			     .crf_ac_UPSRCAR	(crf_ac_UPSRCAR[CRF_DATA_WIDTH-1:0]),
-			     .crf_ac_UPDSTAR	(crf_ac_UPDSTAR[CRF_DATA_WIDTH-1:0]),
+			     .crf_ac_UPSTART	(crf_ac_UPSTART),
+			     .crf_ac_UPEND	(crf_ac_UPEND),
 			     .crf_ac_wbusy	(crf_ac_wbusy),
 			     // Inputs
 			     .clk		(acif.clk),	 // Templated
@@ -158,8 +154,6 @@ module ac_crf_top(ac_if acif);
 		       .ac_crf_wrt	(ac_crf_wrt),
 		       .ac_crf_wdata	(ac_crf_wdata[CRF_DATA_WIDTH-1:0]),
 		       .ac_crf_waddr	(ac_crf_waddr[CRF_ADDR_WIDTH-1:0]),
-		       .UPSTR		(acif.usif.UPSTR[CRF_DATA_WIDTH-1:0]), // Templated
-		       .UPENDR		(acif.usif.UPENDR[CRF_DATA_WIDTH-1:0]), // Templated
 		       .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid), // Templated
 		       .ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]), // Templated
 		       .ac_upsp_wready	(acif.usif.ac_upsp_wready), // Templated
@@ -175,10 +169,8 @@ module ac_crf_top(ac_if acif);
 		       // Inputs
 		       .clk		(acif.clk),		 // Templated
 		       .rst_n		(acif.rst_n),		 // Templated
-		       .crf_ac_UPSTR	(crf_ac_UPSTR[CRF_DATA_WIDTH-1:0]),
-		       .crf_ac_UPENDR	(crf_ac_UPENDR[CRF_DATA_WIDTH-1:0]),
-		       .crf_ac_UPSRCAR	(crf_ac_UPSRCAR[CRF_DATA_WIDTH-1:0]),
-		       .crf_ac_UPDSTAR	(crf_ac_UPDSTAR[CRF_DATA_WIDTH-1:0]),
+		       .crf_ac_UPSTART	(crf_ac_UPSTART),
+		       .crf_ac_UPEND	(crf_ac_UPEND),
 		       .crf_ac_wbusy	(crf_ac_wbusy),
 		       .upsp_ac_rready	(upsp_ac_rready),
 		       .upsp_ac_wvalid	(upsp_ac_wvalid),

@@ -97,18 +97,14 @@ module bcci_ip
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
-    wire [CRF_DATA_WIDTH-1:0] UPENDR;		// From AAA_access_control of access_control.v
-    wire [CRF_DATA_WIDTH-1:0] UPSTR;		// From AAA_access_control of access_control.v
     wire [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;	// From AAA_access_control of access_control.v
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
     wire [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;	// From AAA_access_control of access_control.v
     wire		ac_upsp_rvalid;		// From AAA_access_control of access_control.v
     wire		ac_upsp_wready;		// From AAA_access_control of access_control.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPDSTAR;	// From AAA_config_register_file of config_register_file.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPENDR;	// From AAA_config_register_file of config_register_file.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPSRCAR;	// From AAA_config_register_file of config_register_file.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPSTR;	// From AAA_config_register_file of config_register_file.v
+    wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
+    wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
     wire		upsp_ac_rready;		// From AAA_bicubic_top of bicubic_top.v
     wire [BUFFER_WIDTH-1:0] upsp_ac_wdata;	// From AAA_bicubic_top of bicubic_top.v
@@ -141,10 +137,8 @@ module bcci_ip
 			     .s_axi_rdata	(s_axi_rdata[AXI_DATA_WIDTH-1:0]),
 			     .s_axi_rresp	(s_axi_rresp[1:0]),
 			     .interrupt_updone	(interrupt_updone),
-			     .crf_ac_UPSTR	(crf_ac_UPSTR[CRF_DATA_WIDTH-1:0]),
-			     .crf_ac_UPENDR	(crf_ac_UPENDR[CRF_DATA_WIDTH-1:0]),
-			     .crf_ac_UPSRCAR	(crf_ac_UPSRCAR[CRF_DATA_WIDTH-1:0]),
-			     .crf_ac_UPDSTAR	(crf_ac_UPDSTAR[CRF_DATA_WIDTH-1:0]),
+			     .crf_ac_UPSTART	(crf_ac_UPSTART),
+			     .crf_ac_UPEND	(crf_ac_UPEND),
 			     .crf_ac_wbusy	(crf_ac_wbusy),
 			     // Inputs
 			     .clk		(clk),
@@ -182,8 +176,6 @@ module bcci_ip
 		       .ac_crf_wrt	(ac_crf_wrt),
 		       .ac_crf_wdata	(ac_crf_wdata[CRF_DATA_WIDTH-1:0]),
 		       .ac_crf_waddr	(ac_crf_waddr[CRF_ADDR_WIDTH-1:0]),
-		       .UPSTR		(UPSTR[CRF_DATA_WIDTH-1:0]),
-		       .UPENDR		(UPENDR[CRF_DATA_WIDTH-1:0]),
 		       .ac_upsp_rvalid	(ac_upsp_rvalid),
 		       .ac_upsp_rdata	(ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]),
 		       .ac_upsp_wready	(ac_upsp_wready),
@@ -199,10 +191,8 @@ module bcci_ip
 		       // Inputs
 		       .clk		(clk),
 		       .rst_n		(rst_n),
-		       .crf_ac_UPSTR	(crf_ac_UPSTR[CRF_DATA_WIDTH-1:0]),
-		       .crf_ac_UPENDR	(crf_ac_UPENDR[CRF_DATA_WIDTH-1:0]),
-		       .crf_ac_UPSRCAR	(crf_ac_UPSRCAR[CRF_DATA_WIDTH-1:0]),
-		       .crf_ac_UPDSTAR	(crf_ac_UPDSTAR[CRF_DATA_WIDTH-1:0]),
+		       .crf_ac_UPSTART	(crf_ac_UPSTART),
+		       .crf_ac_UPEND	(crf_ac_UPEND),
 		       .crf_ac_wbusy	(crf_ac_wbusy),
 		       .upsp_ac_rready	(upsp_ac_rready),
 		       .upsp_ac_wvalid	(upsp_ac_wvalid),
