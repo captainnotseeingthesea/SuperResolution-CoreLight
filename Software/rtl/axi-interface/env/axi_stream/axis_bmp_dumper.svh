@@ -43,13 +43,13 @@ endclass
 function void axis_bmp_dumper::build_phase(uvm_phase phase);
     super.build_phase(phase);
     if(!uvm_config_db#(string)::get(this, "", "src_bin", src_bin))
-        `uvm_fatal("axis_bmp_dumper", "src_bin must be set!")
+        `uvm_fatal(get_name(), "src_bin must be set!")
     if(!uvm_config_db#(string)::get(this, "", "dst_bmp", dst_bmp))
-        `uvm_fatal("axis_bmp_dumper", "dst_bmp must be set!")
+        `uvm_fatal(get_name(), "dst_bmp must be set!")
     if(!uvm_config_db#(int)::get(this, "", "height", height))
-        `uvm_fatal("axis_bmp_dumper", "height must be set!")
+        `uvm_fatal(get_name(), "height must be set!")
     if(!uvm_config_db#(int)::get(this, "", "width", width))
-        `uvm_fatal("axis_bmp_dumper", "width must be set!")
+        `uvm_fatal(get_name(), "width must be set!")
     dump_port = new("dump_port", this);
 endfunction: build_phase
 
@@ -58,6 +58,7 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
     axi_stream_trans t;
     int i = 0;
     int j = 0;
+    int rows_received = 0;
 
     phase.raise_objection(this);
 
@@ -76,11 +77,13 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
         end else
             i++;
         
-        if(t.tlast) begin
-            `uvm_info("axis_bmp_dumper", "tlast valid, start dumping file", UVM_LOW)
+        if(t.tlast) rows_received++;
+
+        if(rows_received == height) begin
+            `uvm_info(get_name(), $sformatf("received %d rows , start dumping file", rows_received), UVM_LOW)
             $writememh(src_bin, data);
             BMP::bin2bmp(src_bin, dst_bmp, height, width);
-            `uvm_info("axis_bmp_dumper", "dumping over", UVM_LOW)
+            `uvm_info(get_name(), "dumping over", UVM_LOW)
             break; 
         end
     end
