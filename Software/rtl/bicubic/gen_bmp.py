@@ -3,8 +3,8 @@ width=960
 height=540
 f = open("display_verilator.txt")
 
-# width=32
-# height=18
+# width=11
+# height=6
 # f = open("display.txt")
 
 result = []
@@ -46,47 +46,32 @@ for i in range(4*height):
 
 
 f = open("49_1k.bmp","rb")
-# f = open("6.bmp","rb")
+# f = open("2.bmp","rb")
 head = f.read(18)
 f.seek(f.tell()+8)
-body = f.read(8)
-f.seek(f.tell()+4)
-tail = f.read(16)
-
-f.seek(f.tell()+8)
+tail = f.read(28)
 # body = f.read(2)
 f.close()
 
 import struct
 # test = open("tt.bmp","wb+")
 test = open("49_4k.bmp","wb+")
-test.write(struct.pack('B', head[0]))
-test.write(struct.pack('B', head[1]))
-test.write(struct.pack('i', 54+4*4*width*height*3))
+test.write(struct.pack('B',head[0]))
+test.write(struct.pack('B',head[1]))
+test.write(struct.pack('i',54+4*4*width*height*3))
 for i in range(18-6):
     test.write(struct.pack('B',head[6+i]))
 test.write(struct.pack('i', width*4))
 test.write(struct.pack("i", height*4))
-for i in range(8):
-    test.write(struct.pack('B', body[i]))    
-test.write(struct.pack('i', 4*4*width*height*3))
-for i in range(16):
+for i in range(28):
     test.write(struct.pack('B', tail[i]))
 
 
 
-# for i in range (len(des)):
-#     t = des[i]
-#     for j in range (12*width):
-#         test.write(struct.pack('B', int(t[j*2:j*2+2],16)))
-
 for i in range (len(des)):
     t = des[i]
-    for j in range (4*width):
-        test.write(struct.pack('B', int(t[(j+1)*6-2:(j+1)*6],16)))
-        test.write(struct.pack('B', int(t[(j+1)*6-4:(j+1)*6-2],16)))
-        test.write(struct.pack('B', int(t[(j+1)*6-6:(j+1)*6-4],16)))
-
+    for j in range (12*width):
+        test.write(struct.pack('B', int(t[j*2:j*2+2],16)))
 test.close()
 print("the result is in 49_4k.bmp")
 

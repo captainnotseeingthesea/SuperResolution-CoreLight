@@ -1,4 +1,4 @@
-`include "define.v"
+// `include "define.v"
 `include "bicubic_read_bmp.v"
 `ifndef DFFS
     `include "dffs.v"
@@ -176,7 +176,7 @@ module buffer #(
     wire cur_is_last_row = (cur_row_cnt == HEIGHT-1) ? 1'b1 : 1'b0;
     assign nxt_row_cnt = cur_row_cnt + 1;
     wire row_cnt_ena = cur_col_cnt_is_width_plus_2 & axi_valid;
-    dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
+    dfflr #(.DW(COL_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
 
 
     wire end_of_upsample_ena = cur_is_last_row & cur_col_cnt_is_width;
