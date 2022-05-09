@@ -151,8 +151,8 @@ import utils_pkg::*;
 
 	initial
 	begin
-		// $dumpfile("../sim/waveform.vcd");
-        // $dumpvars(0, tb_ac_bcci);
+		$dumpfile("../sim/waveform.vcd");
+        $dumpvars(0, tb_ac_bcci);
         // wait(tb_ac_bcci.dut.AAA_bicubic_top.u_buffer.cur_row_cnt == 2);
         // $dumpoff;
         // wait(tb_ac_bcci.dut.AAA_bicubic_top.u_buffer.cur_row_cnt == 52);

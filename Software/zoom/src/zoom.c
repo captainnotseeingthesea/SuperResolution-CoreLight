@@ -347,6 +347,15 @@ void _zoom_linear_opencv(Zoom_Info *info)
         fy = (float)((ii + 0.5) * fHStep - 0.5);
         sy = (int)floor(fy);
         fy -= sy;
+        if(sy < 0)
+        {
+            sy = 0;
+        }
+
+        if(sy >= info->heightOut - 2)
+        {
+            sy = info->heightOut - 2;
+        }
 
         cbufY[0] = (short)((1.f - fy) * 2048);
         cbufY[1] = 2048 - cbufY[0];
@@ -359,12 +368,12 @@ void _zoom_linear_opencv(Zoom_Info *info)
 
             if(sx < 0)
             {
-                fx = 0, sx = 0;
+                fx = 0, sx = 1;
             }
 
-            if(sx >= info->width - 1)
+            if(sx >= info->widthOut - 2)
             {
-                fx = 0, sx = info->width - 1;
+                fx = 0, sx = info->widthOut - 2;
             }
 
             cbufX[0] = (short)((1.f - fx) * 2048);
@@ -372,12 +381,12 @@ void _zoom_linear_opencv(Zoom_Info *info)
 
             for(mm = 0; mm < 2; mm++) // cols
             {
-                pCurr = info->rgb + clip((sy + mm), 0, info->height) * info->width;
+                pCurr = info->rgb + (sy + mm) * info->width;
                 for(nn = 0; nn < 2; nn++) // rows
                 {
-                    r_sum += pCurr[clip(sx + nn, 0, info->width)].r * cbufY[mm]*cbufX[nn];
-                    g_sum += pCurr[clip(sx + nn, 0, info->width)].g * cbufY[mm]*cbufX[nn];
-                    b_sum += pCurr[clip(sx + nn, 0, info->width)].b * cbufY[mm]*cbufX[nn];
+                    r_sum += pCurr[sx + nn].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[sx + nn].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[sx + nn].b * cbufY[mm]*cbufX[nn];
                 }
             }
             r_sum >>= 22;
@@ -517,47 +526,49 @@ void _zoom_linear_stream_opencv(
     for(ii = 0; ii < info->heightOut; ii++)
     {
         fy = (float)((ii + 0.5) * fHStep - 0.5);
-        sy = (int)floor(fy);
+        sy = (int)fy;
         fy -= sy;
-        
-        if(sy + 1 < info->height)
+        if(sy < 0)
         {
-            while (readLine < sy + 1)
-            {
-                //后面数据往前挪
-                lineX = line[0];
-                line[0] = line[1];
-                line[1] = lineX;
-                //读取新一行数据
-                if (srcRead(objSrc, (unsigned char *)line[1], 1) == 1)
-                    readLine += 1;
-                else
-                    break;
-            }
+            fy = 0, sy = 0;
         }
-        else
+
+        if(sy >= info->heightOut - 2)
+        {
+            fy = 0, sy = info->heightOut - 2;
+        }
+
+        while (readLine < sy + 1)
         {
             //后面数据往前挪
-            memcpy(line[0], line[1], info->width * 3);
+            lineX = line[0];
+            line[0] = line[1];
+            line[1] = lineX;
+            //读取新一行数据
+            if (srcRead(objSrc, (unsigned char *)line[1], 1) == 1)
+                readLine += 1;
+            else
+                break;
         }
         
+
         cbufY[0] = (short)((1.f - fy) * 2048);
         cbufY[1] = 2048 - cbufY[0];
 
         for(jj = 0; jj < info->widthOut; jj++)
         {
             fx = (float)((jj + 0.5) * fWStep - 0.5);
-            sx = (int)floor(fx);
+            sx = (int)fx;
             fx -= sx;
 
-            if(sx < 0)
+            if(sx < 1)
             {
-                fx = 0, sx = 0;
+                fx = 0, sx = 1;
             }
 
-            if(sx >= info->width - 1)
+            if(sx >= info->widthOut - 2)
             {
-                fx = 0, sx = info->width - 1;
+                fx = 0, sx = info->widthOut - 2;
             }
 
             cbufX[0] = (short)((1.f - fx) * 2048);
@@ -568,17 +579,17 @@ void _zoom_linear_stream_opencv(
                 pCurr = line[mm];
                 for(nn = 0; nn < 2; nn++) // rows
                 {
-                    r_sum += pCurr[clip(sx + nn, 0, info->width)].r * cbufY[mm]*cbufX[nn];
-                    g_sum += pCurr[clip(sx + nn, 0, info->width)].g * cbufY[mm]*cbufX[nn];
-                    b_sum += pCurr[clip(sx + nn, 0, info->width)].b * cbufY[mm]*cbufX[nn];
+                    r_sum += pCurr[sx + nn].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[sx + nn].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[sx + nn].b * cbufY[mm]*cbufX[nn];
                 }
             }
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;
-            (pSamp + jj)->r = clip(r_sum, 0, 256);
-            (pSamp + jj)->g = clip(g_sum, 0, 256);
-            (pSamp + jj)->b = clip(b_sum, 0, 256);
+            (pSamp + jj)->r = r_sum;
+            (pSamp + jj)->g = g_sum;
+            (pSamp + jj)->b = b_sum;
         }
         distWrite(objDist, (unsigned char *)info->rgbOut, 1);
     }
@@ -1048,7 +1059,8 @@ void _zoom_bicubic_stream_opencv(
     fWStep = 1.0f * info->width / info->widthOut;
     fHStep = 1.0f * info->height / info->heightOut;
     pSamp = info->rgbOut;
-
+    int t = 0;
+    int tt = 0;
     for(ii = 0; ii < info->heightOut; ii++)
     {
         fy = (float)((ii + 0.5) * fHStep - 0.5);
@@ -1078,8 +1090,13 @@ void _zoom_bicubic_stream_opencv(
                 memcpy(line[3], line[2], info->width * 3);
                 readLine++;
             }
+            //读取新一行数据
+            if (srcRead(objSrc, (unsigned char *)line[3], 1) == 1)
+                readLine += 1;
+            else
+                break;
         }
-        
+
         coeffsY[0] = ((A*(fy + 1) - 5*A)*(fy + 1) + 8 * A)*(fy + 1) - 4 * A;
 		coeffsY[1] = ((A + 2)*fy - (A + 3))*fy*fy + 1;
 		coeffsY[2] = ((A + 2)*(1 - fy) - (A + 3))*(1 - fy)*(1 - fy) + 1;
@@ -1096,17 +1113,42 @@ void _zoom_bicubic_stream_opencv(
         // }
         // printf("\r\n");
 
+        if(t!=8) {
+            printf("w: %f \n", coeffsY[0]*128);
+            printf("w: %f \n", coeffsY[1]*128);
+            printf("w: %f \n", coeffsY[2]*128);
+            printf("w: %f \n", coeffsY[3]*128);
+            t=t+1;
+        }
+
+
         for(jj = 0; jj < info->widthOut; jj++)
         {
             fx = (float)((jj + 0.5) * fWStep - 0.5);
             sx = (int)floor(fx);
             fx -= sx;
 
+            if(sx < 1)
+            {
+                fx = 0, sx = 1;
+            }
+
+            if(sx >= info->widthOut - 3)
+            {
+                fx = 0, sx = info->widthOut - 3;
+            }
+
             coeffsX[0] = ((A*(fx + 1) - 5*A)*(fx + 1) + 8*A)*(fx + 1) - 4*A;
 			coeffsX[1] = ((A + 2)*fx - (A + 3))*fx*fx + 1;
 			coeffsX[2] = ((A + 2)*(1 - fx) - (A + 3))*(1 - fx)*(1 - fx) + 1;
 			coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
-			
+            if(tt!=32) {            
+                printf("h: %f \n", coeffsX[0]*128);
+                printf("h: %f \n", coeffsX[1]*128);
+                printf("h: %f \n", coeffsX[2]*128);
+                printf("h: %f \n", coeffsX[3]*128);
+                tt = tt+1; 
+            }
 			cbufX[0] = (short)(coeffsX[0] * 2048);
 			cbufX[1] = (short)(coeffsX[1] * 2048);
 			cbufX[2] = (short)(coeffsX[2] * 2048);
@@ -1134,9 +1176,9 @@ void _zoom_bicubic_stream_opencv(
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;
-            (pSamp + jj)->r = clip(r_sum, 0, 256);
-            (pSamp + jj)->g = clip(g_sum, 0, 256);
-            (pSamp + jj)->b = clip(b_sum, 0, 256);
+            (pSamp + jj)->r = r_sum;
+            (pSamp + jj)->g = g_sum;
+            (pSamp + jj)->b = b_sum;
         }
         //输出一行数据
         distWrite(objDist, (unsigned char *)info->rgbOut, 1);
@@ -1178,21 +1220,55 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
         sy = (int)floor(fy);
         fy -= sy;
 
+        if(sy < 1)
+        {
+            sy = 1;
+        }
+
+        if(sy >= info->heightOut - 3)
+        {
+            sy = info->heightOut - 3;
+        }
+
         coeffsY[0] = ((A*(fy + 1) - 5*A)*(fy + 1) + 8 * A)*(fy + 1) - 4 * A;
 		coeffsY[1] = ((A + 2)*fy - (A + 3))*fy*fy + 1;
 		coeffsY[2] = ((A + 2)*(1 - fy) - (A + 3))*(1 - fy)*(1 - fy) + 1;
 		coeffsY[3] = 1.f - coeffsY[0] - coeffsY[1] - coeffsY[2];
 
+<<<<<<< HEAD
         cbufY[0] = (short)(coeffsY[0] * 128);
 		cbufY[1] = (short)(coeffsY[1] * 128);
 		cbufY[2] = (short)(coeffsY[2] * 128);
 		cbufY[3] = (short)(coeffsY[3] * 128);
+=======
+
+
+        cbufY[0] = (short)(coeffsY[0] * 2048);
+		cbufY[1] = (short)(coeffsY[1] * 2048);
+		cbufY[2] = (short)(coeffsY[2] * 2048);
+		cbufY[3] = (short)(coeffsY[3] * 2048);
+        printf("%d \n", cbufY[0]);
+        printf("%d \n", cbufY[1]);
+        printf("%d \n", cbufY[2]);
+        printf("%d \n", cbufY[3]);   
+
+>>>>>>> 1fcdba92bec0cb8ead91a93e5fa7d77eb11ae549
 
         for(jj = 0; jj < info->widthOut; jj++)
         {
             fx = (float)((jj + 0.5) * fWStep - 0.5);
             sx = (int)floor(fx);
             fx -= sx;
+
+            if(sx < 1)
+            {
+                fx = 0, sx = 1;
+            }
+
+            if(sx >= info->widthOut - 3)
+            {
+                fx = 0, sx = info->widthOut - 3;
+            }
 
             coeffsX[0] = ((A*(fx + 1) - 5*A)*(fx + 1) + 8*A)*(fx + 1) - 4*A;
 			coeffsX[1] = ((A + 2)*fx - (A + 3))*fx*fx + 1;
@@ -1206,12 +1282,12 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
 
             for(mm = 0; mm < 4; mm++) // rows
             {
-                pCurr = info->rgb + clip((sy + mm - 1), 0, info->height) * info->width;
+                pCurr = info->rgb + (sy + mm - 1) * info->width;
                 for(nn = 0; nn < 4; nn++) // cols
                 { 
-                    r_sum += pCurr[clip(sx + nn - 1, 0, info->width)].r * cbufY[mm]*cbufX[nn];
-                    g_sum += pCurr[clip(sx + nn - 1, 0, info->width)].g * cbufY[mm]*cbufX[nn];
-                    b_sum += pCurr[clip(sx + nn - 1, 0, info->width)].b * cbufY[mm]*cbufX[nn];
+                    r_sum += pCurr[sx + nn - 1].r * cbufY[mm]*cbufX[nn];
+                    g_sum += pCurr[sx + nn - 1].g * cbufY[mm]*cbufX[nn];
+                    b_sum += pCurr[sx + nn - 1].b * cbufY[mm]*cbufX[nn];
                 }
             }
             r_sum >>= 14;

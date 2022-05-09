@@ -23,7 +23,7 @@ module stream_in # (
    // Outputs
    ac_upsp_rvalid, ac_upsp_rdata, s_axis_tready,
    // Inputs
-   upsp_ac_rready, UPSTR, UPENDR, s_axis_aclk, s_axis_arstn,
+   upsp_ac_rready, UPSTART, UPEND, s_axis_aclk, s_axis_arstn,
    s_axis_tvalid, s_axis_tid, s_axis_tdata, s_axis_tstrb,
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user
    );
@@ -37,10 +37,10 @@ module stream_in # (
 	output [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;
 
 
-	// Use UPSTR[0] to indicate the start of a stream
-	input UPSTR;
-	// Use UPENDR[0] to indicate Up-Sampling module has done its work
-	input UPENDR;
+	// Use UPSTART to indicate the start of a stream
+	input UPSTART;
+	// Use UPEND to indicate Up-Sampling module has done its work
+	input UPEND;
 
 
     // Interface as a AXI-Stream slave
@@ -77,14 +77,14 @@ module stream_in # (
 			input_row_cnt <= {DST_IMG_HEIGHT_LB2{1'b0}};
 		else if(one_row_hsked)
 			input_row_cnt <= input_row_cnt + 1;
-		else if(UPENDR)
+		else if(UPEND)
 			input_row_cnt <= {DST_IMG_HEIGHT_LB2{1'b0}};
 	end
 
 	// Track whether a whole image has been transmitted or not
 	reg frame_done;
 	always@(posedge clk or negedge rst_n) begin
-		// If UPSTR didn't be set, frame_done will be asserted, not data will
+		// If UPSTART didn't be set, frame_done will be asserted, not data will
 		// be transmitted.
 		if(~rst_n)
 			frame_done <= 1'b1;
@@ -92,10 +92,10 @@ module stream_in # (
 		else if(one_row_hsked && input_row_cnt == SRC_IMG_HEIGHT - 1)
 			frame_done <= 1'b1;
 		// Up-Sampling finished the operation, which means no further data needed
-		else if(UPENDR)
+		else if(UPEND)
 			frame_done <= 1'b1;
 		// reset when next stream begins.
-		else if(frame_done & UPSTR)
+		else if(frame_done & UPSTART)
 			frame_done <= 1'b0;
 	end
 
@@ -116,7 +116,7 @@ module stream_in # (
 		else if(s_axis_tvalid ) begin
 			if(s_axis_tstrb & s_axis_tkeep != 'b0111)
 				AXIS_ONLY_3LSB_ARE_VALID <= 1'b1;
-		end else if(frame_done & UPSTR)
+		end else if(frame_done & UPSTART)
 			AXIS_ONLY_3LSB_ARE_VALID <= 1'b0;
 	end
 

@@ -43,7 +43,7 @@ def bin2bmp(binname = "", bmpname = "", height=None, width=None):
     i = 0;
     j = 0;
     for line in lines:
-        b,g,r = line[0:2], line[2:4], line[4:];
+        r,g,b = line[0:2], line[2:4], line[4:];
         a[j,i,0] = int(r, 16);
         a[j,i,1] = int(g, 16);
         a[j,i,2] = int(b, 16);
