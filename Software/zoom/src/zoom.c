@@ -861,7 +861,7 @@ unsigned char *zoom(
     if (outSize > 76800)
     {
         //获取cpu可用核心数
-        processor = 4;
+        processor = 1;
     }
 
     //普通处理
@@ -894,7 +894,7 @@ unsigned char *zoom(
         *retHeight = info.heightOut;
     
     // 使用高斯滤波进行锐化处理 (USM(Unshrpen Mask)算法)
-    usm(&info, 5, 6, 2, -1, 0, processor);
+    // usm(&info, 5, 6, 2, -1, 0, processor);
 
     return (unsigned char *)info.rgbOut;
 }
@@ -1183,10 +1183,10 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
 		coeffsY[2] = ((A + 2)*(1 - fy) - (A + 3))*(1 - fy)*(1 - fy) + 1;
 		coeffsY[3] = 1.f - coeffsY[0] - coeffsY[1] - coeffsY[2];
 
-        cbufY[0] = (short)(coeffsY[0] * 2048);
-		cbufY[1] = (short)(coeffsY[1] * 2048);
-		cbufY[2] = (short)(coeffsY[2] * 2048);
-		cbufY[3] = (short)(coeffsY[3] * 2048);
+        cbufY[0] = (short)(coeffsY[0] * 128);
+		cbufY[1] = (short)(coeffsY[1] * 128);
+		cbufY[2] = (short)(coeffsY[2] * 128);
+		cbufY[3] = (short)(coeffsY[3] * 128);
 
         for(jj = 0; jj < info->widthOut; jj++)
         {
@@ -1199,10 +1199,10 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
 			coeffsX[2] = ((A + 2)*(1 - fx) - (A + 3))*(1 - fx)*(1 - fx) + 1;
 			coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
 			
-			cbufX[0] = (short)(coeffsX[0] * 2048);
-			cbufX[1] = (short)(coeffsX[1] * 2048);
-			cbufX[2] = (short)(coeffsX[2] * 2048);
-			cbufX[3] = (short)(coeffsX[3] * 2048);
+			cbufX[0] = (short)(coeffsX[0] * 128);
+			cbufX[1] = (short)(coeffsX[1] * 128);
+			cbufX[2] = (short)(coeffsX[2] * 128);
+			cbufX[3] = (short)(coeffsX[3] * 128);
 
             for(mm = 0; mm < 4; mm++) // rows
             {
@@ -1214,9 +1214,9 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
                     b_sum += pCurr[clip(sx + nn - 1, 0, info->width)].b * cbufY[mm]*cbufX[nn];
                 }
             }
-            r_sum >>= 22;
-            g_sum >>= 22;
-            b_sum >>= 22;
+            r_sum >>= 14;
+            g_sum >>= 14;
+            b_sum >>= 14;
             info->rgbOut[ii * info->widthOut + jj].r = clip(r_sum, 0, 256);
             info->rgbOut[ii * info->widthOut + jj].g = clip(g_sum, 0, 256);
             info->rgbOut[ii * info->widthOut + jj].b = clip(b_sum, 0, 256);
