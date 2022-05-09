@@ -75,10 +75,18 @@ for i in range(16):
 
 
 
+# for i in range (len(des)):
+#     t = des[i]
+#     for j in range (12*width):
+#         test.write(struct.pack('B', int(t[j*2:j*2+2],16)))
+
 for i in range (len(des)):
     t = des[i]
-    for j in range (12*width):
-        test.write(struct.pack('B', int(t[j*2:j*2+2],16)))
+    for j in range (4*width):
+        test.write(struct.pack('B', int(t[(j+1)*6-2:(j+1)*6],16)))
+        test.write(struct.pack('B', int(t[(j+1)*6-4:(j+1)*6-2],16)))
+        test.write(struct.pack('B', int(t[(j+1)*6-6:(j+1)*6-4],16)))
+
 test.close()
 print("the result is in 49_4k.bmp")
 
