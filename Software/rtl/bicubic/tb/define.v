@@ -1,7 +1,7 @@
 
-`define GEN_IN_SIXTEEN
+`define GEN_IN_TWO
 
-`define SIM_WITH_VERILATOR
+`define SIM_WITH_VERILATOR  
 `define SIM_WITHOUT_AXI
 
 `define UPSP_DATA_WIDTH 24
