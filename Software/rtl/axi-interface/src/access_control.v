@@ -31,10 +31,12 @@ module access_control # (
 		parameter DST_IMG_HEIGHT = 2160
 	) (/*AUTOARG*/
    // Outputs
-   ac_crf_wrt, ac_crf_wdata, ac_crf_waddr, ac_upsp_rvalid,
-   ac_upsp_rdata, ac_upsp_wready, s_axis_tready, m_axis_tvalid,
-   m_axis_tid, m_axis_tdata, m_axis_tkeep, m_axis_tstrb, m_axis_tlast,
-   m_axis_tdest, m_axis_user,
+   ac_crf_wrt, ac_crf_wdata, ac_crf_waddr, ac_crf_processing,
+   ac_crf_axisi_tvalid, ac_crf_axisi_tready, ac_crf_axiso_tvalid,
+   ac_crf_axiso_tready, ac_upsp_rvalid, ac_upsp_rdata, ac_upsp_wready,
+   s_axis_tready, m_axis_tvalid, m_axis_tid, m_axis_tdata,
+   m_axis_tkeep, m_axis_tstrb, m_axis_tlast, m_axis_tdest,
+   m_axis_user,
    // Inputs
    clk, rst_n, crf_ac_UPSTART, crf_ac_UPEND, crf_ac_wbusy,
    upsp_ac_rready, upsp_ac_wvalid, upsp_ac_wdata, s_axis_tvalid,
@@ -56,6 +58,11 @@ module access_control # (
 	input                       crf_ac_UPSTART;
 	input                       crf_ac_UPEND  ;
 	input                       crf_ac_wbusy;
+	output                      ac_crf_processing;
+	output                      ac_crf_axisi_tvalid;
+	output                      ac_crf_axisi_tready;
+	output                      ac_crf_axiso_tvalid;
+	output                      ac_crf_axiso_tready;
 
 
 	// Interface with upsp
@@ -115,7 +122,8 @@ module access_control # (
 	wire UPSTART = crf_ac_UPSTART;
 	wire UPEND   = crf_ac_UPEND;
 
-	// Whether a upsampling is been processing or not
+
+	// Whether a upsampling is under processing or not
 	reg processing;
 	always@(posedge clk or negedge rst_n) begin: PROCESSING
 		if(~rst_n)
@@ -148,6 +156,14 @@ module access_control # (
 		end else
 			ac_crf_wrt <= 1'b0;
 	end
+
+
+	// axi-s handshake signals to crf
+	wire ac_crf_axisi_tvalid = s_axis_tvalid;
+	wire ac_crf_axisi_tready = s_axis_tready;
+	wire ac_crf_axiso_tvalid = m_axis_tvalid;
+	wire ac_crf_axiso_tready = m_axis_tready;
+	wire ac_crf_processing   = processing;
 
 
 	// Stream in to handle input axi-stream
@@ -240,9 +256,20 @@ module access_control # (
 
 	wire [AXIS_DATA_WIDTH-1:0] outbuf0_dout, outbuf1_dout;
 
+
+	// Preserve the previous data if not handshaked.
+	reg [AXIS_DATA_WIDTH-1:0] m_axis_tdata_r;
+	always@(posedge clk or negedge rst_n) begin: MTDATA_R
+		if(~rst_n)
+			m_axis_tdata_r <= {AXIS_DATA_WIDTH{1'b0}};
+		else
+			m_axis_tdata_r <= m_axis_tdata;
+	end
+
 	reg [1:0] outbuf_re_r;
-	assign m_axis_tdata =   ({AXIS_DATA_WIDTH{outbuf_re_r[0]}} & outbuf0_dout)
-						  | ({AXIS_DATA_WIDTH{outbuf_re_r[1]}} & outbuf1_dout);
+	assign m_axis_tdata =   ({AXIS_DATA_WIDTH{outbuf_re_r[0]}}  & outbuf0_dout)
+						  | ({AXIS_DATA_WIDTH{outbuf_re_r[1]}}  & outbuf1_dout)
+						  | ({AXIS_DATA_WIDTH{~(|outbuf_re_r)}} & m_axis_tdata_r);
 
 	always@(posedge clk or negedge rst_n) begin
 		if(~rst_n)
