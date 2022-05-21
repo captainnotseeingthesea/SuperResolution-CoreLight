@@ -32,7 +32,10 @@ line_buffer:
 
 bicubic_iverilog:
 	make clean
-	iverilog -o vvp.exec bicubic_top.v
+	iverilog -o vvp.exec -s bicubic_top_tb -D SRC_IMG_HEIGHT=540 -D SRC_IMG_WIDTH=960 -D SIM_WITHOUT_AXI -D SIM_WITH_VERILATOR -D GEN_IN_TWO -D UPSP_DATA_WIDTH=24 \
+		 ../src/bicubic_mult.v  ../src/bicubic_vector_mult.v ../src/bicubic_pvector_mult_wmatrix.v ../src/bicubic_wvector_mult_pmatrix.v \
+		 ../src/dffs.v ../src/line_buffer.v ./bicubic_read_bmp.v ../src/bicubic_upsample_2.v ../src/buffer.v ../src/bicubic_top.v ./bicubic_top_tb.v
+
 	vvp -n vvp.exec > display.txt
 	gtkwave wave.vcd
 
@@ -42,7 +45,9 @@ gen_bmp:
 
 bicubic_verilator:
 	make clean
-	verilator -Wno-lint --output-split 40000 -threads 2 --trace -cc -exe --build -top bicubic_top sim_main.cpp -I define.v -I ../src/*.v
+	verilator -Wno-lint --output-split 40000 -threads 2 --trace -cc -exe --build -top bicubic_top sim_main.cpp -I define.v -I ../src/bicubic_mult.v \
+	../src/bicubic_vector_mult.v ../src/bicubic_pvector_mult_wmatrix.v ../src/bicubic_wvector_mult_pmatrix.v \
+		 ../src/dffs.v ../src/line_buffer.v ./bicubic_read_bmp.v ../src/bicubic_upsample_2.v ../src/buffer.v ../src/bicubic_top.v 
 	numactl -C 1-2 -- obj_dir/Vbicubic_top > display_verilator.txt
 
 metircs:

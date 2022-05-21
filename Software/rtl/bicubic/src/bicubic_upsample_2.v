@@ -1,7 +1,3 @@
-// `include "define.v"
-// `include "bicubic_pvector_mult_wmatrix.v"
-// `include "bicubic_wvector_mult_pmatrix.v"
-
 
 module bicubic_upsample_2(
     input wire clk,
@@ -36,6 +32,16 @@ module bicubic_upsample_2(
     output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data7,
     output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data8,
 
+    output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data9,
+    output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data10,
+    output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data11,
+    output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data12,
+
+    output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data13,
+    output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data14,
+    output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data15,
+    output wire [CHANNEL_WIDTH-1:0] bcci_rsp_data16,
+
     output wire bcci_rsp_valid,
     input wire bf_rsp_ready
 );
@@ -55,9 +61,9 @@ module bicubic_upsample_2(
     wire cur_is_s2 = (cur_state == STATE_S2) ? 1'b1 : 1'b0;
 
     assign bcci_req_ready = cur_is_s1 & bf_rsp_ready;
-    assign bcci_rsp_valid = bf_req_valid;    
+    assign bcci_rsp_valid = cur_is_s2;    
 
-    wire state_s1_exit_ena = cur_is_s1 & bf_req_hsked & bcci_rsp_hsked;
+    wire state_s1_exit_ena = cur_is_s1 & bf_req_hsked;
     wire state_s2_exit_ena = cur_is_s2 & bcci_rsp_hsked;    
 
     wire state_ena =  state_s1_exit_ena
@@ -99,12 +105,28 @@ module bicubic_upsample_2(
 
     wire [WEIGHT_WIDTH-1:0] w1_a, w2_a, w3_a, w4_a;
     wire [WEIGHT_WIDTH-1:0] w1_b, w2_b, w3_b, w4_b;
+    wire [WEIGHT_WIDTH-1:0] w1_c, w2_c, w3_c, w4_c;
+    wire [WEIGHT_WIDTH-1:0] w1_d, w2_d, w3_d, w4_d;
     wire [CHANNEL_WIDTH:0] p1_1, p1_2, p1_3, p1_4;
     wire [CHANNEL_WIDTH:0] p2_1, p2_2, p2_3, p2_4;
     wire [CHANNEL_WIDTH:0] p3_1, p3_2, p3_3, p3_4;
     wire [CHANNEL_WIDTH:0] p4_1, p4_2, p4_3, p4_4;  
     wire [CHANNEL_WIDTH:0] product1_t_a, product2_t_a, product3_t_a, product4_t_a;
     wire [CHANNEL_WIDTH:0] product1_t_b, product2_t_b, product3_t_b, product4_t_b;
+    wire [CHANNEL_WIDTH:0] product1_t_c, product2_t_c, product3_t_c, product4_t_c;
+    wire [CHANNEL_WIDTH:0] product1_t_d, product2_t_d, product3_t_d, product4_t_d;
+
+    wire [CHANNEL_WIDTH:0] cur_product1_a, cur_product2_a, cur_product3_a, cur_product4_a;
+    wire [CHANNEL_WIDTH:0] cur_product1_b, cur_product2_b, cur_product3_b, cur_product4_b;
+    wire [CHANNEL_WIDTH:0] cur_product1_c, cur_product2_c, cur_product3_c, cur_product4_c;
+    wire [CHANNEL_WIDTH:0] cur_product1_d, cur_product2_d, cur_product3_d, cur_product4_d;
+
+    wire [CHANNEL_WIDTH:0] nxt_product1_a, nxt_product2_a, nxt_product3_a, nxt_product4_a;
+    wire [CHANNEL_WIDTH:0] nxt_product1_b, nxt_product2_b, nxt_product3_b, nxt_product4_b;
+    wire [CHANNEL_WIDTH:0] nxt_product1_c, nxt_product2_c, nxt_product3_c, nxt_product4_c;
+    wire [CHANNEL_WIDTH:0] nxt_product1_d, nxt_product2_d, nxt_product3_d, nxt_product4_d;
+
+
     bicubic_wvector_mult_pmatrix u_bicubic_wvector_mult_pmatrix_a(
         .w1(w1_a),
         .w2(w2_a),
@@ -173,29 +195,144 @@ module bicubic_upsample_2(
         .inner_product_sign4(product4_t_b[8]) 
     );  
 
-    assign w1_a = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_1)
-                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U3_1);
+    bicubic_wvector_mult_pmatrix u_bicubic_wvector_mult_pmatrix_c(
+        .w1(w1_c),
+        .w2(w2_c),
+        .w3(w3_c),
+        .w4(w4_c),
 
-    assign w2_a = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_2)
-                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U3_2);
+        .p1_1(p1_1),
+        .p1_2(p1_2),
+        .p1_3(p1_3),
+        .p1_4(p1_4),
+        .p2_1(p2_1),
+        .p2_2(p2_2),
+        .p2_3(p2_3),
+        .p2_4(p2_4),
+        .p3_1(p3_1),
+        .p3_2(p3_2),
+        .p3_3(p3_3),
+        .p3_4(p3_4),
+        .p4_1(p4_1),
+        .p4_2(p4_2),
+        .p4_3(p4_3),
+        .p4_4(p4_4),
+
+        .inner_product1(product1_t_c[7:0]),
+        .inner_product2(product2_t_c[7:0]),
+        .inner_product3(product3_t_c[7:0]),
+        .inner_product4(product4_t_c[7:0]),
+
+        .inner_product_sign1(product1_t_c[8]),
+        .inner_product_sign2(product2_t_c[8]),
+        .inner_product_sign3(product3_t_c[8]),
+        .inner_product_sign4(product4_t_c[8]) 
+    );  
+
+    bicubic_wvector_mult_pmatrix u_bicubic_wvector_mult_pmatrix_d(
+        .w1(w1_d),
+        .w2(w2_d),
+        .w3(w3_d),
+        .w4(w4_d),
+
+        .p1_1(p1_1),
+        .p1_2(p1_2),
+        .p1_3(p1_3),
+        .p1_4(p1_4),
+        .p2_1(p2_1),
+        .p2_2(p2_2),
+        .p2_3(p2_3),
+        .p2_4(p2_4),
+        .p3_1(p3_1),
+        .p3_2(p3_2),
+        .p3_3(p3_3),
+        .p3_4(p3_4),
+        .p4_1(p4_1),
+        .p4_2(p4_2),
+        .p4_3(p4_3),
+        .p4_4(p4_4),
+
+        .inner_product1(product1_t_d[7:0]),
+        .inner_product2(product2_t_d[7:0]),
+        .inner_product3(product3_t_d[7:0]),
+        .inner_product4(product4_t_d[7:0]),
+
+        .inner_product_sign1(product1_t_d[8]),
+        .inner_product_sign2(product2_t_d[8]),
+        .inner_product_sign3(product3_t_d[8]),
+        .inner_product_sign4(product4_t_d[8]) 
+    );  
+
+    assign nxt_product1_a = product1_t_a;
+    assign nxt_product2_a = product2_t_a;
+    assign nxt_product3_a = product3_t_a;
+    assign nxt_product4_a = product4_t_a;
+
+    assign nxt_product1_b = product1_t_b;
+    assign nxt_product2_b = product2_t_b;
+    assign nxt_product3_b = product3_t_b;
+    assign nxt_product4_b = product4_t_b;
+
+    assign nxt_product1_c = product1_t_c;
+    assign nxt_product2_c = product2_t_c;
+    assign nxt_product3_c = product3_t_c;
+    assign nxt_product4_c = product4_t_c;
+
+    assign nxt_product1_d = product1_t_d;
+    assign nxt_product2_d = product2_t_d;
+    assign nxt_product3_d = product3_t_d;
+    assign nxt_product4_d = product4_t_d;
+
+
+    wire product_dff_ena;
+
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product1a_dff(.lden(product_dff_ena), .dnxt(nxt_product1_a), .qout(cur_product1_a), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product2a_dff(.lden(product_dff_ena), .dnxt(nxt_product2_a), .qout(cur_product2_a), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product3a_dff(.lden(product_dff_ena), .dnxt(nxt_product3_a), .qout(cur_product3_a), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product4a_dff(.lden(product_dff_ena), .dnxt(nxt_product4_a), .qout(cur_product4_a), .clk(clk));
+
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product1b_dff(.lden(product_dff_ena), .dnxt(nxt_product1_b), .qout(cur_product1_b), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product2b_dff(.lden(product_dff_ena), .dnxt(nxt_product2_b), .qout(cur_product2_b), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product3b_dff(.lden(product_dff_ena), .dnxt(nxt_product3_b), .qout(cur_product3_b), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product4b_dff(.lden(product_dff_ena), .dnxt(nxt_product4_b), .qout(cur_product4_b), .clk(clk));
+
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product1c_dff(.lden(product_dff_ena), .dnxt(nxt_product1_c), .qout(cur_product1_c), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product2c_dff(.lden(product_dff_ena), .dnxt(nxt_product2_c), .qout(cur_product2_c), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product3c_dff(.lden(product_dff_ena), .dnxt(nxt_product3_c), .qout(cur_product3_c), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product4c_dff(.lden(product_dff_ena), .dnxt(nxt_product4_c), .qout(cur_product4_c), .clk(clk));
+
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product1d_dff(.lden(product_dff_ena), .dnxt(nxt_product1_d), .qout(cur_product1_d), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product2d_dff(.lden(product_dff_ena), .dnxt(nxt_product2_d), .qout(cur_product2_d), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product3d_dff(.lden(product_dff_ena), .dnxt(nxt_product3_d), .qout(cur_product3_d), .clk(clk));
+    dffl #(.DW(CHANNEL_WIDTH+1)) u_product4d_dff(.lden(product_dff_ena), .dnxt(nxt_product4_d), .qout(cur_product4_d), .clk(clk));
+  
+
+
+    assign product_dff_ena = state_s1_exit_ena;
+
+
+
+
+    assign w1_a = S_U1_1;
+    assign w2_a = S_U1_2;
+    assign w3_a = S_U1_3;
+    assign w4_a = S_U1_4;
+
+    assign w1_b = S_U2_1;
+    assign w2_b = S_U2_2;
+    assign w3_b = S_U2_3;
+    assign w4_b = S_U2_4;
     
-    assign w3_a = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_3)
-                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U3_3);
+    assign w1_c = S_U3_1;
+    assign w2_c = S_U3_2;
+    assign w3_c = S_U3_3;
+    assign w4_c = S_U3_4;
 
-    assign w4_a = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_4)
-                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U3_4);
+    assign w1_d = S_U4_1;
+    assign w2_d = S_U4_2;
+    assign w3_d = S_U4_3;
+    assign w4_d = S_U4_4;
 
-    assign w1_b = ({WEIGHT_WIDTH{cur_is_s1}} & S_U2_1)
-                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U4_1);
-
-    assign w2_b = ({WEIGHT_WIDTH{cur_is_s1}} & S_U2_2)
-                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U4_2);
-    
-    assign w3_b = ({WEIGHT_WIDTH{cur_is_s1}} & S_U2_3)
-                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U4_3);
-
-    assign w4_b = ({WEIGHT_WIDTH{cur_is_s1}} & S_U2_4)
-                | ({WEIGHT_WIDTH{cur_is_s2}} & S_U4_4);
 
     assign p1_1 = {1'b0, p1};
     assign p1_2 = {1'b0, p5};   
@@ -223,9 +360,14 @@ module bicubic_upsample_2(
     wire [WEIGHT_WIDTH-1:0] w4_1, w4_2, w4_3, w4_4;
     wire [CHANNEL_WIDTH:0] p1_a, p2_a, p3_a, p4_a;
     wire [CHANNEL_WIDTH:0] p1_b, p2_b, p3_b, p4_b;
+    wire [CHANNEL_WIDTH:0] p1_c, p2_c, p3_c, p4_c;
+    wire [CHANNEL_WIDTH:0] p1_d, p2_d, p3_d, p4_d;
 
     wire [CHANNEL_WIDTH:0] product1_a, product2_a, product3_a, product4_a;
     wire [CHANNEL_WIDTH:0] product1_b, product2_b, product3_b, product4_b; 
+    wire [CHANNEL_WIDTH:0] product1_c, product2_c, product3_c, product4_c;
+    wire [CHANNEL_WIDTH:0] product1_d, product2_d, product3_d, product4_d; 
+
 
     bicubic_pvector_mult_wmatrix u_bicubic_pverctor_mult_wmatrix_a(
         .w1_1(w1_1),
@@ -295,6 +437,75 @@ module bicubic_upsample_2(
         .inner_product_sign3(product3_b[8]),
         .inner_product_sign4(product4_b[8])  
     );
+    bicubic_pvector_mult_wmatrix u_bicubic_pverctor_mult_wmatrix_c(
+        .w1_1(w1_1),
+        .w1_2(w1_2),
+        .w1_3(w1_3),
+        .w1_4(w1_4),
+        .w2_1(w2_1),
+        .w2_2(w2_2),
+        .w2_3(w2_3),
+        .w2_4(w2_4),
+        .w3_1(w3_1),
+        .w3_2(w3_2),
+        .w3_3(w3_3),
+        .w3_4(w3_4),
+        .w4_1(w4_1),
+        .w4_2(w4_2),
+        .w4_3(w4_3),
+        .w4_4(w4_4),
+
+        .p1(p1_c),
+        .p2(p2_c),
+        .p3(p3_c),
+        .p4(p4_c),
+
+        .inner_product1(product1_c[7:0]),
+        .inner_product2(product2_c[7:0]),
+        .inner_product3(product3_c[7:0]),
+        .inner_product4(product4_c[7:0]),
+
+        .inner_product_sign1(product1_c[8]),
+        .inner_product_sign2(product2_c[8]),
+        .inner_product_sign3(product3_c[8]),
+        .inner_product_sign4(product4_c[8])  
+    );
+
+    bicubic_pvector_mult_wmatrix u_bicubic_pverctor_mult_wmatrix_d(
+        .w1_1(w1_1),
+        .w1_2(w1_2),
+        .w1_3(w1_3),
+        .w1_4(w1_4),
+        .w2_1(w2_1),
+        .w2_2(w2_2),
+        .w2_3(w2_3),
+        .w2_4(w2_4),
+        .w3_1(w3_1),
+        .w3_2(w3_2),
+        .w3_3(w3_3),
+        .w3_4(w3_4),
+        .w4_1(w4_1),
+        .w4_2(w4_2),
+        .w4_3(w4_3),
+        .w4_4(w4_4),
+
+        .p1(p1_d),
+        .p2(p2_d),
+        .p3(p3_d),
+        .p4(p4_d),
+
+        .inner_product1(product1_d[7:0]),
+        .inner_product2(product2_d[7:0]),
+        .inner_product3(product3_d[7:0]),
+        .inner_product4(product4_d[7:0]),
+
+        .inner_product_sign1(product1_d[8]),
+        .inner_product_sign2(product2_d[8]),
+        .inner_product_sign3(product3_d[8]),
+        .inner_product_sign4(product4_d[8])  
+    );
+
+
 
     assign w1_1 = S_U1_1;
     assign w1_2 = S_U1_2;
@@ -316,15 +527,26 @@ module bicubic_upsample_2(
     assign w4_3 = S_U4_3;
     assign w4_4 = S_U4_4;  
 
-    assign p1_a = product1_t_a;
-    assign p2_a = product2_t_a;
-    assign p3_a = product3_t_a;
-    assign p4_a = product4_t_a;
+    assign p1_a = cur_product1_a;
+    assign p2_a = cur_product2_a;
+    assign p3_a = cur_product3_a;
+    assign p4_a = cur_product4_a;
 
-    assign p1_b = product1_t_b;
-    assign p2_b = product2_t_b;
-    assign p3_b = product3_t_b;
-    assign p4_b = product4_t_b;
+    assign p1_b = cur_product1_b;
+    assign p2_b = cur_product2_b;
+    assign p3_b = cur_product3_b;
+    assign p4_b = cur_product4_b;
+
+    assign p1_c = cur_product1_c;
+    assign p2_c = cur_product2_c;
+    assign p3_c = cur_product3_c;
+    assign p4_c = cur_product4_c;
+
+    assign p1_d = cur_product1_d;
+    assign p2_d = cur_product2_d;
+    assign p3_d = cur_product3_d;
+    assign p4_d = cur_product4_d;
+
 
     assign bcci_rsp_data1 = product1_a[CHANNEL_WIDTH-1:0];
     assign bcci_rsp_data2 = product2_a[CHANNEL_WIDTH-1:0];
@@ -336,7 +558,16 @@ module bicubic_upsample_2(
     assign bcci_rsp_data7 = product3_b[CHANNEL_WIDTH-1:0];
     assign bcci_rsp_data8 = product4_b[CHANNEL_WIDTH-1:0];
 
+    assign bcci_rsp_data9 = product1_c[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data10 = product2_c[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data11 = product3_c[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data12 = product4_c[CHANNEL_WIDTH-1:0];
 
+
+    assign bcci_rsp_data13 = product1_d[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data14 = product2_d[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data15 = product3_d[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data16 = product4_d[CHANNEL_WIDTH-1:0];
 
 
 endmodule

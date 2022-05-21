@@ -72,10 +72,20 @@ module bicubic_read_bmp (
         img_height = {bmp_data[25], bmp_data[24], bmp_data[23], bmp_data[22]};
         img_start_index = {bmp_data[13], bmp_data[12], bmp_data[11], bmp_data[10]};
         img_size = {bmp_data[5], bmp_data[4], bmp_data[3], bmp_data[2]};
-
         $fclose(bmp_file_id);
 
+        `ifndef SIM_WITH_VERILATOR  
+            #2
+        `endif
 
+        for (ii=0;ii<img_width;ii=ii+1) begin
+            index = (img_height-1) * (img_width+1) * 3 + img_start_index+ii*3;
+            shaped_data[ii+1] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
+        end
+        
+        `ifndef SIM_WITH_VERILATOR  
+            #1
+        `endif
         for (i = img_height - 1; i >= 0; i = i - 1) begin
             for(j = 0; j < img_width; j = j + 1) begin
                 // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
@@ -87,27 +97,17 @@ module bicubic_read_bmp (
         end
 
 
-
-
-
-        // in bmp format, the last row of the data is stored first (Revese order).
-
-        // index = (img_height-1) * (img_width+1) * 3 + 0 * 3 + img_start_index;
-        // $display("(0, 0): %x, %x, %x", bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]);
-        // $display("(0, 1): %x, %x, %x", bmp_data[index+5], bmp_data[index+4], bmp_data[index+3]);
-        // $display("(0, 2): %x, %x, %x", bmp_data[index+8], bmp_data[index+7], bmp_data[index+6]);
-
-        // index = (img_height-2) * (img_width+1) * 3 + 0 * 3 + img_start_index;
-        // $display("(1, 0): %x, %x, %x", bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]);
-        // $display("(1, 1): %x, %x, %x", bmp_data[index+5], bmp_data[index+4], bmp_data[index+3]);
-        // $display("(1, 2): %x, %x, %x", bmp_data[index+8], bmp_data[index+7], bmp_data[index+6]);
-
-        // $display("shaped data");
-        // $display("(0, 0): %x", shaped_data[0]);
-        // $display("(0, 1): %x", shaped_data[1]);
-        // $display("(1, 1): %x", shaped_data[(WIDTH+3)*1+1]);
-        // $display("(2, 1): %x", shaped_data[(WIDTH+3)*2+1]);
-
+        for (ii=0;ii<img_width;ii=ii+1) begin
+            index = img_start_index+ii*3;
+            shaped_data[shaped_index+com] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
+            shaped_index = shaped_index + 1;
+        end
+        com = com+3;
+        for (ii=0;ii<img_width;ii=ii+1) begin
+            index = img_start_index+ii*3;
+            shaped_data[shaped_index+com] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
+            shaped_index = shaped_index + 1;
+        end
     end
 
 
@@ -129,6 +129,7 @@ module bicubic_read_bmp (
             if(bmp_hsked) begin
                 data_reg <= #1 shaped_data[ptr];
                 ptr <= #1 ptr + 1;
+                // $display("cur data: %x", data);
             end
         end
 
@@ -143,8 +144,6 @@ module bicubic_read_bmp (
     assign data = data_reg;
 
 endmodule
-
-
 // module bicubic_read_bmp_tb();
 //     reg clk_tb;
 //     reg rst_n_tb;

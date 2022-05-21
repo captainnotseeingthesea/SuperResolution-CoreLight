@@ -20,9 +20,9 @@ module bicubic_top_tb();
         ac_upsp_wready_tb = 1'b0;
         #7 rst_n_tb = 1'b1;
            ac_upsp_wready_tb = 1'b1;
-        #253 ac_upsp_wready_tb = 1'b0;
+        // #253 ac_upsp_wready_tb = 1'b0;
 
-        #11 ac_upsp_wready_tb = 1'b1;
+        // #11 ac_upsp_wready_tb = 1'b1;
     end
 
     always #2 clk_tb = ~clk_tb;
