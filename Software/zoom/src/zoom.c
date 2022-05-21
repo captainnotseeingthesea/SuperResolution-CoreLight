@@ -181,7 +181,7 @@ void Gaussian_blur(Gaussian_blur_info *blur_info)
                 for(int v = 0; v < _size; v++)
                 {
                     pix_x = (jj - center + v) < 0 ? (center - v - jj) : (jj - center + v) >= info->widthOut ? (2 * info->widthOut - jj + center - v - 2) : (jj - center + v);
-                    pix_x = clip(pix_x, left_side, right_side);
+                    // pix_x = clip(pix_x, left_side, right_side);
                     r_sum += info->rgbOut[pix_y * info->widthOut + pix_x].r * weight[u][v];
                     g_sum += info->rgbOut[pix_y * info->widthOut + pix_x].g * weight[u][v];
                     b_sum += info->rgbOut[pix_y * info->widthOut + pix_x].b * weight[u][v];

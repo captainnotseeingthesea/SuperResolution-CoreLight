@@ -7,10 +7,15 @@
 #pragma pack(1)
 
 typedef struct {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a;
+  union {
+    struct {
+      uint8_t r;
+      uint8_t g;
+      uint8_t b;
+      uint8_t a;
+    };
+    uint8_t color[4];
+  };
 } Pixel;
 
 typedef struct {             // Total: 54 bytes
