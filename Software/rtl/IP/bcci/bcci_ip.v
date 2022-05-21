@@ -16,10 +16,10 @@
 module bcci_ip
 #(
 	parameter  AXI_DATA_WIDTH  = `AXI_DATA_WIDTH   ,
-	localparam AXI_STRB_WIDTH  = AXI_DATA_WIDTH/8  ,
+	localparam AXI_STRB_WIDTH  = `AXI_STRB_WIDTH   ,
 	parameter  AXI_ADDR_WIDTH  = `AXI_ADDR_WIDTH   ,
 	parameter  AXIS_DATA_WIDTH = `AXIS_DATA_WIDTH  ,
-	localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8 ,
+	localparam AXIS_STRB_WIDTH = `AXIS_STRB_WIDTH  ,
 	parameter  CRF_DATA_WIDTH  = `CRF_DATA_WIDTH   ,
 	parameter  CRF_ADDR_WIDTH  = `CRF_ADDR_WIDTH   ,
 	parameter  UPSP_DATA_WIDTH = `UPSP_DATA_WIDTH  ,
@@ -27,7 +27,7 @@ module bcci_ip
 	parameter  SRC_IMG_HEIGHT  = `SRC_IMG_HEIGHT   ,
 	parameter  DST_IMG_WIDTH   = `DST_IMG_WIDTH    ,
 	parameter  DST_IMG_HEIGHT  = `DST_IMG_HEIGHT   ,
-	localparam BUFFER_WIDTH    = UPSP_DATA_WIDTH   ,
+	localparam BUFFER_WIDTH    = `UPSP_DATA_WIDTH   ,
 	parameter  CHANNEL_WIDTH   = 8
 )
 (/*AUTOARG*/
@@ -97,6 +97,11 @@ module bcci_ip
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    wire		ac_crf_axisi_tready;	// From AAA_access_control of access_control.v
+    wire		ac_crf_axisi_tvalid;	// From AAA_access_control of access_control.v
+    wire		ac_crf_axiso_tready;	// From AAA_access_control of access_control.v
+    wire		ac_crf_axiso_tvalid;	// From AAA_access_control of access_control.v
+    wire		ac_crf_processing;	// From AAA_access_control of access_control.v
     wire [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;	// From AAA_access_control of access_control.v
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
@@ -156,7 +161,12 @@ module bcci_ip
 			     .s_axi_rready	(s_axi_rready),
 			     .ac_crf_wrt	(ac_crf_wrt),
 			     .ac_crf_waddr	(ac_crf_waddr[CRF_ADDR_WIDTH-1:0]),
-			     .ac_crf_wdata	(ac_crf_wdata[CRF_DATA_WIDTH-1:0]));
+			     .ac_crf_wdata	(ac_crf_wdata[CRF_DATA_WIDTH-1:0]),
+			     .ac_crf_axisi_tvalid(ac_crf_axisi_tvalid),
+			     .ac_crf_axisi_tready(ac_crf_axisi_tready),
+			     .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
+			     .ac_crf_axiso_tready(ac_crf_axiso_tready),
+			     .ac_crf_processing	(ac_crf_processing));
 
     /* access_control AUTO_TEMPLATE (
     );
@@ -176,6 +186,11 @@ module bcci_ip
 		       .ac_crf_wrt	(ac_crf_wrt),
 		       .ac_crf_wdata	(ac_crf_wdata[CRF_DATA_WIDTH-1:0]),
 		       .ac_crf_waddr	(ac_crf_waddr[CRF_ADDR_WIDTH-1:0]),
+		       .ac_crf_processing(ac_crf_processing),
+		       .ac_crf_axisi_tvalid(ac_crf_axisi_tvalid),
+		       .ac_crf_axisi_tready(ac_crf_axisi_tready),
+		       .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
+		       .ac_crf_axiso_tready(ac_crf_axiso_tready),
 		       .ac_upsp_rvalid	(ac_upsp_rvalid),
 		       .ac_upsp_rdata	(ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]),
 		       .ac_upsp_wready	(ac_upsp_wready),

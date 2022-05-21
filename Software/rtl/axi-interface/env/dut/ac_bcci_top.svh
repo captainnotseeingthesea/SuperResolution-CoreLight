@@ -32,6 +32,11 @@ module ac_bcci_top(ac_if acif);
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    wire		ac_crf_axisi_tready;	// From AAA_access_control of access_control.v
+    wire		ac_crf_axisi_tvalid;	// From AAA_access_control of access_control.v
+    wire		ac_crf_axiso_tready;	// From AAA_access_control of access_control.v
+    wire		ac_crf_axiso_tvalid;	// From AAA_access_control of access_control.v
+    wire		ac_crf_processing;	// From AAA_access_control of access_control.v
     wire [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;	// From AAA_access_control of access_control.v
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
@@ -105,7 +110,12 @@ module ac_bcci_top(ac_if acif);
 			     .s_axi_rready	(acif.lite_master.axi_rready), // Templated
 			     .ac_crf_wrt	(ac_crf_wrt),
 			     .ac_crf_waddr	(ac_crf_waddr[CRF_ADDR_WIDTH-1:0]),
-			     .ac_crf_wdata	(ac_crf_wdata[CRF_DATA_WIDTH-1:0]));
+			     .ac_crf_wdata	(ac_crf_wdata[CRF_DATA_WIDTH-1:0]),
+			     .ac_crf_axisi_tvalid(ac_crf_axisi_tvalid),
+			     .ac_crf_axisi_tready(ac_crf_axisi_tready),
+			     .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
+			     .ac_crf_axiso_tready(ac_crf_axiso_tready),
+			     .ac_crf_processing	(ac_crf_processing));
  
     /* access_control AUTO_TEMPLATE (
 		.UPSTR		(acif.usif.UPSTR[CRF_DATA_WIDTH-1:0]),
@@ -153,6 +163,11 @@ module ac_bcci_top(ac_if acif);
 		       .ac_crf_wrt	(ac_crf_wrt),
 		       .ac_crf_wdata	(ac_crf_wdata[CRF_DATA_WIDTH-1:0]),
 		       .ac_crf_waddr	(ac_crf_waddr[CRF_ADDR_WIDTH-1:0]),
+		       .ac_crf_processing(ac_crf_processing),
+		       .ac_crf_axisi_tvalid(ac_crf_axisi_tvalid),
+		       .ac_crf_axisi_tready(ac_crf_axisi_tready),
+		       .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
+		       .ac_crf_axiso_tready(ac_crf_axiso_tready),
 		       .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid), // Templated
 		       .ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]), // Templated
 		       .ac_upsp_wready	(acif.usif.ac_upsp_wready), // Templated

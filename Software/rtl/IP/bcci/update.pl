@@ -17,7 +17,7 @@ $axidir = "../../axi-interface";
 $bicubdir = "../../bicubic";
 $bcciip = "bcci_ip.v";
 
-@srcfiles = glob "$axidir/src/*.v $bicubdir/*.v $bcciip";
+@srcfiles = glob "$axidir/src/*.v $bicubdir/src/*.v $bcciip";
 foreach $src (@srcfiles) {
     $dst = File::Spec->catfile($tmp, basename $src);
     copy $src, $dst or die "cannot copy $src:$!";

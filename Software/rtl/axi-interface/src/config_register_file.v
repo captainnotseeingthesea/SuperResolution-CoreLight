@@ -30,7 +30,9 @@ module config_register_file # (
    clk, rst_n, s_axi_awvalid, s_axi_awaddr, s_axi_awprot,
    s_axi_wvalid, s_axi_wdata, s_axi_wstrb, s_axi_bready,
    s_axi_arvalid, s_axi_araddr, s_axi_arprot, s_axi_rready,
-   ac_crf_wrt, ac_crf_waddr, ac_crf_wdata
+   ac_crf_wrt, ac_crf_waddr, ac_crf_wdata, ac_crf_axisi_tvalid,
+   ac_crf_axisi_tready, ac_crf_axiso_tvalid, ac_crf_axiso_tready,
+   ac_crf_processing
    );
 
 	localparam RESP_OKAY = 2'b00;
@@ -80,6 +82,15 @@ module config_register_file # (
 	output                      crf_ac_UPEND;
 	output                      crf_ac_wbusy;
 
+	// Input and output axi-stream handshake signals
+	input                       ac_crf_axisi_tvalid;
+	input                       ac_crf_axisi_tready;
+	input                       ac_crf_axiso_tvalid;
+	input                       ac_crf_axiso_tready;
+	input                       ac_crf_processing;
+
+
+
 	/*AUTOWIRE*/
 
 	/*AUTOREG*/
@@ -96,13 +107,57 @@ module config_register_file # (
 	// Up-Sampling status register.
 	reg [CRF_DATA_WIDTH-1:0] UPSTAT;
 
-
 	// Directly output registers.
 	assign crf_ac_UPSTART = UPSTAT[0];
 	assign crf_ac_UPEND  = UPSTAT[1];
 
 	// Output the LSB of UPENR as an interrupt to PS.
 	assign interrupt_updone = UPSTAT[1];
+
+
+/*************************** Performance monitoring registers ***************************/
+	reg [CRF_DATA_WIDTH-1:0] UPINHSKCNT;
+	reg [CRF_DATA_WIDTH-1:0] UPINNRDYCNT;
+	reg [CRF_DATA_WIDTH-1:0] UPOUTHSKCNT;
+	reg [CRF_DATA_WIDTH-1:0] UPOUTNRDYCNT;
+
+	wire stream_i_hsked = ac_crf_axisi_tvalid & ac_crf_axisi_tready;
+	wire stream_i_nrdy  = ac_crf_axisi_tvalid & ~ac_crf_axisi_tready;
+	wire stream_o_hsked = ac_crf_axiso_tvalid & ac_crf_axiso_tready;
+	wire stream_o_nrdy  = ac_crf_axiso_tvalid & ~ac_crf_axiso_tready;
+
+	always@(posedge clk or negedge rst_n) begin: STREAMIN_HSKED
+		if(~rst_n) begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			UPINHSKCNT <= {CRF_DATA_WIDTH{1'b0}};
+			UPINNRDYCNT <= {CRF_DATA_WIDTH{1'b0}};
+			UPOUTHSKCNT <= {CRF_DATA_WIDTH{1'b0}};
+			UPOUTNRDYCNT <= {CRF_DATA_WIDTH{1'b0}};
+			// End of automatics
+		end else if(ac_crf_processing) begin
+			if(crf_ac_UPSTART & stream_i_hsked) UPINHSKCNT  <= UPINHSKCNT + 1;
+			if(crf_ac_UPSTART & stream_i_nrdy)  UPINNRDYCNT <= UPINNRDYCNT + 1;
+			if(crf_ac_UPSTART & stream_o_hsked) UPOUTHSKCNT <= UPOUTHSKCNT + 1;
+			if(crf_ac_UPSTART & stream_o_nrdy) UPOUTNRDYCNT <= UPOUTNRDYCNT + 1;
+		end else if(crf_ac_UPEND) begin
+			UPINHSKCNT   <= UPINHSKCNT  ;
+			UPINNRDYCNT  <= UPINNRDYCNT ;
+			UPOUTHSKCNT  <= UPOUTHSKCNT ;
+			UPOUTNRDYCNT <= UPOUTNRDYCNT;
+		end else begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			UPINHSKCNT <= {CRF_DATA_WIDTH{1'b0}};
+			UPINNRDYCNT <= {CRF_DATA_WIDTH{1'b0}};
+			UPOUTHSKCNT <= {CRF_DATA_WIDTH{1'b0}};
+			UPOUTNRDYCNT <= {CRF_DATA_WIDTH{1'b0}};
+			// End of automatics
+		end
+	end
+
+
+/*************************** Performance monitoring registers end ***************************/
 
 
 	// Write address channel
@@ -245,7 +300,11 @@ module config_register_file # (
 		end else if(axi_read) begin
 			s_axi_rvalid <= 1'b1;
 			case(axi_raddr)
-				0: s_axi_rdata <= UPSTAT  ;
+				0: s_axi_rdata  <= UPSTAT      ;
+				4: s_axi_rdata  <= UPINHSKCNT  ;
+				8: s_axi_rdata  <= UPINNRDYCNT ;
+				12: s_axi_rdata <= UPOUTHSKCNT ;
+				16: s_axi_rdata <= UPOUTNRDYCNT ;
 				default: s_axi_rdata <= {AXI_DATA_WIDTH{1'b0}};
 			endcase
 		end else begin
