@@ -32,13 +32,13 @@ module bicubic_top
 `ifdef GEN_IN_SIXTEEN
     output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
 `elsif GEN_IN_EIGHT
-    output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
+    output wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata,
 `elsif GEN_IN_FOUR
-    output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
+    output wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata,
 `elsif GEN_IN_TWO
-    output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
+    output wire [BUFFER_WIDTH*16-1:0] upsp_ac_wdata,
 `elsif GEN_IN_ONE
-    output wire [BUFFER_WIDTH-1:0] upsp_ac_wdata,
+    output wire [BUFFER_WIDTH*16-1:0] upsp_ac_wdata,
 `endif
     output wire upsp_ac_wvalid
 
