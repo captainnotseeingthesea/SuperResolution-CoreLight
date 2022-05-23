@@ -88,13 +88,21 @@ module axis_outbuf # (
             rd_status <= cs_t & re_t;
     end
 
+    reg [DATA_WIDTH-1:0] rdout_r;
+    always@(posedge clk or negedge rst_n) begin
+        if(~rst_n)
+            rdout_r <= 4'b0;
+        else
+            rdout_r <= rdout;
+    end
+
     always@(*) begin
         case(rd_status)
         4'b0001: rdout = dout0;
         4'b0010: rdout = dout1;
         4'b0100: rdout = dout2;
         4'b1000: rdout = dout3;
-        default: rdout = {DATA_WIDTH{1'b0}};
+        default: rdout = rdout_r;
         endcase
     end
 
