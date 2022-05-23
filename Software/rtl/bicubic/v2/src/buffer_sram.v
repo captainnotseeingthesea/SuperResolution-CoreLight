@@ -156,7 +156,9 @@ module buffer_sram #(
     wire cur_col_cnt_below_5 = (cur_col_cnt < 5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_6 = (cur_col_cnt < 6) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_width = (cur_col_cnt < WIDTH) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_is_0 = (cur_col_cnt == 0) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_5 = (cur_col_cnt == 5) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_is_6 = (cur_col_cnt == 6) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width = (cur_col_cnt == WIDTH) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width_plus_2 = (cur_col_cnt == WIDTH+2) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width_plus_3 = (cur_col_cnt == WIDTH+3) ? 1'b1 : 1'b0;
@@ -203,7 +205,7 @@ module buffer_sram #(
     wire cur_row_cnt_is_last_1 = (cur_row_cnt == HEIGHT*4-1) ? 1'b1 : 1'b0;
 
     assign nxt_row_cnt = cur_row_cnt + 1;
-    wire row_cnt_ena = bcci_2_bf_hsked & cur_col_cnt_is_width_plus_5;
+    wire row_cnt_ena = cur_col_cnt_is_width_plus_5;
     dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
 
 
@@ -217,22 +219,23 @@ module buffer_sram #(
 
 
     wire [$clog2(WIDTH)-1:0] cur_raddr, nxt_raddr;
+
     assign nxt_raddr = ((cur_raddr < WIDTH-1) & (~cur_col_cnt_below_2)) ? cur_raddr+1 
-                     : ((cur_raddr == WIDTH-1) & (cur_col_cnt_below_width_plus_5)) ? cur_raddr : 0;
+                     : ((cur_raddr == WIDTH-1) & (cur_col_cnt_below_width_plus_4)) ? cur_raddr : 0;
     wire cur_rd_end = (cur_raddr == WIDTH-1) ? 1'b1 : 1'b0;
     wire raddr_ena;
     dfflr #(.DW($clog2(WIDTH))) u_raddr_reg(.lden(raddr_ena), .dnxt(nxt_raddr), .qout(cur_raddr), .clk(clk), .rst_n(rst_n));    
 
 
 
-    localparam CNT_WIDTH = 1;
-    wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
-    wire cur_cnt_is_1 = (cur_cnt == 1'd1) ? 1'b1 : 1'b0;
-    assign nxt_cnt = cur_cnt_is_1 ? 1'd1 : 1'd0;
-    wire cnt_ena = init_finished & cur_col_cnt_below_width & bcci_2_bf_hsked;
-    dfflr #(.DW(CNT_WIDTH)) u_cnt3_dff (.lden(cnt_ena), .dnxt(nxt_cnt), .qout(cur_cnt), .clk(clk), .rst_n(rst_n));
+    // localparam CNT_WIDTH = 1;
+    // wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
+    // wire cur_cnt_is_1 = (cur_cnt == 1'd1) ? 1'b1 : 1'b0;
+    // assign nxt_cnt = cur_cnt_is_1 ? 1'd1 : 1'd0;
+    // wire cnt_ena = init_finished & cur_col_cnt_below_width & bcci_2_bf_hsked;
+    // dfflr #(.DW(CNT_WIDTH)) u_cnt3_dff (.lden(cnt_ena), .dnxt(nxt_cnt), .qout(cur_cnt), .clk(clk), .rst_n(rst_n));
 
-    assign col_cnt_ena = init_finished & ((cur_col_cnt_below_5) | (~cur_col_cnt_below_5)  & bcci_2_bf_hsked);
+    assign col_cnt_ena = init_finished & (cur_col_cnt_below_width_plus_5 | (cur_col_cnt_is_width_plus_5 & row_cnt_ena));
 
 
     assign state_s0_exit_ena = (cur_is_s0 & init_finished) ? 1'b1 : 1'b0;
@@ -248,7 +251,7 @@ module buffer_sram #(
                      | state_s4_exit_ena | state_s5_exit_ena;
 
 
-    wire shift_ena = (init_finished & (~end_of_data)) ? bcci_2_bf_hsked | (cur_col_cnt_below_6) : 1'b0;
+    wire shift_ena = (init_finished & (~end_of_data)) ? (cur_col_cnt_below_width_plus_5 | cur_col_cnt_below_6) : 1'b0;
 
     assign raddr_ena = init_finished ? shift_ena : 1'b0;
 
@@ -372,10 +375,12 @@ module buffer_sram #(
 
     wire end_of_data;
 
-    wire nxt_bf_req_valid = init_finished ? ((cur_col_cnt_below_width_plus_4) & (~cur_col_cnt_below_5) & (~end_of_data)) : 1'b0;
 
-    wire reg_ena = shift_ena;
-    dfflr #(.DW(1)) u_pipeline_valid_reg (.lden(reg_ena), .dnxt(nxt_bf_req_valid), .qout(bf_req_valid), .clk(clk), .rst_n(rst_n));
+    assign bf_req_valid = init_finished ? ((cur_col_cnt_below_width_plus_6) & (~cur_col_cnt_below_5) & (~end_of_data)) : 1'b0;
+
+    // wire nxt_bf_req_valid = init_finished ? ((cur_col_cnt_below_width_plus_4) & (~cur_col_cnt_below_5) & (~end_of_data)) : 1'b0;
+    // wire reg_ena = shift_ena;
+    // dfflr #(.DW(1)) u_pipeline_valid_reg (.lden(reg_ena), .dnxt(nxt_bf_req_valid), .qout(bf_req_valid), .clk(clk), .rst_n(rst_n));
 
 
     assign axi_ready = (~init_finished) 
@@ -404,10 +409,10 @@ module buffer_sram #(
         end
         else begin
             if(bcci_2_bf_hsked) begin
-                if(cur_col_cnt_is_5) begin
+                if(cur_col_cnt_is_6) begin
                     $display("%x", out1[BUFFER_WIDTH*2-1:0]);
                 end
-                else if(cur_col_cnt_is_width_plus_5) begin
+                else if(cur_col_cnt_is_0) begin
                     $display("%x", out1[BUFFER_WIDTH*4-1:BUFFER_WIDTH*2]);
                 end
                 else begin

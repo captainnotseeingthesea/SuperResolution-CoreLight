@@ -245,7 +245,6 @@ module bicubic_upsample  (
     wire [WEIGHT_WIDTH-1:0] w2_1, w2_2, w2_3, w2_4;
     wire [WEIGHT_WIDTH-1:0] w3_1, w3_2, w3_3, w3_4;
     wire [WEIGHT_WIDTH-1:0] w4_1, w4_2, w4_3, w4_4;
-    wire [CHANNEL_WIDTH:0] p1_t, p2_t, p3_t, p4_t;
 
     wire [CHANNEL_WIDTH:0] product1, product2, product3, product4;
 

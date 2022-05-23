@@ -1125,10 +1125,19 @@ void _zoom_bicubic_stream_opencv(
                     r_sum += pCurr[clip(sx + nn - 1, 0, info->width)].r * cbufY[mm]*cbufX[nn];
                     g_sum += pCurr[clip(sx + nn - 1, 0, info->width)].g * cbufY[mm]*cbufX[nn];
                     b_sum += pCurr[clip(sx + nn - 1, 0, info->width)].b * cbufY[mm]*cbufX[nn];
-                    // printf("%x ", pCurr[clip(sx + nn - 1, 0, info->width)].r);
+                    // if(ii==0 && ((jj == 20) || (jj==21))) {
+                    //     printf("Y: %d X: %d \n", cbufY[mm]/16, cbufX[nn]/16);
+                    //     printf("pixel :%x ", pCurr[clip(sx + nn - 1, 0, info->width)].r);
+                    //     printf("sum: %d \n", r_sum/16/16);
+                    // }
+
                 }
+
             }
-            // printf("\n");
+            // // printf("\n");
+            // if(ii==0 && ((jj <= 22))) {
+            //     printf("total_sum: %d \n", r_sum>>= 22);
+            // }
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;
