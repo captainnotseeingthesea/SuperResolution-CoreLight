@@ -1,7 +1,5 @@
-// `include "define.v"
-// `include "bicubic_pvector_mult_wmatrix.v"
-// `include "bicubic_wvector_mult_pmatrix.v"
-module bicubic_upsample_4  (
+
+module bicubic_upsample  (
     input wire clk,
     input wire rst_n,
     input wire bf_req_valid,

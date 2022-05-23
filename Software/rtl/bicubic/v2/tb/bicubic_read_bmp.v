@@ -52,15 +52,13 @@ module bicubic_read_bmp (
         `ifndef SIM_WITH_VERILATOR  
             #2
         `endif
-
-        // for (ii=0;ii<img_width;ii=ii+1) begin
-        //     index = (img_height-1) * (img_width+1) * 3 + img_start_index+ii*3;
-        //     shaped_data[ii+1] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
-        // end
         
         `ifndef SIM_WITH_VERILATOR  
             #1
         `endif
+
+        // The following code to revese the data
+        //
         // for (i = img_height - 1; i >= 0; i = i - 1) begin
         //     for(j = 0; j < img_width; j = j + 1) begin
         //         // if it is odd of width, then use (width+1), the extra bits are set to 00 0000

@@ -1,3 +1,4 @@
+
 module sram #(
     parameter DATA_WIDTH=24,
     parameter DEPTH = 960
@@ -7,8 +8,7 @@ module sram #(
     input wire cs_n,
     input wire wr_en,
     input wire [DATA_WIDTH-1:0] data_in,
-    output wire [DATA_WIDTH-1:0] data_out,
-    output wire data_valid 
+    output wire [DATA_WIDTH-1:0] data_out
 
 
 );
@@ -20,23 +20,23 @@ module sram #(
         // ram not work while cs_n is high
         if(cs_n) begin
             data_t <= #1 {DATA_WIDTH{1'b0}};
-            data_valid_t <= #1 1'b0;
+            // data_valid_t <= #1 1'b0;
         end
         else begin
             if(wr_en) begin
                 ram[addr] <= data_in;
                 data_t <= #1 {DATA_WIDTH{1'b0}};
-                data_valid_t <= #1 1'b0;
+                // data_valid_t <= #1 1'b0;
             end
             else begin
                 data_t <= #1 ram[addr];
-                data_valid_t <= #1 1'b1;
+                // data_valid_t <= #1 1'b1;
             end
         end
     end
 
     assign data_out = data_t;
-    assign data_valid = data_valid_t;
+    // assign data_valid = data_valid_t;
 
 endmodule
 

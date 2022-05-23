@@ -7,7 +7,7 @@
     - Pixel vector multiplication weight matrix operator.
 - bicubic_wvector_mult_pmatrix.v
     - Weight vector multiplication pixel matrix operator.
-- bicubic_upsample_4.v
+- bicubic_upsample.v
     - The upsample module.
 - buffer_ram.v
     - Buffer control module, currently used to provide data to the upsampleing module

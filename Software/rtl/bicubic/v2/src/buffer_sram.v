@@ -1,4 +1,4 @@
-// `define BUFFER_SRAM
+
 module buffer_sram #(
     parameter BUFFER_WIDTH=24
 ) (
@@ -84,19 +84,18 @@ module buffer_sram #(
     wire wr_en1, wr_en2, wr_en3, wr_en4, wr_en5; 
     wire [$clog2(WIDTH)-1:0] addr1, addr2, addr3, addr4, addr5;
     wire [BUFFER_WIDTH-1:0] data_out1, data_out2, data_out3, data_out4, data_out5;
-    wire data_valid1, data_valid2, data_valid3, data_valid4, data_valid5;
  
 
     sram #(.DATA_WIDTH(BUFFER_WIDTH), .DEPTH(WIDTH)) u_sram1 
-          (.clk(clk), .addr(addr1), .cs_n(cs_n1), .wr_en(wr_en1), .data_in(axi_data), .data_out(data_out1), .data_valid(data_valid1)); 
+          (.clk(clk), .addr(addr1), .cs_n(cs_n1), .wr_en(wr_en1), .data_in(axi_data), .data_out(data_out1)); 
     sram #(.DATA_WIDTH(BUFFER_WIDTH), .DEPTH(WIDTH)) u_sram2 
-          (.clk(clk), .addr(addr2), .cs_n(cs_n2), .wr_en(wr_en2), .data_in(axi_data), .data_out(data_out2), .data_valid(data_valid2)); 
+          (.clk(clk), .addr(addr2), .cs_n(cs_n2), .wr_en(wr_en2), .data_in(axi_data), .data_out(data_out2)); 
     sram #(.DATA_WIDTH(BUFFER_WIDTH), .DEPTH(WIDTH)) u_sram3 
-          (.clk(clk), .addr(addr3), .cs_n(cs_n3), .wr_en(wr_en3), .data_in(axi_data), .data_out(data_out3), .data_valid(data_valid3)); 
+          (.clk(clk), .addr(addr3), .cs_n(cs_n3), .wr_en(wr_en3), .data_in(axi_data), .data_out(data_out3)); 
     sram #(.DATA_WIDTH(BUFFER_WIDTH), .DEPTH(WIDTH)) u_sram4 
-          (.clk(clk), .addr(addr4), .cs_n(cs_n4), .wr_en(wr_en4), .data_in(axi_data), .data_out(data_out4), .data_valid(data_valid4)); 
+          (.clk(clk), .addr(addr4), .cs_n(cs_n4), .wr_en(wr_en4), .data_in(axi_data), .data_out(data_out4)); 
     sram #(.DATA_WIDTH(BUFFER_WIDTH), .DEPTH(WIDTH)) u_sram5 
-          (.clk(clk), .addr(addr5), .cs_n(cs_n5), .wr_en(wr_en5), .data_in(axi_data), .data_out(data_out5), .data_valid(data_valid5)); 
+          (.clk(clk), .addr(addr5), .cs_n(cs_n5), .wr_en(wr_en5), .data_in(axi_data), .data_out(data_out5)); 
 
 
 
@@ -211,7 +210,6 @@ module buffer_sram #(
 
     wire [$clog2(WIDTH)-1:0] cur_waddr, nxt_waddr;
     wire cur_wr_end = (~init_finished) ? (cur_waddr == WIDTH-1) : (cur_waddr == WIDTH);
-    // assign nxt_waddr = (cur_waddr < WIDTH-1) ? cur_waddr+1 : 0;
     assign nxt_waddr = (~cur_wr_end) ? cur_waddr+1 : 0;
 
     wire waddr_ena = cur_is_s0 ? axi_hsked : cur_wr_end ? state_ena : axi_hsked;
@@ -314,9 +312,6 @@ module buffer_sram #(
     dffl #(.DW(BUFFER_WIDTH)) u_dffl15(.lden(shift_ena), .dnxt(out_p16), .qout(out_p15), .clk(clk));
     dffl #(.DW(BUFFER_WIDTH)) u_dffl16(.lden(shift_ena), .dnxt(line_out4), .qout(out_p16), .clk(clk));
 
-    // assign state_ena = init_finished ? (cur_row_cnt_is_4x & cur_col_cnt_is_width_plus_2 & cur_wr_end) : 1'b0;
-
-
     assign {wr_en1, wr_en2, wr_en3, wr_en4, wr_en5} =
           ({5{cur_is_s0 & cur_init_ram1 & axi_hsked}} & 5'b10000)
         | ({5{cur_is_s0 & cur_init_ram2 & axi_hsked}} & 5'b01000)
@@ -382,15 +377,9 @@ module buffer_sram #(
     wire reg_ena = shift_ena;
     dfflr #(.DW(1)) u_pipeline_valid_reg (.lden(reg_ena), .dnxt(nxt_bf_req_valid), .qout(bf_req_valid), .clk(clk), .rst_n(rst_n));
 
-    // wire cur_wr_end_delayed, nxt_wr_end_delayed;
-    // assign nxt_wr_end_delayed = cur_wr_end ? 1'b1 : 1'b0;
-    // wire wr_end_delayed_ena = init_finished ? cur_wr_end : axi_hsked;
-    // dfflr #(.DW(1)) u_wr_end_delay_reg (.lden(wr_end_delayed_ena), .dnxt(cur_wr_end_delayed), .qout(cur_wr_end_delayed), .clk(clk), .rst_n(rst_n));
 
     assign axi_ready = (~init_finished) 
                      | ((cur_is_s1 | cur_is_s2 | cur_is_s3 | cur_is_s4 | cur_is_s5) & ( ~cur_wr_end) & cur_row_cnt_below_last_10);
-
-
 
 
 

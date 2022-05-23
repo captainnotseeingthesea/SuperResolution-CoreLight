@@ -1,22 +1,6 @@
-// `include "define.v"
-// `ifndef BUFFER
-//     `include "buffer.v"
-// `endif
 
-// `ifdef GEN_IN_SIXTEEN
-//     `include "bicubic_upsample_16.v"
-// `elsif GEN_IN_EIGHT
-//     `include "bicubic_upsample_8.v"
-// `elsif GEN_IN_FOUR
-//     `include "bicubic_upsample_4.v"
-// `elsif GEN_IN_TWO
-//     `include "bicubic_upsample_2.v"
-// `elsif GEN_IN_ONE
-//     `include "bicubic_upsample_1.v"
-// `endif
 module bicubic_top 
 #(
-    // localparam BUFFER_WIDTH = `UPSP_DATA_WIDTH, 
     parameter BUFFER_WIDTH = 24, 
   parameter CHANNEL_WIDTH = 8
 )
@@ -203,7 +187,7 @@ module bicubic_top
     wire G_bf_rsp_ready = ac_upsp_wready;
     wire B_bf_rsp_ready = ac_upsp_wready;
 
-    bicubic_upsample_4 u_R_bicubic_upsample(
+    bicubic_upsample u_R_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
         .bf_req_valid(R_bf_req_valid),
@@ -235,7 +219,7 @@ module bicubic_top
     );
 
 
-    bicubic_upsample_4 u_G_bicubic_upsample(
+    bicubic_upsample u_G_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
         .bf_req_valid(G_bf_req_valid),
@@ -266,7 +250,7 @@ module bicubic_top
         .bcci_rsp_data4(G_bcci_rsp_data4)
     );
 
-    bicubic_upsample_4 u_B_bicubic_upsample(
+    bicubic_upsample u_B_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
         .bf_req_valid   (B_bf_req_valid),

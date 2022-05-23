@@ -11,17 +11,7 @@ module bicubic_top_tb();
 
     localparam BUFFER_WIDTH=24;
     reg ac_upsp_wready_tb;
-`ifdef GEN_IN_SIXTEEN
-    wire [BUFFER_WIDTH-1:0] upsp_ac_wdata_tb;
-`elsif GEN_IN_EIGHT
     wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata_tb;
-`elsif GEN_IN_FOUR
-    wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata_tb;
-`elsif GEN_IN_TWO
-    wire [BUFFER_WIDTH*16-1:0] upsp_ac_wdata_tb;
-`elsif GEN_IN_ONE
-    wire [BUFFER_WIDTH*16-1:0] upsp_ac_wdata_tb;
-`endif
     wire upsp_ac_wvalid_tb;
 
     initial begin

@@ -1,6 +1,4 @@
-// `ifndef BICUBIC_MULT
-//     `include "bicubic_vector_mult.v"
-// `endif
+
 module bicubic_wvector_mult_pmatrix(
     input wire [3:0] w1,
     input wire [3:0] w2,
