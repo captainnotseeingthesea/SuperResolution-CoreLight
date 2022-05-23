@@ -63,7 +63,7 @@ module bicubic_top_tb();
 
         // #1320
         // #4000
-        #30000
+        #26000
         #5 $finish;
     end
 

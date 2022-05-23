@@ -70,7 +70,8 @@ module bicubic_upsample_4  (
     wire [FSM_WIDTH-1:0] cur_state, nxt_state;
 
     wire [FSM_WIDTH-1:0] state_s1_nxt = STATE_S2;
-    wire [FSM_WIDTH-1:0] state_s2_nxt = cur_row_cnt_is_1 ? STATE_S1 : STATE_S3;
+    // wire [FSM_WIDTH-1:0] state_s2_nxt = cur_row_cnt_is_1 ? STATE_S1 : STATE_S3;
+    wire [FSM_WIDTH-1:0] state_s2_nxt = STATE_S3;
     wire [FSM_WIDTH-1:0] state_s3_nxt = STATE_S4;
     wire [FSM_WIDTH-1:0] state_s4_nxt = STATE_S1;
 
@@ -111,26 +112,27 @@ module bicubic_upsample_4  (
     localparam CHANNEL_WIDTH = 8;
     localparam WEIGHT_WIDTH = 4;
 
-    localparam S_U1_1 = {1'b1, 3'd2}; // -9
-    localparam S_U1_2 = {1'b0, 3'd7}; // 124        
-    localparam S_U1_3 = {1'b0, 3'd4}; // 14.5        
-    localparam S_U1_4 = {1'b1, 3'd0}; // -1.5     
+// u(5/8):
+    localparam S_U1_1 = {1'b1, 3'd1}; // -8.5    9
+    localparam S_U1_2 = {1'b0, 3'd5}; // 54.5    5
+    localparam S_U1_3 = {1'b0, 3'd6}; // 96      6
+    localparam S_U1_4 = {1'b1, 3'd3}; // -14     b
+// u(7/8):
+    localparam S_U2_1 = {1'b1, 3'd0}; // -1.5    8
+    localparam S_U2_2 = {1'b0, 3'd4}; // 14.5    4
+    localparam S_U2_3 = {1'b0, 3'd7}; // 124     7
+    localparam S_U2_4 = {1'b1, 3'd2}; // -9      a
+// u(1/8):
+    localparam S_U3_1 = {1'b1, 3'd2}; // -9      a
+    localparam S_U3_2 = {1'b0, 3'd7}; // 124     7  
+    localparam S_U3_3 = {1'b0, 3'd4}; // 14.5    4   
+    localparam S_U3_4 = {1'b1, 3'd0}; // -1.5    8
+// u(3/8):
+    localparam S_U4_1 = {1'b1, 3'd3}; // -14     b
+    localparam S_U4_2 = {1'b0, 3'd6}; // 96      6
+    localparam S_U4_3 = {1'b0, 3'd5}; // 54.5    5 
+    localparam S_U4_4 = {1'b1, 3'd1}; // -8.5    9
  
-    localparam S_U2_1 = {1'b1, 3'd3}; // -14
-    localparam S_U2_2 = {1'b0, 3'd6}; // 96      
-    localparam S_U2_3 = {1'b0, 3'd5}; // 54.5
-    localparam S_U2_4 = {1'b1, 3'd1}; // -8.5 
- 
-    localparam S_U3_1 = {1'b1, 3'd1}; 
-    localparam S_U3_2 = {1'b0, 3'd6};         
-    localparam S_U3_3 = {1'b0, 3'd5};     
-    localparam S_U3_4 = {1'b1, 3'd3}; 
-
-    localparam S_U4_1 = {1'b1, 3'd0};  
-    localparam S_U4_2 = {1'b0, 3'd4};         
-    localparam S_U4_3 = {1'b0, 3'd7};          
-    localparam S_U4_4 = {1'b1, 3'd2};
-
 
     wire [WEIGHT_WIDTH-1:0] w1, w2, w3, w4;
 
@@ -283,26 +285,46 @@ module bicubic_upsample_4  (
         .inner_product_sign4(product4[8])  
     );
 
-    assign w1_1 = S_U1_1;
-    assign w1_2 = S_U1_2;
-    assign w1_3 = S_U1_3;
-    assign w1_4 = S_U1_4;    
+    // assign w1_1 = S_U1_1;
+    // assign w1_2 = S_U1_2;
+    // assign w1_3 = S_U1_3;
+    // assign w1_4 = S_U1_4;    
 
-    assign w2_1 = S_U2_1;
-    assign w2_2 = S_U2_2;
-    assign w2_3 = S_U2_3;
-    assign w2_4 = S_U2_4;  
+    // assign w2_1 = S_U2_1;
+    // assign w2_2 = S_U2_2;
+    // assign w2_3 = S_U2_3;
+    // assign w2_4 = S_U2_4;  
 
-    assign w3_1 = S_U3_1;
-    assign w3_2 = S_U3_2;
-    assign w3_3 = S_U3_3;
-    assign w3_4 = S_U3_4;  
+    // assign w3_1 = S_U3_1;
+    // assign w3_2 = S_U3_2;
+    // assign w3_3 = S_U3_3;
+    // assign w3_4 = S_U3_4;  
 
-    assign w4_1 = S_U4_1;
-    assign w4_2 = S_U4_2;
-    assign w4_3 = S_U4_3;
-    assign w4_4 = S_U4_4;  
+    // assign w4_1 = S_U4_1;
+    // assign w4_2 = S_U4_2;
+    // assign w4_3 = S_U4_3;
+    // assign w4_4 = S_U4_4;  
 
+
+    assign w1_1 = S_U3_1;
+    assign w1_2 = S_U3_2;
+    assign w1_3 = S_U3_3;
+    assign w1_4 = S_U3_4;    
+
+    assign w2_1 = S_U4_1;
+    assign w2_2 = S_U4_2;
+    assign w2_3 = S_U4_3;
+    assign w2_4 = S_U4_4;  
+
+    assign w3_1 = S_U1_1;
+    assign w3_2 = S_U1_2;
+    assign w3_3 = S_U1_3;
+    assign w3_4 = S_U1_4;  
+
+    assign w4_1 = S_U2_1;
+    assign w4_2 = S_U2_2;
+    assign w4_3 = S_U2_3;
+    assign w4_4 = S_U2_4;  
 
     assign bcci_rsp_data1 = product1[CHANNEL_WIDTH-1:0];
     assign bcci_rsp_data2 = product2[CHANNEL_WIDTH-1:0];

@@ -65,6 +65,7 @@ module buffer_sram #(
 `endif
 
     wire axi_hsked = axi_ready & axi_valid;
+    wire bf_req_hsked = bf_req_valid & bcci_req_ready;
 
     localparam INIT_CNT_WIDTH = $clog2((WIDTH)*4);
     wire [INIT_CNT_WIDTH-1:0] cur_init_cnt, nxt_init_cnt;
@@ -154,6 +155,7 @@ module buffer_sram #(
     wire cur_col_cnt_below_3 = (cur_col_cnt < 3) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_4 = (cur_col_cnt < 4) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_5 = (cur_col_cnt < 5) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_below_6 = (cur_col_cnt < 6) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_width = (cur_col_cnt < WIDTH) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_5 = (cur_col_cnt == 5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width = (cur_col_cnt == WIDTH) ? 1'b1 : 1'b0;
@@ -188,7 +190,7 @@ module buffer_sram #(
     wire cur_row_cnt_is_9 = (cur_row_cnt == 9) ? 1'b1 : 1'b0;
     wire [ROW_CNT_WIDTH-1:0] cur_row_cnt_minus_6 = cur_row_cnt - 6;
 
-    
+    wire cur_row_cnt_over_9 = (cur_row_cnt > 9) ? 1'b1 : 1'b0;
     wire cur_row_cnt_is_4x_plus_6 = (cur_row_cnt_minus_6[1:0] == 2'b11) ? 1'b1 : 1'b0;
 
     wire cur_row_cnt_below_last_10 = (cur_row_cnt + 11 < HEIGHT*4) ? 1'b1 : 1'b0;
@@ -236,7 +238,8 @@ module buffer_sram #(
 
 
     assign state_s0_exit_ena = (cur_is_s0 & init_finished) ? 1'b1 : 1'b0;
-    assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & cur_rd_end & cur_row_cnt_is_9) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    // assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & cur_rd_end & cur_row_cnt_is_9) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & cur_rd_end & cur_row_cnt_is_4x_plus_6) ? ((~cur_row_cnt_is_last_3) & cur_row_cnt_over_9) | cur_row_cnt_is_9 : 1'b0;
     assign state_s2_exit_ena = (cur_is_s2 & cur_wr_end & cur_rd_end & cur_row_cnt_is_4x_plus_6) ? (~cur_row_cnt_is_last_3) : 1'b0;
     assign state_s3_exit_ena = (cur_is_s3 & cur_wr_end & cur_rd_end & cur_row_cnt_is_4x_plus_6) ? (~cur_row_cnt_is_last_3) : 1'b0;
     assign state_s4_exit_ena = (cur_is_s4 & cur_wr_end & cur_rd_end & cur_row_cnt_is_4x_plus_6) ? (~cur_row_cnt_is_last_3) : 1'b0;
@@ -247,7 +250,7 @@ module buffer_sram #(
                      | state_s4_exit_ena | state_s5_exit_ena;
 
 
-    wire shift_ena = init_finished ? bcci_2_bf_hsked | (cur_col_cnt_below_5) : 1'b0;
+    wire shift_ena = (init_finished & (~end_of_data)) ? bcci_2_bf_hsked | (cur_col_cnt_below_6) : 1'b0;
 
     assign raddr_ena = init_finished ? shift_ena : 1'b0;
 
@@ -374,7 +377,7 @@ module buffer_sram #(
 
     wire end_of_data;
 
-    wire nxt_bf_req_valid = init_finished ? ((cur_col_cnt_below_width_plus_4) & (~cur_col_cnt_below_4) & (~end_of_data)) : 1'b0;
+    wire nxt_bf_req_valid = init_finished ? ((cur_col_cnt_below_width_plus_4) & (~cur_col_cnt_below_5) & (~end_of_data)) : 1'b0;
 
     wire reg_ena = shift_ena;
     dfflr #(.DW(1)) u_pipeline_valid_reg (.lden(reg_ena), .dnxt(nxt_bf_req_valid), .qout(bf_req_valid), .clk(clk), .rst_n(rst_n));

@@ -39,8 +39,8 @@ module bicubic_read_bmp (
 
 
         // bmp_file_id = $fopen("2.bmp", "rb");
-        // bmp_file_id = $fopen("49_1k.bmp", "rb");
-        bmp_file_id = $fopen("4.bmp", "rb");
+        bmp_file_id = $fopen("49_1k.bmp", "rb");
+        // bmp_file_id = $fopen("4.bmp", "rb");
         icode = $fread(bmp_data, bmp_file_id);
 
         img_width = {bmp_data[21], bmp_data[20], bmp_data[19], bmp_data[18]};
@@ -61,7 +61,15 @@ module bicubic_read_bmp (
         `ifndef SIM_WITH_VERILATOR  
             #1
         `endif
-        for (i = img_height - 1; i >= 0; i = i - 1) begin
+        // for (i = img_height - 1; i >= 0; i = i - 1) begin
+        //     for(j = 0; j < img_width; j = j + 1) begin
+        //         // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
+        //         index = i * (img_width) * 3 + j * 3 + img_start_index;
+        //         shaped_data[shaped_index] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
+        //         shaped_index = shaped_index + 1;
+        //     end
+        // end
+        for (i = 0; i < img_height; i = i + 1) begin
             for(j = 0; j < img_width; j = j + 1) begin
                 // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
                 index = i * (img_width) * 3 + j * 3 + img_start_index;

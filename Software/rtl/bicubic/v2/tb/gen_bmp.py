@@ -1,19 +1,23 @@
 
-# width=960
-# height=540
-# f = open("display_verilator.txt")
+# width=11
+# height=6
+# f = open("display.txt")
 
-width=48
-height=27
-f = open("display.txt")
+width=960
+height=540
+f = open("display_verilator.txt")
+
+# width=48
+# height=27
+# f = open("display.txt")
 
 result = []
 for line in f.readlines():
     result.append(line.strip())
 f.close()
 
-# if use iverilog, the first line should be poped
-result.pop(0)
+# If use iverilog, the first line should be poped
+# result.pop(0)
 
 if(len(result) != (width+1)*height*4):
     print("error len")
@@ -31,16 +35,16 @@ for i in range(4*height):
     des.append(string_t)
 
 # reverse
-t = des
-des = []
-for i in range(4*height):
-    des.append(t[4*height-i-1])
+# t = des
+# des = []
+# for i in range(4*height):
+#     des.append(t[4*height-i-1])
 
-print(des[0])
+# print(des[0])
 
 # f = open("2.bmp","rb")
-# f = open("49_1k.bmp","rb")
-f = open("4.bmp","rb")
+f = open("49_1k.bmp","rb")
+# f = open("4.bmp","rb")
 head = f.read(18)
 f.seek(f.tell()+8)
 body = f.read(8)
@@ -52,8 +56,8 @@ f.close()
 
 import struct
 # test = open("2_4k.bmp","wb+")
-# test = open("49_4k.bmp","wb+")
-test = open("4_4k.bmp","wb+")
+test = open("49_4k.bmp","wb+")
+# test = open("4_4k.bmp","wb+")
 test.write(struct.pack('B', head[0]))
 test.write(struct.pack('B', head[1]))
 test.write(struct.pack('i', 54+4*4*width*height*3))
