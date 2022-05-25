@@ -39,8 +39,8 @@ module bicubic_read_bmp (
 
 
         // bmp_file_id = $fopen("2.bmp", "rb");
-        // bmp_file_id = $fopen("49_1k.bmp", "rb");
-        bmp_file_id = $fopen("4.bmp", "rb");
+        bmp_file_id = $fopen("49_1k.bmp", "rb");
+        // bmp_file_id = $fopen("4.bmp", "rb");
         icode = $fread(bmp_data, bmp_file_id);
 
         img_width = {bmp_data[21], bmp_data[20], bmp_data[19], bmp_data[18]};
@@ -83,16 +83,13 @@ module bicubic_read_bmp (
     reg [31:0] ptr;
     reg [23:0] data_reg;
     reg valid_reg;
-    reg [31:0] stime;
     always @(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
             ptr <= 32'd0;
             data_reg <= 24'd0;
             valid_reg <= 1'b0;
-            stime <= 32'd0;
         end
         else begin
-            stime <= #2 $stime;
             valid_reg <= #1 1'b1;
             if(bmp_hsked) begin
                 ptr <= #1 ptr + 1;

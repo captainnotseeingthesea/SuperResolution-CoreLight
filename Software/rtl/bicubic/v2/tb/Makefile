@@ -47,10 +47,15 @@ gen_bmp:
 
 bicubic_verilator:
 	make clean
-	verilator -Wno-lint --output-split 40000 -threads 2 --trace -cc -exe --build -top bicubic_top sim_main.cpp -I define.v  \
+	verilator -Wno-lint --output-split 40000 -threads 2 --trace  --coverage -cc -exe --build -top bicubic_top sim_main.cpp -I define.v  \
 		 ../src/bicubic_mult.v  ../src/bicubic_vector_mult.v ../src/bicubic_pvector_mult_wmatrix.v ../src/bicubic_wvector_mult_pmatrix.v \
 		 ../src/dffs.v ../src/sram.v ./bicubic_read_bmp.v ../src/bicubic_upsample.v ../src/buffer_sram.v ../src/bicubic_top.v
 	numactl -C 1-2 -- obj_dir/Vbicubic_top > display_verilator.txt
+
+
+coverage: bicubic_verilator
+	verilator_coverage --annotate logs/annotate --annotate-all -write-info logs/merged.info logs/coverage.dat
+	genhtml logs/merged.info --output-directory logs/html
 
 metircs:
 	python3 psnr_ssim.py
@@ -65,5 +70,5 @@ sram:
 	gtkwave wave.vcd
 
 clean:
-	rm -rf vvp.exec wave.vcd out.txt display_verilator.txt obj_dir display.txt
+	rm -rf vvp.exec wave.vcd out.txt display_verilator.txt obj_dir display.txt logs/
 

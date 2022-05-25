@@ -17,7 +17,7 @@ int main(int argc, char** argv, char** env) {
     unsigned int clock = 0;
     #define PERIOD 4
 
-    while (!contextp->gotFinish() && (clock < 40000000)) { 
+    while (!contextp->gotFinish() && (clock < 12000000)) { 
         clock++;
         top->ac_upsp_wready = 0x0;
         top->ac_upsp_rvalid = 0x0;
@@ -45,6 +45,10 @@ int main(int argc, char** argv, char** env) {
     // if (tfp){
     //   tfp->close();
     // }
+
+    Verilated::mkdir("logs");
+    Verilated::threadContextp()->coveragep()->write("logs/coverage.dat");
+  
     delete top;
     delete contextp;
     return 0;
