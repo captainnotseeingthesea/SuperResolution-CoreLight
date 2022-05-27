@@ -7,51 +7,87 @@ module bicubic_mult(
     output wire [7:0] product,
     output wire product_sign
 );
-    wire multi_by_1   = (weight == 3'd0) ? 1'b1 : 1'b0;
-    wire multi_by_8   = (weight == 3'd1) ? 1'b1 : 1'b0;
-    wire multi_by_9   = (weight == 3'd2) ? 1'b1 : 1'b0;
-    wire multi_by_14  = (weight == 3'd3) ? 1'b1 : 1'b0;
-    wire multi_by_15  = (weight == 3'd4) ? 1'b1 : 1'b0;
-    wire multi_by_54  = (weight == 3'd5) ? 1'b1 : 1'b0;
-    wire multi_by_96  = (weight == 3'd6) ? 1'b1 : 1'b0;
-    wire multi_by_124 = (weight == 3'd7) ? 1'b1 : 1'b0;
+    wire multi_by_21   = (weight == 3'd0) ? 1'b1 : 1'b0;
+    wire multi_by_135  = (weight == 3'd1) ? 1'b1 : 1'b0;
+    wire multi_by_147  = (weight == 3'd2) ? 1'b1 : 1'b0;
+    wire multi_by_225  = (weight == 3'd3) ? 1'b1 : 1'b0;
+    wire multi_by_235  = (weight == 3'd4) ? 1'b1 : 1'b0;
+    wire multi_by_873  = (weight == 3'd5) ? 1'b1 : 1'b0;
+    wire multi_by_1535 = (weight == 3'd6) ? 1'b1 : 1'b0;
+    wire multi_by_1981 = (weight == 3'd7) ? 1'b1 : 1'b0;
 
-    wire [14:0] pixel_in_mult_half = {8'b0, pixel[7:1]};
-    wire [14:0] pixel_in_mult_1   = {7'b0, pixel};  
-    wire [14:0] pixel_in_mult_2   = {6'b0, pixel, 1'b0};
-    wire [14:0] pixel_in_mult_4   = {5'b0, pixel, 2'b0};
-    wire [14:0] pixel_in_mult_8   = {4'b0, pixel, 3'b0};
-    wire [14:0] pixel_in_mult_16  = {3'b0, pixel, 4'b0};
-    wire [14:0] pixel_in_mult_32  = {2'b0, pixel, 5'b0};
-    wire [14:0] pixel_in_mult_64  = {1'b0, pixel, 6'b0};
-    wire [14:0] pixel_in_mult_128 = {      pixel, 7'b0};
+    // wire [14:0] pixel_in_mult_half = {'b0, pixel[7:1]};
+    wire [17:0] pixel_in_mult_1    = {10'b0,pixel};  
+    wire [17:0] pixel_in_mult_2    = {9'b0, pixel, 1'b0};
+    wire [17:0] pixel_in_mult_4    = {8'b0, pixel, 2'b0};
+    wire [17:0] pixel_in_mult_8    = {7'b0, pixel, 3'b0};
+    wire [17:0] pixel_in_mult_16   = {6'b0, pixel, 4'b0};
+    wire [17:0] pixel_in_mult_32   = {5'b0, pixel, 5'b0};
+    wire [17:0] pixel_in_mult_64   = {4'b0, pixel, 6'b0};
+    wire [17:0] pixel_in_mult_128  = {3'b0, pixel, 7'b0};
+    wire [17:0] pixel_in_mult_256  = {2'b0, pixel, 8'b0};   
+    wire [17:0] pixel_in_mult_512  = {1'b0, pixel, 9'b0};  
+    wire [17:0] pixel_in_mult_1024 = {      pixel, 10'b0};
+    // wire [18:0] pixel_in_mult_2048 = {      pixel, 11'b0};
 
+
+    wire [18:0] result0 = pixel_in_mult_16 + pixel_in_mult_4 + pixel_in_mult_1;
+    wire [18:0] result1 = pixel_in_mult_128 + pixel_in_mult_4 + pixel_in_mult_2 + pixel_in_mult_1;
+    wire [18:0] result2 = pixel_in_mult_128 + pixel_in_mult_16 + pixel_in_mult_2 + pixel_in_mult_1;
+    wire [18:0] result3 = pixel_in_mult_128 + pixel_in_mult_64 + pixel_in_mult_32 + pixel_in_mult_1;
+    // wire [18:0] result4 = (pixel_in_mult_128 + pixel_in_mult_64) + (pixel_in_mult_32 + pixel_in_mult_8) + (pixel_in_mult_2 + pixel_in_mult_1);
+    // wire [18:0] t1 = pixel_in_mult_128 + pixel_in_mult_64;
+    // wire [18:0] t2 = pixel_in_mult_32 + pixel_in_mult_8;
+    // wire [18:0] t3 = pixel_in_mult_2 + pixel_in_mult_1;  
+    // wire [18:0] result4 = t1 + t2 + t3;
+
+    wire [18:0] result4 = pixel_in_mult_256 - pixel_in_mult_16 - pixel_in_mult_4 - pixel_in_mult_1;
+
+    // wire [18:0] result5 = (pixel_in_mult_512 + pixel_in_mult_256) + (pixel_in_mult_64 + pixel_in_mult_32) + (pixel_in_mult_8 + pixel_in_mult_1);
+    wire [18:0] t4 = pixel_in_mult_512 + pixel_in_mult_256 + pixel_in_mult_8;
+    wire [18:0] t5 = pixel_in_mult_64 + pixel_in_mult_32 + pixel_in_mult_1;
+    // wire [18:0] t6 = pixel_in_mult_8 + pixel_in_mult_1;  
+    wire [18:0] result5 = t4 + t5;
+
+
+    // wire [18:0] result5 = pixel_in_mult_1024 - pixel_in_mult_128 - pixel_in_mult_16 - pixel_in_mult_4 - pixel_in_mult_2 - pixel_in_mult_1;
+    // wire [18:0] result5 = pixel_in_mult_1024 - pixel_in_mult_128 - pixel_in_mult_16 - pixel_in_mult_4 - pixel_in_mult_2 - pixel_in_mult_1;
     
 
-    wire [15:0] result0 = pixel_in_mult_1 + pixel_in_mult_half; //1.5    0
-    wire [15:0] result1 = pixel_in_mult_8 + pixel_in_mult_half; //8.5    1
-    wire [15:0] result2 = pixel_in_mult_8 + pixel_in_mult_1;//9          2
-    wire [15:0] result3 = pixel_in_mult_8 + pixel_in_mult_4 + pixel_in_mult_2;//14   3
-    wire [15:0] result4 = pixel_in_mult_8 + pixel_in_mult_4 + pixel_in_mult_2 + pixel_in_mult_half;//14.5   4
-    wire [15:0] result5 = pixel_in_mult_32 + pixel_in_mult_16 + pixel_in_mult_4 + pixel_in_mult_2 + pixel_in_mult_half;//54.5  5
-    wire [15:0] result6 = pixel_in_mult_64 + pixel_in_mult_32;//96   6
-    wire [15:0] result7 = pixel_in_mult_64 + pixel_in_mult_32 + pixel_in_mult_16 + pixel_in_mult_8 + pixel_in_mult_4 + pixel_in_mult_2;//124  7
 
-    wire [14:0] product_data = ({15{multi_by_1}}   & result0[14:0])
-                             | ({15{multi_by_8}}   & result1[14:0])
-                             | ({15{multi_by_9}}   & result2[14:0])
-                             | ({15{multi_by_14}}  & result3[14:0])
-                             | ({15{multi_by_15}}  & result4[14:0])
-                             | ({15{multi_by_54}}  & result5[14:0])
-                             | ({15{multi_by_96}}  & result6[14:0])
-                             | ({15{multi_by_124}} & result7[14:0]);
+    // wire [18:0] result6 = pixel_in_mult_1024 + pixel_in_mult_256 + pixel_in_mult_128 + pixel_in_mult_64 + pixel_in_mult_32 + pixel_in_mult_16 + pixel_in_mult_8 + pixel_in_mult_4 + pixel_in_mult_2 + pixel_in_mult_1;
+    // wire [18:0] t1 = pixel_in_mult_1024 + pixel_in_mult_256;
+    // wire [18:0] t2 = pixel_in_mult_128 + pixel_in_mult_64;
+    // wire [18:0] t3 = pixel_in_mult_32 + pixel_in_mult_16;
+    // wire [18:0] t4 = pixel_in_mult_8 + pixel_in_mult_4;
+    // wire [18:0] t5 = pixel_in_mult_2 + pixel_in_mult_1;
+    // wire [18:0] t6 = t1 + t2;
+    // wire [18:0] t7 = t3 + t4;
+    // wire [18:0] result6 = t5 + t6 + t7;
 
+    wire [18:0] result6 = pixel_in_mult_1024 + pixel_in_mult_512 - pixel_in_mult_1;
 
+    // wire [18:0] result7 = pixel_in_mult_1024 + pixel_in_mult_512 + pixel_in_mult_256 + pixel_in_mult_128 + pixel_in_mult_32 + pixel_in_mult_16 + pixel_in_mult_8 + pixel_in_mult_4 + pixel_in_mult_1;
+    wire [18:0] t8 = pixel_in_mult_1024 + pixel_in_mult_512 + pixel_in_mult_256;
+    wire [18:0] t9 = pixel_in_mult_128 + pixel_in_mult_32 + pixel_in_mult_16;
+    wire [18:0] t10 = pixel_in_mult_8 + pixel_in_mult_4 + pixel_in_mult_1;
+    wire [18:0] result7 = t8 + t9 + t10;
 
+    // wire [18:0] result7 = pixel_in_mult_2048 - pixel_in_mult_64 - pixel_in_mult_2 - pixel_in_mult_1;
 
-    wire [7:0] temp_product = product_data[14:7];
+    wire [18:0] product_data = ({19{multi_by_21}}   & result0[18:0])
+                             | ({19{multi_by_135}}  & result1[18:0])
+                             | ({19{multi_by_147}}  & result2[18:0])
+                             | ({19{multi_by_225}}  & result3[18:0])
+                             | ({19{multi_by_235}}  & result4[18:0])
+                             | ({19{multi_by_873}}  & result5[18:0])
+                             | ({19{multi_by_1535}} & result6[18:0])
+                             | ({19{multi_by_1981}} & result7[18:0]);
+
+    wire [7:0] temp_product = product_data[18:11];
 
     wire product_is_0 = (~(|pixel)) | (~(|temp_product));
+    // wire product_is_0 = (~(|pixel));
 
     assign product_sign = product_is_0 ? 1'b0 : weight_sign ^ pixel_sign;
     assign product = product_is_0 ? 8'd0 : temp_product;
@@ -59,6 +95,7 @@ module bicubic_mult(
     
 
 endmodule
+
 
 // module bicubic_mult_tb();
 

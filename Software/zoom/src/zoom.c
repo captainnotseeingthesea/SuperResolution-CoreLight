@@ -1108,10 +1108,10 @@ void _zoom_bicubic_stream_opencv(
 			cbufX[1] = (short)(coeffsX[1] * 2048);
 			cbufX[2] = (short)(coeffsX[2] * 2048);
 			cbufX[3] = (short)(coeffsX[3] * 2048);
-            // if(ii<=0) {
+            // if(ii<=1) {
             //     printf("%d ", ii);
             //     printf("cbufX:");
-            //     printf("%d %d %d %d \t", (short)(coeffsX[0] * 128), (short)(coeffsX[1] * 128), (short)(coeffsX[2] * 128), (short)(coeffsX[3] * 128));
+            //     printf("%d %d %d %d \t", (short)(coeffsX[0] * 2048), (short)(coeffsX[1] * 2048), (short)(coeffsX[2] * 2048), (short)(coeffsX[3] * 2048));
             //     printf("\r\n");
             // }
             // printf("axis_x: %d %d %d %d \n", clip(sx + 0 - 1, 0, info->width), clip(sx + 1 - 1, 0, info->width), clip(sx + 2 - 1, 0, info->width), clip(sx + 3 - 1, 0, info->width));

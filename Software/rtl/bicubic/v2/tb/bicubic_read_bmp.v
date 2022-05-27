@@ -37,7 +37,6 @@ module bicubic_read_bmp (
             #1
         `endif
 
-
         // bmp_file_id = $fopen("2.bmp", "rb");
         bmp_file_id = $fopen("49_1k.bmp", "rb");
         // bmp_file_id = $fopen("4.bmp", "rb");
@@ -78,7 +77,6 @@ module bicubic_read_bmp (
 
     end
 
-
     wire bmp_hsked = ready & valid;
     reg [31:0] ptr;
     reg [23:0] data_reg;
@@ -103,7 +101,6 @@ module bicubic_read_bmp (
 
     end
     wire cur_is_last_data = (ptr % (WIDTH)) ? 1'b0 : 1'b1;
-
 
     assign valid = valid_reg;
     assign data = data_reg;

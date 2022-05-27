@@ -1,4 +1,4 @@
-
+`include "../tb/define.v"
 module buffer_sram #(
     parameter BUFFER_WIDTH=24
 ) (

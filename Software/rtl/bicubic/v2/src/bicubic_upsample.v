@@ -1,4 +1,4 @@
-
+`include "../tb/define.v"
 module bicubic_upsample  (
     input wire clk,
     input wire rst_n,
