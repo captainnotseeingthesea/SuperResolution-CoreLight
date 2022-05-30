@@ -17,6 +17,9 @@
 
 interface ac_if();
 
+	localparam AXISIN_DATA_WIDTH  = `AXISIN_DATA_WIDTH ;
+    localparam AXISOUT_DATA_WIDTH = `AXISOUT_DATA_WIDTH;
+
 	logic clk;
 	logic rst_n;
 
@@ -27,10 +30,12 @@ interface ac_if();
 	axi_lite_if lite_master();
 
 	// AXI-Stream master for input
-	axi_stream_if stream_master();
+	axi_stream_if#(.AXIS_DATA_WIDTH(AXISIN_DATA_WIDTH)) 
+	stream_master();
 
 	// AXI-Stream slvae for output
-	axi_stream_if stream_slave();
+	axi_stream_if#(.AXIS_DATA_WIDTH(AXISOUT_DATA_WIDTH)) 
+	stream_slave();
 
 	// Output for interrupt
 	logic interrupt_updone;

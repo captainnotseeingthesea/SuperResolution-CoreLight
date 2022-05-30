@@ -25,7 +25,8 @@ class m_axi_stream_driver extends uvm_driver # (axi_stream_trans);
       super.new(name, parent);
     endfunction
 
-    virtual axi_stream_if vif;
+    virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISIN_DATA_WIDTH)) vif;
+    int axis_strb_width;
 
     int count;
 
@@ -41,8 +42,9 @@ endclass
 // Methods
 function void m_axi_stream_driver::build_phase(uvm_phase phase);
     super.build_phase(phase);
-    if(!uvm_config_db#(virtual axi_stream_if)::get(this,"","vif",vif))
+    if(!uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISIN_DATA_WIDTH)))::get(this,"","vif",vif))
         `uvm_fatal(get_name(), "vif must be set!")
+    axis_strb_width = vif.get_strb_width();
 endfunction
 
 
@@ -79,14 +81,17 @@ endtask: main_phase
 
 task m_axi_stream_driver::write_one_trans(axi_stream_trans t);
     int i;
+
     vif.axis_tvalid <= 1'b0    ;
     repeat(t.delay) @(posedge vif.aclk);
 
     vif.axis_tvalid <= 1'b1    ;
     vif.axis_tid    <= t.tid   ;
-    vif.axis_tdata  <= t.tdata ;
-    vif.axis_tkeep  <= t.tkeep ;
-    vif.axis_tstrb  <= t.tstrb ;
+
+    vif.axis_tdata  <= {>>{t.tdata}};
+    vif.axis_tkeep  <= {>>{t.tkeep}};
+    vif.axis_tstrb  <= {>>{t.tstrb}};
+
     vif.axis_tlast  <= t.tlast ;
     vif.axis_tdest  <= t.tdest ;
     vif.axis_user   <= t.tuser ;

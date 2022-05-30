@@ -1,5 +1,10 @@
 `include "../tb/define.v"
-module bicubic_upsample  (
+module bicubic_upsample #
+(
+    localparam CHANNEL_WIDTH = 8
+)
+
+  (
     input wire clk,
     input wire rst_n,
     input wire bf_req_valid,
@@ -107,7 +112,6 @@ module bicubic_upsample  (
     );
 
 
-    localparam CHANNEL_WIDTH = 8;
     localparam WEIGHT_WIDTH = 4;
 
 // u(5/8):

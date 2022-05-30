@@ -34,8 +34,9 @@ class axis_in_seq extends uvm_sequence #(axi_stream_trans);
         // Input stream
         repeat(`SRC_IMG_WIDTH*`SRC_IMG_HEIGHT-1) begin
             `uvm_do_with(t, {
-                &t.tkeep == 1;
-                &t.tstrb == 1;
+                t.tdata.size() == `AXISIN_DATA_WIDTH;
+                foreach(t.tkeep[k]) t.tkeep[k] == 1;
+                foreach(t.tstrb[k]) t.tkeep[k] == 1;
                 t.tid    == 0;
                 t.tlast  == 0;
                 t.tdest  == 0;
@@ -48,8 +49,9 @@ class axis_in_seq extends uvm_sequence #(axi_stream_trans);
         end
         // The last pixel
         `uvm_do_with(t, {
-            &t.tkeep == 1;
-            &t.tstrb == 1;
+            t.tdata.size() == `AXISIN_DATA_WIDTH;
+            foreach(t.tkeep[k]) t.tkeep[k] == 1;
+            foreach(t.tstrb[k]) t.tkeep[k] == 1;
             t.tid    == 0;
             t.tlast  == 1;
             t.tdest  == 0;

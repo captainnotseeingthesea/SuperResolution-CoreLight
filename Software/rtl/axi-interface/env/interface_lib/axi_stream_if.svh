@@ -17,7 +17,7 @@
 
 interface axi_stream_if();
 
-	localparam AXIS_DATA_WIDTH = `AXIS_DATA_WIDTH;
+	parameter  AXIS_DATA_WIDTH = 24;
 	localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
 
 	logic aclk;
@@ -32,5 +32,9 @@ interface axi_stream_if();
 	logic                       axis_tlast;
 	logic                       axis_tdest;
 	logic                       axis_user;
+
+	function get_strb_width();
+		return AXIS_STRB_WIDTH;
+	endfunction
 
 endinterface

@@ -66,18 +66,25 @@ task bmp_seq::body();
     
     // Input stream
     repeat(width * height) begin
-        `uvm_create(t)
+        t = new("bem_seq_pixel");
+
+        start_item(t);
+
         t.timeout = 16*height*width;
-        `uvm_rand_send_with(t, {
-            &t.tkeep == 1;
-            &t.tstrb == 1;
+        assert(t.randomize() with {
+            t.tdata.size() == `AXISIN_DATA_WIDTH/8;
+            foreach(t.tkeep[k]) t.tkeep[k] == 1;
+            foreach(t.tstrb[k]) t.tkeep[k] == 1;
             t.tid    == 0;
             t.tlast  == (i % width == width - 1); // VDMA will send a last singal for each row
             t.tdest  == 0;
             t.tuser  == 0;
-            t.tdata  == img[i];
-            t.delay  == 0;
-        })
+            t.delay  <= 2;
+        });
+        {>>{t.tdata}} = img[i];
+
+        finish_item(t);
+
         i++;
         if(i % width == 0)
         `uvm_info(get_name() ,$sformatf("Send %d", i), UVM_HIGH)

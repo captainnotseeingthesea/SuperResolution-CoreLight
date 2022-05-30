@@ -1,4 +1,4 @@
-`include "../tb/define.v"
+// `include "../tb/define.v"
 module buffer_sram #(
     parameter BUFFER_WIDTH=24
 ) (
@@ -250,7 +250,7 @@ module buffer_sram #(
                      | state_s2_exit_ena | state_s3_exit_ena
                      | state_s4_exit_ena | state_s5_exit_ena;
 
-
+    wire end_of_data;
     wire shift_ena = (init_finished & (~end_of_data)) ? (cur_col_cnt_below_width_plus_5 | cur_col_cnt_below_6) : 1'b0;
 
     assign raddr_ena = init_finished ? shift_ena : 1'b0;
@@ -373,7 +373,6 @@ module buffer_sram #(
                       cur_is_s4 ? data_out2 :
                       cur_is_s5 ? data_out3 : {BUFFER_WIDTH{1'b0}}; 
 
-    wire end_of_data;
 
 
     assign bf_req_valid = init_finished ? ((cur_col_cnt_below_width_plus_6) & (~cur_col_cnt_below_5) & (~end_of_data)) : 1'b0;

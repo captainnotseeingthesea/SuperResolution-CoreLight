@@ -10,25 +10,11 @@ def bmp2bin(bmpname = "", binname = ""):
     a = np.array(img);
 
     height, width = a.shape[0], a.shape[1];
-    apaddig = np.zeros((height+3, width+3, 3), dtype=np.uint8);
-    for j in range(height):
-        for i in range(width):
-            apaddig[j+1][i+1] = a[j][i];
-    
-    for i in range(width):
-        apaddig[0][i+1] = a[0][i];
-        apaddig[height+1][i+1] = a[height-1][i];
-        apaddig[height+2][i+1] = a[height-1][i];
-
-    for j in range(height):
-        apaddig[j+1][0] = a[j][0];
-        apaddig[j+1][width+1] = a[j][width-1];
-        apaddig[j+2][width+2] = a[j][width-1];
 
     with open(binname, "w") as f:
-        for j in range(height+3):
-            for i in range(width+3):
-                r,g,b = format(apaddig[j,i,0], "02x"), format(apaddig[j,i,1], "02x"), format(apaddig[j,i,2], "02x");
+        for j in range(height):
+            for i in range(width):
+                r,g,b = format(a[j,i,0], "02x"), format(a[j,i,1], "02x"), format(a[j,i,2], "02x");
                 f.writelines([r, g, b, os.linesep]);
     
     print("\nTransformed "+bmpname+" to "+binname+"\n");

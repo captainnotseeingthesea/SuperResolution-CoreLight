@@ -122,11 +122,11 @@ import utils_pkg::*;
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "height",
-        SRC_IMG_HEIGHT+3);
+        SRC_IMG_HEIGHT);
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "width",
-        SRC_IMG_WIDTH+3);
+        SRC_IMG_WIDTH);
 
         // Output dumper
         uvm_config_db#(string)::set(null, 

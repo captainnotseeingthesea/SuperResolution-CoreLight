@@ -16,14 +16,14 @@ $incdir =
 '-incdir ../env/interface_lib '.
 '-incdir ../env/testbench '.
 '-incdir ../env/utils '.
-'-incdir ../../bicubic ';
+'-incdir ../../bicubic/v2/src ';
 
 $verbo = "+UVM_VERBOSITY=UVM_LOW";
-$top = "tb_bcci_ip";
+$top = "tb_ac_bcci";
 
 # Multicore simulation support. 
 # -mce_top and -top must be specified simultaneously
-$mceoption = "-mce -mce_top $top";
+# $mceoption = "-mce -mce_top $top";
 
 $xcmd = 
 "xrun -64bit -top $top "
