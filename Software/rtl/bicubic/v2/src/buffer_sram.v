@@ -227,15 +227,15 @@ module buffer_sram #(
     dfflr #(.DW($clog2(WIDTH))) u_raddr_reg(.lden(raddr_ena), .dnxt(nxt_raddr), .qout(cur_raddr), .clk(clk), .rst_n(rst_n));    
 
 
+    // assign col_cnt_ena = init_finished & (cur_col_cnt_below_width_plus_5 | (cur_col_cnt_is_width_plus_5 & row_cnt_ena));
+    // wire shift_ena = (init_finished & (~end_of_data)) ? (cur_col_cnt_below_width_plus_5 | cur_col_cnt_below_6) : 1'b0;
 
-    // localparam CNT_WIDTH = 1;
-    // wire [CNT_WIDTH-1:0] cur_cnt, nxt_cnt;
-    // wire cur_cnt_is_1 = (cur_cnt == 1'd1) ? 1'b1 : 1'b0;
-    // assign nxt_cnt = cur_cnt_is_1 ? 1'd1 : 1'd0;
-    // wire cnt_ena = init_finished & cur_col_cnt_below_width & bcci_2_bf_hsked;
-    // dfflr #(.DW(CNT_WIDTH)) u_cnt3_dff (.lden(cnt_ena), .dnxt(nxt_cnt), .qout(cur_cnt), .clk(clk), .rst_n(rst_n));
-
-    assign col_cnt_ena = init_finished & (cur_col_cnt_below_width_plus_5 | (cur_col_cnt_is_width_plus_5 & row_cnt_ena));
+    assign col_cnt_ena = init_finished & (
+                                             cur_col_cnt_below_6 
+                                           | (cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) 
+                                           | (cur_col_cnt_is_width_plus_5 & row_cnt_ena)
+                                        );
+    wire shift_ena = (init_finished & (~end_of_data)) ? ((cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) | cur_col_cnt_below_6) : 1'b0;
 
 
     assign state_s0_exit_ena = (cur_is_s0 & init_finished) ? 1'b1 : 1'b0;
@@ -251,7 +251,6 @@ module buffer_sram #(
                      | state_s4_exit_ena | state_s5_exit_ena;
 
     wire end_of_data;
-    wire shift_ena = (init_finished & (~end_of_data)) ? (cur_col_cnt_below_width_plus_5 | cur_col_cnt_below_6) : 1'b0;
 
     assign raddr_ena = init_finished ? shift_ena : 1'b0;
 

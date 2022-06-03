@@ -22,9 +22,11 @@ module bicubic_top_tb();
         ac_upsp_wready_tb = 1'b0;
         #7 rst_n_tb = 1'b1;
            ac_upsp_wready_tb = 1'b1;
-        // #253 ac_upsp_wready_tb = 1'b0;
+        #220 ac_upsp_wready_tb = 1'b0;
+        #8 ac_upsp_wready_tb = 1'b1;
 
-        // #11 ac_upsp_wready_tb = 1'b1;
+
+
     end
 
     always #2 clk_tb = ~clk_tb;
@@ -52,8 +54,8 @@ module bicubic_top_tb();
 
 
         // #1320
-        // #4000
-        #26000
+        #4000
+        // #26000
         #5 $finish;
     end
 
