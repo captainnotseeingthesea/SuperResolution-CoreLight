@@ -1,7 +1,7 @@
-`include "../tb/define.v"
+// `include "../tb/define.v"
 module bicubic_upsample #
 (
-    localparam CHANNEL_WIDTH = 8
+    parameter CHANNEL_WIDTH = 8
 )
 
   (
