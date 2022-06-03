@@ -24,9 +24,9 @@ class axi_stream_trans extends uvm_sequence_item;
 
     int timeout = 32;
 
-    rand bit [`AXIS_DATA_WIDTH-1:0] tdata;
-    rand bit [`AXIS_STRB_WIDTH-1:0] tkeep;
-    rand bit [`AXIS_STRB_WIDTH-1:0] tstrb;
+    rand bit [7:0] tdata[$];
+    rand bit       tkeep[$];
+    rand bit       tstrb[$];
 
     rand bit tid;
     rand bit tlast;
@@ -36,11 +36,12 @@ class axi_stream_trans extends uvm_sequence_item;
     // Delay for this trans
     rand int unsigned delay = 0;
     constraint DELAY;
+    constraint Q_SIZE;
 
     `uvm_object_utils_begin(axi_stream_trans)
-        `uvm_field_int(tdata, UVM_ALL_ON)
-        `uvm_field_int(tkeep, UVM_ALL_ON)
-        `uvm_field_int(tstrb, UVM_ALL_ON)
+        `uvm_field_queue_int(tdata, UVM_ALL_ON)
+        `uvm_field_queue_int(tkeep, UVM_ALL_ON)
+        `uvm_field_queue_int(tstrb, UVM_ALL_ON)
         `uvm_field_int(tid, UVM_ALL_ON)
         `uvm_field_int(tlast, UVM_ALL_ON)
         `uvm_field_int(tdest, UVM_ALL_ON)
@@ -54,4 +55,10 @@ endclass
 constraint axi_stream_trans::DELAY {
     delay >= 0;
     delay <= 5;
+}
+
+constraint axi_stream_trans::Q_SIZE {
+    tkeep.size() <= 16;
+    tdata.size() == tkeep.size();
+    tstrb.size() == tkeep.size();
 }

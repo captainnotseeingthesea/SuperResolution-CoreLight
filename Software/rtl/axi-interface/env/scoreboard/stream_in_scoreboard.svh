@@ -25,14 +25,14 @@ class stream_in_scoreboard extends base_scoreboard
         super.new(name, parent);
     endfunction
 
-    extern function void exp2act(axi_stream_trans src, upsp_trans target);
+    extern function void exp2act(exp_t src, act_t target);
     extern function int compare(act_t a, act_t b);
 endclass
 
 
 // Methods
-function void stream_in_scoreboard::exp2act(axi_stream_trans src, upsp_trans target);
-    target.data = src.tdata;
+function void stream_in_scoreboard::exp2act(exp_t src, act_t target);
+    target.data = {>>{src.tdata}};
 endfunction
 
 

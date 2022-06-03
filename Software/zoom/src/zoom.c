@@ -1099,10 +1099,7 @@ void _zoom_bicubic_stream_opencv(
 		cbufY[2] = (short)(coeffsY[2] * 2048);
 		cbufY[3] = (short)(coeffsY[3] * 2048);
         // printf("cbufY:");
-        // for(int i = 0; i < 4; i++)
-        // {
-        //     printf("%d\t", (short)(coeffsY[i] * 128));
-        // }
+        // printf("%d %d %d %d \t", (short)(coeffsY[0] * 128), (short)(coeffsY[1] * 128), (short)(coeffsY[2] * 128), (short)(coeffsY[3] * 128));
         // printf("\r\n");
 
         for(jj = 0; jj < info->widthOut; jj++)
@@ -1120,14 +1117,15 @@ void _zoom_bicubic_stream_opencv(
 			cbufX[1] = (short)(coeffsX[1] * 2048);
 			cbufX[2] = (short)(coeffsX[2] * 2048);
 			cbufX[3] = (short)(coeffsX[3] * 2048);
-
-            // printf("cbufX:");
-            // for(int i = 0; i < 4; i++)
-            // {
-            //     printf("%d\t", (short)(coeffsX[i] * 128));
+            // if(ii<=1) {
+            //     printf("%d ", ii);
+            //     printf("cbufX:");
+            //     printf("%d %d %d %d \t", (short)(coeffsX[0] * 2048), (short)(coeffsX[1] * 2048), (short)(coeffsX[2] * 2048), (short)(coeffsX[3] * 2048));
+            //     printf("\r\n");
             // }
-            // printf("\r\n");
-
+            // printf("axis_x: %d %d %d %d \n", clip(sx + 0 - 1, 0, info->width), clip(sx + 1 - 1, 0, info->width), clip(sx + 2 - 1, 0, info->width), clip(sx + 3 - 1, 0, info->width));
+          
+          
             for(mm = 0; mm < 4; mm++) // rows
             {
                 pCurr = line[mm];
@@ -1136,10 +1134,19 @@ void _zoom_bicubic_stream_opencv(
                     r_sum += pCurr[clip(sx + nn - 1, 0, info->width)].r * cbufY[mm]*cbufX[nn];
                     g_sum += pCurr[clip(sx + nn - 1, 0, info->width)].g * cbufY[mm]*cbufX[nn];
                     b_sum += pCurr[clip(sx + nn - 1, 0, info->width)].b * cbufY[mm]*cbufX[nn];
-                    // printf("axis_x: %d", clip(sx + nn - 1, 0, info->width));
+                    // if(ii==0 && ((jj == 20) || (jj==21))) {
+                    //     printf("Y: %d X: %d \n", cbufY[mm]/16, cbufX[nn]/16);
+                    //     printf("pixel :%x ", pCurr[clip(sx + nn - 1, 0, info->width)].r);
+                    //     printf("sum: %d \n", r_sum/16/16);
+                    // }
+
                 }
-                // printf("\r\n");
+
             }
+            // // printf("\n");
+            // if(ii==0 && ((jj <= 22))) {
+            //     printf("total_sum: %d \n", r_sum>>= 22);
+            // }
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;

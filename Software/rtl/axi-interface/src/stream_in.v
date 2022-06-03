@@ -16,8 +16,8 @@
 
  **************************************************/
 module stream_in # (
-		parameter AXIS_DATA_WIDTH = 32,
-		parameter UPSP_DATA_WIDTH = 32,
+		parameter AXISIN_DATA_WIDTH = 32,
+		parameter UPSP_RDDATA_WIDTH = 32,
 		parameter SRC_IMG_HEIGHT = 2160
 	) (/*AUTOARG*/
    // Outputs
@@ -28,13 +28,13 @@ module stream_in # (
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user
    );
 
-	localparam AXIS_STRB_WIDTH    = AXIS_DATA_WIDTH/8;
-	localparam DST_IMG_HEIGHT_LB2 = $clog2(SRC_IMG_HEIGHT);
+	localparam AXISIN_STRB_WIDTH    = AXISIN_DATA_WIDTH/8;
+	localparam DST_IMG_HEIGHT_LB2   = $clog2(SRC_IMG_HEIGHT);
 	
 	// Interface for upsp read
 	input                        upsp_ac_rready;
 	output                       ac_upsp_rvalid;
-	output [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;
+	output [UPSP_RDDATA_WIDTH-1:0] ac_upsp_rdata;
 
 
 	// Use UPSTART to indicate the start of a stream
@@ -51,9 +51,9 @@ module stream_in # (
 	output s_axis_tready;
 
 	input                       s_axis_tid;
-	input [AXIS_DATA_WIDTH-1:0] s_axis_tdata;
-	input [AXIS_STRB_WIDTH-1:0] s_axis_tstrb;
-	input [AXIS_STRB_WIDTH-1:0] s_axis_tkeep;
+	input [AXISIN_DATA_WIDTH-1:0] s_axis_tdata;
+	input [AXISIN_STRB_WIDTH-1:0] s_axis_tstrb;
+	input [AXISIN_STRB_WIDTH-1:0] s_axis_tkeep;
 	input                       s_axis_tlast;
 	input                       s_axis_tdest;
 	input                       s_axis_user;

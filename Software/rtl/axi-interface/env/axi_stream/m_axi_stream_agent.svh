@@ -27,7 +27,7 @@
     // A sequencer, a driver, a monitor
     m_axi_stream_sqr    sqr;
     m_axi_stream_driver drv;
-    axi_stream_monitor  mon;
+    m_axi_stream_monitor  mon;
 
     // An analysis port points to ap inside monitor
     uvm_analysis_port #(axi_stream_trans) ap;
@@ -45,7 +45,7 @@ function void m_axi_stream_agent::build_phase(uvm_phase phase);
         sqr = m_axi_stream_sqr::type_id::create("sqr", this);
         drv = m_axi_stream_driver::type_id::create("drv", this); 
     end
-    mon = axi_stream_monitor::type_id::create("mon", this);
+    mon = m_axi_stream_monitor::type_id::create("mon", this);
 endfunction: build_phase
 
 

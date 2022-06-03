@@ -26,7 +26,7 @@
     
     // A driver, a monitor, a dumper
     s_axi_stream_driver drv;
-    axi_stream_monitor mon;
+    s_axi_stream_monitor mon;
     axis_bmp_dumper dmp;
 
     // An analysis port points to ap inside monitor
@@ -55,7 +55,7 @@ function void s_axi_stream_agent::build_phase(uvm_phase phase);
         dmp = axis_bmp_dumper::type_id::create("dmp", this);
         mon_dmp_fifo = new("mon_dmp_fifo", this);
     end
-    mon = axi_stream_monitor::type_id::create("mon", this);
+    mon = s_axi_stream_monitor::type_id::create("mon", this);
 endfunction: build_phase
 
 

@@ -127,6 +127,7 @@ module bicubic_top
     // hsk signal bcci to axi
     wire bcci_2_bf_hsked = upsp_ac_wvalid & ac_upsp_wready;
 
+    `ifdef GEN_WITH_REG
     buffer #(.BUFFER_WIDTH(BUFFER_WIDTH)) u_buffer (
         .clk(clk),
         .rst_n(rst_n),
@@ -211,84 +212,85 @@ module bicubic_top
         .bcci_2_bf_hsked(bcci_2_bf_hsked)
 
     );
+    `endif
+    `ifdef GEN_WITH_SRAM    
+    buffer_sram #(.BUFFER_WIDTH(BUFFER_WIDTH)) u_buffer (
+        .clk(clk),
+        .rst_n(rst_n),
 
-    // buffer_sram #(.BUFFER_WIDTH(BUFFER_WIDTH)) u_buffer (
-    //     .clk(clk),
-    //     .rst_n(rst_n),
+    `ifndef SIM_WITHOUT_AXI
+        .axi_ready(upsp_ac_rready),
+        .axi_data(ac_upsp_rdata),
+        .axi_valid(ac_upsp_rvalid),
+    `endif
 
-    // `ifndef SIM_WITHOUT_AXI
-    //     .axi_ready(upsp_ac_rready),
-    //     .axi_data(ac_upsp_rdata),
-    //     .axi_valid(ac_upsp_rvalid),
-    // `endif
+        .bf_req_valid(bf_req_valid),
+        .bcci_req_ready(bcci_req_ready),
 
-    //     .bf_req_valid(bf_req_valid),
-    //     .bcci_req_ready(bcci_req_ready),
-
-    //     .out_p1(out_p1),
-    //     .out_p2(out_p2),
-    //     .out_p3(out_p3),
-    //     .out_p4(out_p4),
-    //     .out_p5(out_p5),
-    //     .out_p6(out_p6),
-    //     .out_p7(out_p7),
-    //     .out_p8(out_p8),
-    //     .out_p9(out_p9),
-    //     .out_p10(out_p10),
-    //     .out_p11(out_p11),
-    //     .out_p12(out_p12),
-    //     .out_p13(out_p13),
-    //     .out_p14(out_p14),
-    //     .out_p15(out_p15),
-    //     .out_p16(out_p16),
+        .out_p1(out_p1),
+        .out_p2(out_p2),
+        .out_p3(out_p3),
+        .out_p4(out_p4),
+        .out_p5(out_p5),
+        .out_p6(out_p6),
+        .out_p7(out_p7),
+        .out_p8(out_p8),
+        .out_p9(out_p9),
+        .out_p10(out_p10),
+        .out_p11(out_p11),
+        .out_p12(out_p12),
+        .out_p13(out_p13),
+        .out_p14(out_p14),
+        .out_p15(out_p15),
+        .out_p16(out_p16),
 
 
-    // `ifdef SIM_WITHOUT_AXI
-    // `ifdef GEN_IN_SIXTEEN
-    //     .bcci_rsp_data1(bcci_rsp_data1),
-    // `elsif GEN_IN_EIGHT
-    //     .bcci_rsp_data1(bcci_rsp_data1),
-    //     .bcci_rsp_data2(bcci_rsp_data2),
-    //     .bcci_rsp_data3(bcci_rsp_data3),
-    //     .bcci_rsp_data4(bcci_rsp_data4),   
-    // `elsif GEN_IN_FOUR
-    //     .bcci_rsp_data1(bcci_rsp_data1),
-    //     .bcci_rsp_data2(bcci_rsp_data2),
-    //     .bcci_rsp_data3(bcci_rsp_data3),
-    //     .bcci_rsp_data4(bcci_rsp_data4), 
-    // `elsif GEN_IN_TWO
-    //     .bcci_rsp_data1(bcci_rsp_data1),
-    //     .bcci_rsp_data2(bcci_rsp_data2),
-    //     .bcci_rsp_data3(bcci_rsp_data3),
-    //     .bcci_rsp_data4(bcci_rsp_data4), 
-    //     .bcci_rsp_data5(bcci_rsp_data5),
-    //     .bcci_rsp_data6(bcci_rsp_data6),
-    //     .bcci_rsp_data7(bcci_rsp_data7),
-    //     .bcci_rsp_data8(bcci_rsp_data8), 
-    // `elsif GEN_IN_ONE
-    //     .bcci_rsp_data1(bcci_rsp_data1),
-    //     .bcci_rsp_data2(bcci_rsp_data2),
-    //     .bcci_rsp_data3(bcci_rsp_data3),
-    //     .bcci_rsp_data4(bcci_rsp_data4), 
-    //     .bcci_rsp_data5(bcci_rsp_data5),
-    //     .bcci_rsp_data6(bcci_rsp_data6),
-    //     .bcci_rsp_data7(bcci_rsp_data7),
-    //     .bcci_rsp_data8(bcci_rsp_data8), 
-    //     .bcci_rsp_data9(bcci_rsp_data9),
-    //     .bcci_rsp_data10(bcci_rsp_data10),
-    //     .bcci_rsp_data11(bcci_rsp_data11),
-    //     .bcci_rsp_data12(bcci_rsp_data12), 
-    //     .bcci_rsp_data13(bcci_rsp_data13),
-    //     .bcci_rsp_data14(bcci_rsp_data14),
-    //     .bcci_rsp_data15(bcci_rsp_data15),
-    //     .bcci_rsp_data16(bcci_rsp_data16), 
-    // `endif
-    // `endif
+    `ifdef SIM_WITHOUT_AXI
+    `ifdef GEN_IN_SIXTEEN
+        .bcci_rsp_data1(bcci_rsp_data1),
+    `elsif GEN_IN_EIGHT
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4),   
+    `elsif GEN_IN_FOUR
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4), 
+    `elsif GEN_IN_TWO
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4), 
+        .bcci_rsp_data5(bcci_rsp_data5),
+        .bcci_rsp_data6(bcci_rsp_data6),
+        .bcci_rsp_data7(bcci_rsp_data7),
+        .bcci_rsp_data8(bcci_rsp_data8), 
+    `elsif GEN_IN_ONE
+        .bcci_rsp_data1(bcci_rsp_data1),
+        .bcci_rsp_data2(bcci_rsp_data2),
+        .bcci_rsp_data3(bcci_rsp_data3),
+        .bcci_rsp_data4(bcci_rsp_data4), 
+        .bcci_rsp_data5(bcci_rsp_data5),
+        .bcci_rsp_data6(bcci_rsp_data6),
+        .bcci_rsp_data7(bcci_rsp_data7),
+        .bcci_rsp_data8(bcci_rsp_data8), 
+        .bcci_rsp_data9(bcci_rsp_data9),
+        .bcci_rsp_data10(bcci_rsp_data10),
+        .bcci_rsp_data11(bcci_rsp_data11),
+        .bcci_rsp_data12(bcci_rsp_data12), 
+        .bcci_rsp_data13(bcci_rsp_data13),
+        .bcci_rsp_data14(bcci_rsp_data14),
+        .bcci_rsp_data15(bcci_rsp_data15),
+        .bcci_rsp_data16(bcci_rsp_data16), 
+    `endif
+    `endif
 
-    //     .bcci_2_bf_hsked(bcci_2_bf_hsked)
+        .bcci_2_bf_hsked(bcci_2_bf_hsked)
 
-    // );
-
+    );
+    `endif
 
     wire R_bf_req_valid = bf_req_valid;
     wire G_bf_req_valid = bf_req_valid;
@@ -1064,10 +1066,10 @@ module bicubic_top
     assign bcci_rsp_data4 = {R_bcci_rsp_data4, G_bcci_rsp_data4, B_bcci_rsp_data4};
 
     assign upsp_ac_wdata = {
-        bcci_rsp_data4,
-        bcci_rsp_data3,
+        bcci_rsp_data1,
         bcci_rsp_data2,
-        bcci_rsp_data1
+        bcci_rsp_data3,
+        bcci_rsp_data4
     };
 
 `elsif GEN_IN_FOUR
@@ -1077,10 +1079,10 @@ module bicubic_top
     assign bcci_rsp_data4 = {R_bcci_rsp_data4, G_bcci_rsp_data4, B_bcci_rsp_data4};
 
     assign upsp_ac_wdata = {
-        bcci_rsp_data4,
-        bcci_rsp_data3,
+        bcci_rsp_data1,
         bcci_rsp_data2,
-        bcci_rsp_data1
+        bcci_rsp_data3,
+        bcci_rsp_data4
     };
 
 `elsif GEN_IN_TWO
@@ -1105,25 +1107,25 @@ module bicubic_top
     assign bcci_rsp_data16 = {R_bcci_rsp_data16, G_bcci_rsp_data16, B_bcci_rsp_data16};
 
     assign upsp_ac_wdata = {
-        bcci_rsp_data16,
-        bcci_rsp_data15,
-        bcci_rsp_data14,
-        bcci_rsp_data13,
-
-        bcci_rsp_data12,
-        bcci_rsp_data11,
-        bcci_rsp_data10,
-        bcci_rsp_data9,
-
-        bcci_rsp_data8,
-        bcci_rsp_data7,
-        bcci_rsp_data6,
-        bcci_rsp_data5,
-
-        bcci_rsp_data4,
-        bcci_rsp_data3,
+        bcci_rsp_data1,
         bcci_rsp_data2,
-        bcci_rsp_data1
+        bcci_rsp_data3,
+        bcci_rsp_data4,
+
+        bcci_rsp_data5,
+        bcci_rsp_data6,
+        bcci_rsp_data7,
+        bcci_rsp_data8,
+
+        bcci_rsp_data9,
+        bcci_rsp_data10,
+        bcci_rsp_data11,
+        bcci_rsp_data12,
+
+        bcci_rsp_data13,
+        bcci_rsp_data14,
+        bcci_rsp_data15,
+        bcci_rsp_data16
     };
 
 `elsif GEN_IN_ONE
@@ -1148,25 +1150,25 @@ module bicubic_top
     assign bcci_rsp_data16 = {R_bcci_rsp_data16, G_bcci_rsp_data16, B_bcci_rsp_data16};
 
     assign upsp_ac_wdata = {
-        bcci_rsp_data16,
-        bcci_rsp_data15,
-        bcci_rsp_data14,
-        bcci_rsp_data13,
-
-        bcci_rsp_data12,
-        bcci_rsp_data11,
-        bcci_rsp_data10,
-        bcci_rsp_data9,
-
-        bcci_rsp_data8,
-        bcci_rsp_data7,
-        bcci_rsp_data6,
-        bcci_rsp_data5,
-
-        bcci_rsp_data4,
-        bcci_rsp_data3,
+        bcci_rsp_data1,
         bcci_rsp_data2,
-        bcci_rsp_data1
+        bcci_rsp_data3,
+        bcci_rsp_data4,
+
+        bcci_rsp_data5,
+        bcci_rsp_data6,
+        bcci_rsp_data7,
+        bcci_rsp_data8,
+
+        bcci_rsp_data9,
+        bcci_rsp_data10,
+        bcci_rsp_data11,
+        bcci_rsp_data12,
+
+        bcci_rsp_data13,
+        bcci_rsp_data14,
+        bcci_rsp_data15,
+        bcci_rsp_data16
     };
 
 

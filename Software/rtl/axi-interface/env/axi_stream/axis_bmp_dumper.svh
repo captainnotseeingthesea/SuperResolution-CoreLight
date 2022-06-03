@@ -26,7 +26,7 @@ class axis_bmp_dumper extends uvm_component;
 
     // Stream data port
     uvm_blocking_get_port #(axi_stream_trans) dump_port;
-    bit [23:0] data[];
+    bit [2:0] [7:0] data[];
 
     string src_bin;
     string dst_bmp;
@@ -56,31 +56,26 @@ endfunction: build_phase
 
 task axis_bmp_dumper::main_phase(uvm_phase phase);
     axi_stream_trans t;
-    int i = 0;
-    int j = 0;
-    int rows_received = 0;
-
+    int pos = 0;
+    bit [23:0] data_in_pixel[];
     phase.raise_objection(this);
 
     data = new[height*width];
+    pos = 0;
 
     while(1) begin
         dump_port.get(t);
-        data[j*width+i] = t.tdata;
-        
-        if(i == width - 1) begin
-            i = 0;
-            if(j == height - 1)
-                j = 0;
-            else
-                j++;
-        end else
-            i++;
-        
-        if(t.tlast) rows_received++;
 
-        if(rows_received == height) begin
-            `uvm_info(get_name(), $sformatf("received %d rows , start dumping file", rows_received), UVM_LOW)
+        for(int k = 0; k < t.tkeep.size(); k++) begin
+            if(t.tkeep[k]) begin
+                if(t.tstrb[k]) 
+                    data[pos/3][2-pos%3] = t.tdata[k];
+                pos++;
+            end
+        end
+        
+        if(pos == data.size()) begin
+            `uvm_info(get_name(), "start dumping file", UVM_LOW)
             $writememh(src_bin, data);
             BMP::bin2bmp(src_bin, dst_bmp, height, width);
             `uvm_info(get_name(), "dumping over", UVM_LOW)

@@ -8,8 +8,10 @@ module bicubic_top_tb();
     reg [23:0] ac_upsp_rdata_tb;
     reg ac_upsp_rvalid_tb;
 
+
+    localparam BUFFER_WIDTH=24;
     reg ac_upsp_wready_tb;
-    wire [23:0] upsp_ac_wdata_tb;
+    wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata_tb;
     wire upsp_ac_wvalid_tb;
 
     initial begin
@@ -51,7 +53,7 @@ module bicubic_top_tb();
 
         // #1320
         // #4000
-        #6000
+        #26000
         #5 $finish;
     end
 

@@ -24,7 +24,7 @@ class s_axi_stream_driver extends uvm_driver #(axi_stream_trans);
         super.new(name, parent);
     endfunction
     
-    virtual axi_stream_if vif;
+    virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISOUT_DATA_WIDTH)) vif;
 
     int receive_random = 0;
 
@@ -38,7 +38,7 @@ endclass
 // Methods
 function void s_axi_stream_driver::build_phase(uvm_phase phase);
     super.build_phase(phase);
-    if(!uvm_config_db#(virtual axi_stream_if)::get(this,"","vif",vif))
+    if(!uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISOUT_DATA_WIDTH)))::get(this,"","vif",vif))
         `uvm_fatal(get_name(), "vif must be set!")
 endfunction: build_phase
 

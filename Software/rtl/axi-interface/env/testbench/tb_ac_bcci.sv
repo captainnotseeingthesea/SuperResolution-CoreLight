@@ -73,25 +73,25 @@ import utils_pkg::*;
         acif);
 
         // in axi-stream driver
-        uvm_config_db#(virtual axi_stream_if)::set(null, 
+        uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISIN_DATA_WIDTH)))::set(null, 
         "uvm_test_top.env.m_axis_agt.drv",
         "vif",
         acif.stream_master);
 
         // in axi-stream monitor
-        uvm_config_db#(virtual axi_stream_if)::set(null, 
+        uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISIN_DATA_WIDTH)))::set(null, 
         "uvm_test_top.env.m_axis_agt.mon",
         "vif",
         acif.stream_master);
 
         // out axi-stream driver
-        uvm_config_db#(virtual axi_stream_if)::set(null, 
+        uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISOUT_DATA_WIDTH)))::set(null, 
         "uvm_test_top.env.s_axis_agt.drv",
         "vif",
         acif.stream_slave);
 
         // out axi-stream monitor
-        uvm_config_db#(virtual axi_stream_if)::set(null, 
+        uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISOUT_DATA_WIDTH)))::set(null, 
         "uvm_test_top.env.s_axis_agt.mon",
         "vif",
         acif.stream_slave);
@@ -123,11 +123,11 @@ import utils_pkg::*;
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "height",
-        SRC_IMG_HEIGHT+3);
+        SRC_IMG_HEIGHT);
         uvm_config_db#(int)::set(null, 
         "uvm_test_top.env.m_axis_agt.sqr.*",
         "width",
-        SRC_IMG_WIDTH+3);
+        SRC_IMG_WIDTH);
 
         // Output dumper
         uvm_config_db#(string)::set(null, 

@@ -15,20 +15,21 @@
 
 module ac_bcci_top(ac_if acif);
  
-    localparam AXI_DATA_WIDTH  = `AXI_DATA_WIDTH ;
-    localparam AXI_STRB_WIDTH  = AXI_DATA_WIDTH/8;
-    localparam AXI_ADDR_WIDTH  = `AXI_ADDR_WIDTH ;
-    localparam AXIS_DATA_WIDTH = `AXIS_DATA_WIDTH;
-    localparam AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
-    localparam CRF_DATA_WIDTH  = `CRF_DATA_WIDTH ;
-    localparam CRF_ADDR_WIDTH  = `CRF_ADDR_WIDTH ;
-    localparam UPSP_DATA_WIDTH = `UPSP_DATA_WIDTH;
-    localparam SRC_IMG_WIDTH   = `SRC_IMG_WIDTH  ;
-    localparam SRC_IMG_HEIGHT  = `SRC_IMG_HEIGHT ;
-    localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
-    localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
-	localparam BUFFER_WIDTH    = UPSP_DATA_WIDTH;
-	localparam CHANNEL_WIDTH   = 8;
+    localparam AXI_DATA_WIDTH     = `AXI_DATA_WIDTH    ;
+    localparam AXI_ADDR_WIDTH     = `AXI_ADDR_WIDTH    ;
+    localparam AXISIN_DATA_WIDTH  = `AXISIN_DATA_WIDTH ;
+    localparam AXISOUT_DATA_WIDTH = `AXISOUT_DATA_WIDTH;
+    localparam CRF_DATA_WIDTH     = `CRF_DATA_WIDTH    ;
+    localparam CRF_ADDR_WIDTH     = `CRF_ADDR_WIDTH    ;
+	localparam UPSP_RDDATA_WIDTH = `UPSP_RDDATA_WIDTH  ;
+	localparam UPSP_WRTDATA_WIDTH = `UPSP_WRTDATA_WIDTH;
+    localparam SRC_IMG_WIDTH      = `SRC_IMG_WIDTH     ;
+    localparam SRC_IMG_HEIGHT     = `SRC_IMG_HEIGHT    ;
+    localparam DST_IMG_WIDTH      = `DST_IMG_WIDTH     ;
+    localparam DST_IMG_HEIGHT     = `DST_IMG_HEIGHT    ;
+	localparam BUFFER_WIDTH       = `BUFFER_WIDTH      ;
+	localparam OUT_FIFO_DEPTH     = `OUT_FIFO_DEPTH    ;
+	localparam CHANNEL_WIDTH      = 8;
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -121,12 +122,12 @@ module ac_bcci_top(ac_if acif);
 		.UPSTR		(acif.usif.UPSTR[CRF_DATA_WIDTH-1:0]),
 		.UPENDR		(acif.usif.UPENDR[CRF_DATA_WIDTH-1:0]),
 		.ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid),
-		.ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]),
+		.ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]),
 		.ac_upsp_wready	(acif.usif.ac_upsp_wready),
 		.m_axis_tready	(acif.stream_slave.axis_tready),
 		.m_axis_tvalid	(acif.stream_slave.axis_tvalid),
 		.m_axis_tid		(acif.stream_slave.axis_tid),
-		.m_axis_tdata	(acif.stream_slave.axis_tdata[AXIS_DATA_WIDTH-1:0]),
+		.m_axis_tdata	(acif.stream_slave.axis_tdata[AXISOUT_DATA_WIDTH-1:0]),
 		.m_axis_tkeep	(acif.stream_slave.axis_tkeep),
 		.m_axis_tstrb	(acif.stream_slave.axis_tstrb),
 		.m_axis_tlast	(acif.stream_slave.axis_tlast),
@@ -136,10 +137,10 @@ module ac_bcci_top(ac_if acif);
 		.rst_n			(acif.rst_n),
 		.upsp_ac_rready		(acif.usif.upsp_ac_rready),
 		.upsp_ac_wvalid		(acif.usif.upsp_ac_wvalid),
-		.upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_DATA_WIDTH-1:0]),
+		.upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_WRTDATA_WIDTH-1:0]),
 		.s_axis_tvalid	(acif.stream_master.axis_tvalid),
 		.s_axis_tid		(acif.stream_master.axis_tid),
-		.s_axis_tdata	(acif.stream_master.axis_tdata[AXIS_DATA_WIDTH-1:0]),
+		.s_axis_tdata	(acif.stream_master.axis_tdata[AXISIN_DATA_WIDTH-1:0]),
 		.s_axis_tstrb	(acif.stream_master.axis_tstrb),
 		.s_axis_tkeep	(acif.stream_master.axis_tkeep),
 		.s_axis_tlast	(acif.stream_master.axis_tlast),
@@ -150,14 +151,17 @@ module ac_bcci_top(ac_if acif);
     */
     access_control #(/*AUTOINSTPARAM*/
 		     // Parameters
-		     .AXIS_DATA_WIDTH	(AXIS_DATA_WIDTH),
+		     .AXISIN_DATA_WIDTH	(AXISIN_DATA_WIDTH),
+		     .AXISOUT_DATA_WIDTH(AXISOUT_DATA_WIDTH),
 		     .CRF_DATA_WIDTH	(CRF_DATA_WIDTH),
 		     .CRF_ADDR_WIDTH	(CRF_ADDR_WIDTH),
-		     .UPSP_DATA_WIDTH	(UPSP_DATA_WIDTH),
+		     .UPSP_RDDATA_WIDTH	(UPSP_RDDATA_WIDTH),
+		     .UPSP_WRTDATA_WIDTH(UPSP_WRTDATA_WIDTH),
 		     .SRC_IMG_WIDTH	(SRC_IMG_WIDTH),
 		     .SRC_IMG_HEIGHT	(SRC_IMG_HEIGHT),
 		     .DST_IMG_WIDTH	(DST_IMG_WIDTH),
-		     .DST_IMG_HEIGHT	(DST_IMG_HEIGHT))
+		     .DST_IMG_HEIGHT	(DST_IMG_HEIGHT),
+		     .OUT_FIFO_DEPTH	(OUT_FIFO_DEPTH))
     AAA_access_control(/*AUTOINST*/
 		       // Outputs
 		       .ac_crf_wrt	(ac_crf_wrt),
@@ -169,12 +173,12 @@ module ac_bcci_top(ac_if acif);
 		       .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
 		       .ac_crf_axiso_tready(ac_crf_axiso_tready),
 		       .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid), // Templated
-		       .ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]), // Templated
+		       .ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]), // Templated
 		       .ac_upsp_wready	(acif.usif.ac_upsp_wready), // Templated
 		       .s_axis_tready	(acif.stream_master.axis_tready), // Templated
 		       .m_axis_tvalid	(acif.stream_slave.axis_tvalid), // Templated
 		       .m_axis_tid	(acif.stream_slave.axis_tid), // Templated
-		       .m_axis_tdata	(acif.stream_slave.axis_tdata[AXIS_DATA_WIDTH-1:0]), // Templated
+		       .m_axis_tdata	(acif.stream_slave.axis_tdata[AXISOUT_DATA_WIDTH-1:0]), // Templated
 		       .m_axis_tkeep	(acif.stream_slave.axis_tkeep), // Templated
 		       .m_axis_tstrb	(acif.stream_slave.axis_tstrb), // Templated
 		       .m_axis_tlast	(acif.stream_slave.axis_tlast), // Templated
@@ -188,10 +192,10 @@ module ac_bcci_top(ac_if acif);
 		       .crf_ac_wbusy	(crf_ac_wbusy),
 		       .upsp_ac_rready	(acif.usif.upsp_ac_rready), // Templated
 		       .upsp_ac_wvalid	(acif.usif.upsp_ac_wvalid), // Templated
-		       .upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_DATA_WIDTH-1:0]), // Templated
+		       .upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_WRTDATA_WIDTH-1:0]), // Templated
 		       .s_axis_tvalid	(acif.stream_master.axis_tvalid), // Templated
 		       .s_axis_tid	(acif.stream_master.axis_tid), // Templated
-		       .s_axis_tdata	(acif.stream_master.axis_tdata[AXIS_DATA_WIDTH-1:0]), // Templated
+		       .s_axis_tdata	(acif.stream_master.axis_tdata[AXISIN_DATA_WIDTH-1:0]), // Templated
 		       .s_axis_tstrb	(acif.stream_master.axis_tstrb), // Templated
 		       .s_axis_tkeep	(acif.stream_master.axis_tkeep), // Templated
 		       .s_axis_tlast	(acif.stream_master.axis_tlast), // Templated

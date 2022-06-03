@@ -64,8 +64,8 @@ module bicubic_read_bmp (
         `endif
 
 
-        // bmp_file_id = $fopen("2.bmp", "rb");
-        bmp_file_id = $fopen("49_1k.bmp", "rb");
+        bmp_file_id = $fopen("2.bmp", "rb");
+        // bmp_file_id = $fopen("49_1k.bmp", "rb");
         icode = $fread(bmp_data, bmp_file_id);
 
         img_width = {bmp_data[21], bmp_data[20], bmp_data[19], bmp_data[18]};
@@ -89,7 +89,7 @@ module bicubic_read_bmp (
         for (i = img_height - 1; i >= 0; i = i - 1) begin
             for(j = 0; j < img_width; j = j + 1) begin
                 // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
-                index = i * (img_width) * 3 + j * 3 + img_start_index;
+                index = i * (img_width+1) * 3 + j * 3 + img_start_index;
                 shaped_data[shaped_index+com] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
                 shaped_index = shaped_index + 1;
             end
@@ -144,42 +144,3 @@ module bicubic_read_bmp (
     assign data = data_reg;
 
 endmodule
-// module bicubic_read_bmp_tb();
-//     reg clk_tb;
-//     reg rst_n_tb;
-//     reg ready_tb;
-//     wire [24-1:0] data_tb;
-//     wire valid_tb;
-
-//     initial begin
-//         clk_tb = 1'b0;
-//         rst_n_tb = 1'b0;
-//         ready_tb = 1'b0;
-//         #5 rst_n_tb = 1'b1;
-//         #4 ready_tb = 1'b1;
-
-
-//         #2000 $finish;
-//     end
-//     always #2 clk_tb = ~clk_tb;
-    
-//     bicubic_read_bmp u_bicubic_read_bmp(
-//         .clk(clk_tb),
-//         .rst_n(rst_n_tb),
-//         .ready(ready_tb),
-//         .data(data_tb),
-//         .valid(valid_tb)
-//     );
-//     // initial begin
-//     //     $monitor("data: %x", data_tb);
-//     // end
-
-//     initial begin
-//         $dumpfile("wave.vcd");
-//         $dumpvars(0, bicubic_read_bmp_tb);
-//     end
-
-
-// endmodule
-
-

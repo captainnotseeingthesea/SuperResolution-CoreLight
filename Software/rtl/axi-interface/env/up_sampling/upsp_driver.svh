@@ -84,7 +84,7 @@ task upsp_driver::write_one_trans(upsp_trans t);
     int i;
     while(!vif.UPSTR) @(posedge vif.clk);
     vif.upsp_ac_wvalid <= 1'b1;    
-    vif.upsp_ac_wdata  <= t.data;
+    vif.upsp_ac_wdata  <= {>>{t.data}};
 
     for(i = 0; i < t.timeout; i++) begin
         if(vif.ac_upsp_wready && vif.upsp_ac_wvalid) break;
