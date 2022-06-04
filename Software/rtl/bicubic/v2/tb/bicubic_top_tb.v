@@ -14,21 +14,6 @@ module bicubic_top_tb();
     wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata_tb;
     wire upsp_ac_wvalid_tb;
 
-    initial begin
-        clk_tb = 1'b0;
-        rst_n_tb = 1'b0;
-        ac_upsp_rdata_tb = 24'd0;
-        ac_upsp_rvalid_tb = 1'b0;
-        ac_upsp_wready_tb = 1'b0;
-        #7 rst_n_tb = 1'b1;
-           ac_upsp_wready_tb = 1'b1;
-        #220 ac_upsp_wready_tb = 1'b0;
-        #8 ac_upsp_wready_tb = 1'b1;
-
-
-
-    end
-
     always #2 clk_tb = ~clk_tb;
 
     initial begin
@@ -49,6 +34,14 @@ module bicubic_top_tb();
         .upsp_ac_wvalid(upsp_ac_wvalid_tb)
     );
 
+    task random_wready();
+        forever begin  
+            @(posedge clk_tb) begin
+                ac_upsp_wready_tb = {$random}%2;
+            end
+        end
+    endtask
+
 
     initial begin
 
@@ -58,6 +51,23 @@ module bicubic_top_tb();
         // #26000
         #5 $finish;
     end
+
+    initial begin
+        clk_tb = 1'b0;
+        rst_n_tb = 1'b0;
+        ac_upsp_rdata_tb = 24'd0;
+        ac_upsp_rvalid_tb = 1'b0;
+        ac_upsp_wready_tb = 1'b0;
+        #7 rst_n_tb = 1'b1;
+           ac_upsp_wready_tb = 1'b1;
+
+        // the following code is used to test the cur_col_cnt signal.   
+        #180 ac_upsp_wready_tb = 1'b0;
+        #8 ac_upsp_wready_tb = 1'b1;
+        #98   random_wready();
+
+    end
+
 
 endmodule
 `endif
