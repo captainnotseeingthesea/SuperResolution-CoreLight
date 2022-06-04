@@ -1,5 +1,9 @@
 
-module bicubic_pvector_mult_wmatrix(
+module bicubic_pvector_mult_wmatrix #
+(
+    parameter PRODUCT_WIDTH = 32
+)
+(
     input wire [3:0] w1_1,
     input wire [3:0] w1_2,
     input wire [3:0] w1_3,
@@ -18,15 +22,15 @@ module bicubic_pvector_mult_wmatrix(
     input wire [3:0] w4_4,
 
 
-    input wire [8:0] p1,
-    input wire [8:0] p2,
-    input wire [8:0] p3,
-    input wire [8:0] p4,
+    input wire [PRODUCT_WIDTH - 1:0] p1,
+    input wire [PRODUCT_WIDTH - 1:0] p2,
+    input wire [PRODUCT_WIDTH - 1:0] p3,
+    input wire [PRODUCT_WIDTH - 1:0] p4,
 
-    output wire [7:0] inner_product1,
-    output wire [7:0] inner_product2,
-    output wire [7:0] inner_product3,
-    output wire [7:0] inner_product4,
+    output wire [PRODUCT_WIDTH - 2:0] inner_product1,
+    output wire [PRODUCT_WIDTH - 2:0] inner_product2,
+    output wire [PRODUCT_WIDTH - 2:0] inner_product3,
+    output wire [PRODUCT_WIDTH - 2:0] inner_product4,
 
     output wire inner_product_sign1,
     output wire inner_product_sign2,

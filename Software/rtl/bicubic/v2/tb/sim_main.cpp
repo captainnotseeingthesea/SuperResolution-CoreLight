@@ -46,8 +46,8 @@ int main(int argc, char** argv, char** env) {
     //   tfp->close();
     // }
 
-    Verilated::mkdir("logs");
-    Verilated::threadContextp()->coveragep()->write("logs/coverage.dat");
+    // Verilated::mkdir("logs");
+    // Verilated::threadContextp()->coveragep()->write("logs/coverage.dat");
   
     delete top;
     delete contextp;

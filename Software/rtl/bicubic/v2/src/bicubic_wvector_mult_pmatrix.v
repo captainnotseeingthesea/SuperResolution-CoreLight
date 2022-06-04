@@ -1,31 +1,35 @@
 
-module bicubic_wvector_mult_pmatrix(
+module bicubic_wvector_mult_pmatrix #
+(
+    parameter PRODUCT_WIDTH = 32
+)
+(
     input wire [3:0] w1,
     input wire [3:0] w2,
     input wire [3:0] w3,
     input wire [3:0] w4,
 
-    input wire [8:0] p1_1,
-    input wire [8:0] p1_2,
-    input wire [8:0] p1_3,
-    input wire [8:0] p1_4,
-    input wire [8:0] p2_1,
-    input wire [8:0] p2_2,
-    input wire [8:0] p2_3,
-    input wire [8:0] p2_4,
-    input wire [8:0] p3_1,
-    input wire [8:0] p3_2,
-    input wire [8:0] p3_3,
-    input wire [8:0] p3_4,
-    input wire [8:0] p4_1,
-    input wire [8:0] p4_2,
-    input wire [8:0] p4_3,
-    input wire [8:0] p4_4,
+    input wire [PRODUCT_WIDTH - 1:0] p1_1,
+    input wire [PRODUCT_WIDTH - 1:0] p1_2,
+    input wire [PRODUCT_WIDTH - 1:0] p1_3,
+    input wire [PRODUCT_WIDTH - 1:0] p1_4,
+    input wire [PRODUCT_WIDTH - 1:0] p2_1,
+    input wire [PRODUCT_WIDTH - 1:0] p2_2,
+    input wire [PRODUCT_WIDTH - 1:0] p2_3,
+    input wire [PRODUCT_WIDTH - 1:0] p2_4,
+    input wire [PRODUCT_WIDTH - 1:0] p3_1,
+    input wire [PRODUCT_WIDTH - 1:0] p3_2,
+    input wire [PRODUCT_WIDTH - 1:0] p3_3,
+    input wire [PRODUCT_WIDTH - 1:0] p3_4,
+    input wire [PRODUCT_WIDTH - 1:0] p4_1,
+    input wire [PRODUCT_WIDTH - 1:0] p4_2,
+    input wire [PRODUCT_WIDTH - 1:0] p4_3,
+    input wire [PRODUCT_WIDTH - 1:0] p4_4,
 
-    output wire [7:0] inner_product1,
-    output wire [7:0] inner_product2,
-    output wire [7:0] inner_product3,
-    output wire [7:0] inner_product4,
+    output wire [PRODUCT_WIDTH - 2:0] inner_product1,
+    output wire [PRODUCT_WIDTH - 2:0] inner_product2,
+    output wire [PRODUCT_WIDTH - 2:0] inner_product3,
+    output wire [PRODUCT_WIDTH - 2:0] inner_product4,
 
     output wire inner_product_sign1,
     output wire inner_product_sign2,

@@ -1,7 +1,8 @@
 // `include "../tb/define.v"
 module bicubic_upsample #
 (
-    parameter CHANNEL_WIDTH = 8
+    parameter CHANNEL_WIDTH = 8,
+    parameter PRODUCT_WIDTH = 32
 )
 
   (
@@ -138,13 +139,13 @@ module bicubic_upsample #
 
     wire [WEIGHT_WIDTH-1:0] w1, w2, w3, w4;
 
-    wire [CHANNEL_WIDTH:0] p1_1, p1_2, p1_3, p1_4;
-    wire [CHANNEL_WIDTH:0] p2_1, p2_2, p2_3, p2_4;
-    wire [CHANNEL_WIDTH:0] p3_1, p3_2, p3_3, p3_4;
-    wire [CHANNEL_WIDTH:0] p4_1, p4_2, p4_3, p4_4;  
+    wire [PRODUCT_WIDTH - 1:0] p1_1, p1_2, p1_3, p1_4;
+    wire [PRODUCT_WIDTH - 1:0] p2_1, p2_2, p2_3, p2_4;
+    wire [PRODUCT_WIDTH - 1:0] p3_1, p3_2, p3_3, p3_4;
+    wire [PRODUCT_WIDTH - 1:0] p4_1, p4_2, p4_3, p4_4;  
 
-    wire [CHANNEL_WIDTH:0] cur_product1_t, cur_product2_t, cur_product3_t, cur_product4_t;
-    wire [CHANNEL_WIDTH:0] nxt_product1_t, nxt_product2_t, nxt_product3_t, nxt_product4_t;
+    wire [PRODUCT_WIDTH - 1:0] cur_product1_t, cur_product2_t, cur_product3_t, cur_product4_t;
+    wire [PRODUCT_WIDTH - 1:0] nxt_product1_t, nxt_product2_t, nxt_product3_t, nxt_product4_t;
 
 
     bicubic_wvector_mult_pmatrix u_bicubic_wvector_mult_pmatrix(
@@ -170,15 +171,15 @@ module bicubic_upsample #
         .p4_3(p4_3),
         .p4_4(p4_4),
 
-        .inner_product1(nxt_product1_t[7:0]),
-        .inner_product2(nxt_product2_t[7:0]),
-        .inner_product3(nxt_product3_t[7:0]),
-        .inner_product4(nxt_product4_t[7:0]),
+        .inner_product1(nxt_product1_t[PRODUCT_WIDTH - 2:0]),
+        .inner_product2(nxt_product2_t[PRODUCT_WIDTH - 2:0]),
+        .inner_product3(nxt_product3_t[PRODUCT_WIDTH - 2:0]),
+        .inner_product4(nxt_product4_t[PRODUCT_WIDTH - 2:0]),
 
-        .inner_product_sign1(nxt_product1_t[8]),
-        .inner_product_sign2(nxt_product2_t[8]),
-        .inner_product_sign3(nxt_product3_t[8]),
-        .inner_product_sign4(nxt_product4_t[8]) 
+        .inner_product_sign1(nxt_product1_t[PRODUCT_WIDTH - 1]),
+        .inner_product_sign2(nxt_product2_t[PRODUCT_WIDTH - 1]),
+        .inner_product_sign3(nxt_product3_t[PRODUCT_WIDTH - 1]),
+        .inner_product_sign4(nxt_product4_t[PRODUCT_WIDTH - 1]) 
     );
 
     assign w1 = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_1)
@@ -201,28 +202,28 @@ module bicubic_upsample #
               | ({WEIGHT_WIDTH{cur_is_s3}} & S_U3_4)
               | ({WEIGHT_WIDTH{cur_is_s4}} & S_U4_4);    
 
-    assign p1_1 = {1'b0, p1};
-    assign p1_2 = {1'b0, p5};   
-    assign p1_3 = {1'b0, p9};
-    assign p1_4 = {1'b0, p13};    
+    assign p1_1 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p1};
+    assign p1_2 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p5};   
+    assign p1_3 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p9};
+    assign p1_4 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p13};    
 
-    assign p2_1 = {1'b0, p2};
-    assign p2_2 = {1'b0, p6};   
-    assign p2_3 = {1'b0, p10};
-    assign p2_4 = {1'b0, p14}; 
+    assign p2_1 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p2};
+    assign p2_2 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p6};   
+    assign p2_3 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p10};
+    assign p2_4 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p14}; 
 
-    assign p3_1 = {1'b0, p3};
-    assign p3_2 = {1'b0, p7};   
-    assign p3_3 = {1'b0, p11};
-    assign p3_4 = {1'b0, p15}; 
+    assign p3_1 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p3};
+    assign p3_2 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p7};   
+    assign p3_3 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p11};
+    assign p3_4 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p15}; 
 
-    assign p4_1 = {1'b0, p4};
-    assign p4_2 = {1'b0, p8};   
-    assign p4_3 = {1'b0, p12};
-    assign p4_4 = {1'b0, p16}; 
+    assign p4_1 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p4};
+    assign p4_2 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p8};   
+    assign p4_3 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p12};
+    assign p4_4 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p16}; 
 
 
-    localparam PIPELINE_WIDTH = (CHANNEL_WIDTH+1)*4;
+    localparam PIPELINE_WIDTH = PRODUCT_WIDTH*4;
     wire [PIPELINE_WIDTH-1:0] cur_pipeline_data, nxt_pipeline_data;
     wire reg_ena = (~bcci_rsp_valid) ? 1'b1 : bcci_rsp_hsked;
 
@@ -250,7 +251,7 @@ module bicubic_upsample #
     wire [WEIGHT_WIDTH-1:0] w3_1, w3_2, w3_3, w3_4;
     wire [WEIGHT_WIDTH-1:0] w4_1, w4_2, w4_3, w4_4;
 
-    wire [CHANNEL_WIDTH:0] product1, product2, product3, product4;
+    wire [PRODUCT_WIDTH - 1:0] product1, product2, product3, product4;
 
     bicubic_pvector_mult_wmatrix u_bicubic_pverctor_mult_wmatrix(
         .w1_1(w1_1),
@@ -275,15 +276,15 @@ module bicubic_upsample #
         .p3(cur_product3_t),
         .p4(cur_product4_t),
 
-        .inner_product1(product1[7:0]),
-        .inner_product2(product2[7:0]),
-        .inner_product3(product3[7:0]),
-        .inner_product4(product4[7:0]),
+        .inner_product1(product1[PRODUCT_WIDTH - 2:0]),
+        .inner_product2(product2[PRODUCT_WIDTH - 2:0]),
+        .inner_product3(product3[PRODUCT_WIDTH - 2:0]),
+        .inner_product4(product4[PRODUCT_WIDTH - 2:0]),
 
-        .inner_product_sign1(product1[8]),
-        .inner_product_sign2(product2[8]),
-        .inner_product_sign3(product3[8]),
-        .inner_product_sign4(product4[8])  
+        .inner_product_sign1(product1[PRODUCT_WIDTH - 1]),
+        .inner_product_sign2(product2[PRODUCT_WIDTH - 1]),
+        .inner_product_sign3(product3[PRODUCT_WIDTH - 1]),
+        .inner_product_sign4(product4[PRODUCT_WIDTH - 1])  
     );
 
     // assign w1_1 = S_U1_1;
@@ -327,10 +328,10 @@ module bicubic_upsample #
     assign w4_3 = S_U2_3;
     assign w4_4 = S_U2_4;  
 
-    assign bcci_rsp_data1 = product1[CHANNEL_WIDTH-1:0];
-    assign bcci_rsp_data2 = product2[CHANNEL_WIDTH-1:0];
-    assign bcci_rsp_data3 = product3[CHANNEL_WIDTH-1:0];
-    assign bcci_rsp_data4 = product4[CHANNEL_WIDTH-1:0];
+    assign bcci_rsp_data1 = product1[PRODUCT_WIDTH - 1] ? {CHANNEL_WIDTH{1'b0}} : product1[PRODUCT_WIDTH - 2 : 22] > 255 ? 255 : product1[CHANNEL_WIDTH + 21 : 22];
+    assign bcci_rsp_data2 = product2[PRODUCT_WIDTH - 1] ? {CHANNEL_WIDTH{1'b0}} : product2[PRODUCT_WIDTH - 2 : 22] > 255 ? 255 : product2[CHANNEL_WIDTH + 21 : 22];
+    assign bcci_rsp_data3 = product3[PRODUCT_WIDTH - 1] ? {CHANNEL_WIDTH{1'b0}} : product3[PRODUCT_WIDTH - 2 : 22] > 255 ? 255 : product3[CHANNEL_WIDTH + 21 : 22];
+    assign bcci_rsp_data4 = product4[PRODUCT_WIDTH - 1] ? {CHANNEL_WIDTH{1'b0}} : product4[PRODUCT_WIDTH - 2 : 22] > 255 ? 255 : product4[CHANNEL_WIDTH + 21 : 22];
 
 
     

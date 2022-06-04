@@ -903,7 +903,7 @@ unsigned char *zoom(
         *retHeight = info.heightOut;
     
     // 使用高斯滤波进行锐化处理 (USM(Unshrpen Mask)算法)
-    usm(&info, 3, 6, 2, -1, 0, processor);
+    // usm(&info, 3, 6, 2, -1, 0, processor);
 
     return (unsigned char *)info.rgbOut;
 }
