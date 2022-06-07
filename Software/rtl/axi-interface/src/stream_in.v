@@ -134,7 +134,7 @@ module stream_in # (
 	assert property(valid_stream_in) else begin 
 		$display("stream_in: tvalid is asserted when frame_done is asserted\n");
 		// $finish;
-	end;
+	end
 
 `endif
 

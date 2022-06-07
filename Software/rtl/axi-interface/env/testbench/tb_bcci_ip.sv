@@ -72,25 +72,25 @@ import utils_pkg::*;
         acif);
 
         // in axi-stream driver
-        uvm_config_db#(virtual axi_stream_if)::set(null, 
+        uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISIN_DATA_WIDTH)))::set(null, 
         "uvm_test_top.env.m_axis_agt.drv",
         "vif",
         acif.stream_master);
 
         // in axi-stream monitor
-        uvm_config_db#(virtual axi_stream_if)::set(null, 
+        uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISIN_DATA_WIDTH)))::set(null, 
         "uvm_test_top.env.m_axis_agt.mon",
         "vif",
         acif.stream_master);
 
         // out axi-stream driver
-        uvm_config_db#(virtual axi_stream_if)::set(null, 
+        uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISOUT_DATA_WIDTH)))::set(null, 
         "uvm_test_top.env.s_axis_agt.drv",
         "vif",
         acif.stream_slave);
 
         // out axi-stream monitor
-        uvm_config_db#(virtual axi_stream_if)::set(null, 
+        uvm_config_db#(virtual axi_stream_if#(.AXIS_DATA_WIDTH(`AXISOUT_DATA_WIDTH)))::set(null, 
         "uvm_test_top.env.s_axis_agt.mon",
         "vif",
         acif.stream_slave);
@@ -152,8 +152,8 @@ import utils_pkg::*;
 	begin
 		$dumpfile("../sim/waveform.vcd");
         // $dumpvars(0, tb_bcci_ip);
-        $dumpvars(3, tb_bcci_ip.dut.AAA_bcci.AAA_access_control.upsp_wrtcnt, 
-        tb_bcci_ip.dut.AAA_bcci.AAA_access_control.ac_rdcnt, 
+        $dumpvars(3, tb_bcci_ip.dut.AAA_bcci.AAA_access_control.upsp_wrtfifo_cnt, 
+        tb_bcci_ip.dut.AAA_bcci.AAA_access_control.ac_rdfifo_cnt, 
         tb_bcci_ip.dut.acif.stream_slave.axis_tvalid,
         tb_bcci_ip.dut.acif.stream_slave.axis_tready,
         tb_bcci_ip.dut.acif.stream_slave.axis_tlast);

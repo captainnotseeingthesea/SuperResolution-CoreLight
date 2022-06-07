@@ -15,20 +15,21 @@
 
 module bcci_ip
 #(
-	parameter  AXI_DATA_WIDTH  = `AXI_DATA_WIDTH   ,
-	localparam AXI_STRB_WIDTH  = `AXI_STRB_WIDTH   ,
-	parameter  AXI_ADDR_WIDTH  = `AXI_ADDR_WIDTH   ,
-	parameter  AXIS_DATA_WIDTH = `AXIS_DATA_WIDTH  ,
-	localparam AXIS_STRB_WIDTH = `AXIS_STRB_WIDTH  ,
-	parameter  CRF_DATA_WIDTH  = `CRF_DATA_WIDTH   ,
-	parameter  CRF_ADDR_WIDTH  = `CRF_ADDR_WIDTH   ,
-	parameter  UPSP_DATA_WIDTH = `UPSP_DATA_WIDTH  ,
-	parameter  SRC_IMG_WIDTH   = `SRC_IMG_WIDTH    ,
-	parameter  SRC_IMG_HEIGHT  = `SRC_IMG_HEIGHT   ,
-	parameter  DST_IMG_WIDTH   = `DST_IMG_WIDTH    ,
-	parameter  DST_IMG_HEIGHT  = `DST_IMG_HEIGHT   ,
-	localparam BUFFER_WIDTH    = `UPSP_DATA_WIDTH   ,
-	parameter  CHANNEL_WIDTH   = 8
+    parameter AXI_DATA_WIDTH     = `AXI_DATA_WIDTH    ,
+    parameter AXI_ADDR_WIDTH     = `AXI_ADDR_WIDTH    ,
+    parameter AXISIN_DATA_WIDTH  = `AXISIN_DATA_WIDTH ,
+    parameter AXISOUT_DATA_WIDTH = `AXISOUT_DATA_WIDTH,
+    parameter CRF_DATA_WIDTH     = `CRF_DATA_WIDTH    ,
+    parameter CRF_ADDR_WIDTH     = `CRF_ADDR_WIDTH    ,
+	parameter UPSP_RDDATA_WIDTH  = `UPSP_RDDATA_WIDTH ,
+	parameter UPSP_WRTDATA_WIDTH = `UPSP_WRTDATA_WIDTH,
+    parameter SRC_IMG_WIDTH      = `SRC_IMG_WIDTH     ,
+    parameter SRC_IMG_HEIGHT     = `SRC_IMG_HEIGHT    ,
+    parameter DST_IMG_WIDTH      = `DST_IMG_WIDTH     ,
+    parameter DST_IMG_HEIGHT     = `DST_IMG_HEIGHT    ,
+	parameter BUFFER_WIDTH       = `BUFFER_WIDTH      ,
+	parameter OUT_FIFO_DEPTH     = `OUT_FIFO_DEPTH    ,
+	parameter CHANNEL_WIDTH      = 8
 )
 (/*AUTOARG*/
    // Outputs
@@ -46,6 +47,11 @@ module bcci_ip
    m_axis_tready
    );
 	
+	localparam AXI_STRB_WIDTH     = AXI_DATA_WIDTH/8;
+	localparam AXIS_STRB_WIDTH    = AXI_DATA_WIDTH/8;
+	localparam AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8;
+	localparam AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8;
+
 	input clk;
 	input rst_n;
 
@@ -74,9 +80,9 @@ module bcci_ip
 	input                       s_axis_tvalid;	
 	output                      s_axis_tready;
 	input                       s_axis_tid;
-	input [AXIS_DATA_WIDTH-1:0] s_axis_tdata;
-	input [AXIS_STRB_WIDTH-1:0] s_axis_tstrb;
-	input [AXIS_STRB_WIDTH-1:0] s_axis_tkeep;
+	input [AXISIN_DATA_WIDTH-1:0] s_axis_tdata;
+	input [AXISIN_STRB_WIDTH-1:0] s_axis_tstrb;
+	input [AXISIN_STRB_WIDTH-1:0] s_axis_tkeep;
 	input                       s_axis_tlast;
 	input                       s_axis_tdest;
 	input                       s_axis_user;
@@ -85,9 +91,9 @@ module bcci_ip
 	output                       m_axis_tvalid;	
 	input                        m_axis_tready;
 	output                       m_axis_tid;
-	output [AXIS_DATA_WIDTH-1:0] m_axis_tdata;
-	output [AXIS_STRB_WIDTH-1:0] m_axis_tkeep;
-	output [AXIS_STRB_WIDTH-1:0] m_axis_tstrb;
+	output [AXISOUT_DATA_WIDTH-1:0] m_axis_tdata;
+	output [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep;
+	output [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb;
 	output                       m_axis_tlast;
 	output                       m_axis_tdest;
 	output                       m_axis_user;
@@ -105,14 +111,14 @@ module bcci_ip
     wire [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;	// From AAA_access_control of access_control.v
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
-    wire [UPSP_DATA_WIDTH-1:0] ac_upsp_rdata;	// From AAA_access_control of access_control.v
+    wire [UPSP_RDDATA_WIDTH-1:0] ac_upsp_rdata;	// From AAA_access_control of access_control.v
     wire		ac_upsp_rvalid;		// From AAA_access_control of access_control.v
     wire		ac_upsp_wready;		// From AAA_access_control of access_control.v
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
     wire		upsp_ac_rready;		// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH-1:0] upsp_ac_wdata;	// From AAA_bicubic_top of bicubic_top.v
+    wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata;	// From AAA_bicubic_top of bicubic_top.v
     wire		upsp_ac_wvalid;		// From AAA_bicubic_top of bicubic_top.v
     // End of automatics
 
@@ -173,14 +179,17 @@ module bcci_ip
     */
     access_control #(/*AUTOINSTPARAM*/
 		     // Parameters
-		     .AXIS_DATA_WIDTH	(AXIS_DATA_WIDTH),
+		     .AXISIN_DATA_WIDTH	(AXISIN_DATA_WIDTH),
+		     .AXISOUT_DATA_WIDTH(AXISOUT_DATA_WIDTH),
 		     .CRF_DATA_WIDTH	(CRF_DATA_WIDTH),
 		     .CRF_ADDR_WIDTH	(CRF_ADDR_WIDTH),
-		     .UPSP_DATA_WIDTH	(UPSP_DATA_WIDTH),
+		     .UPSP_RDDATA_WIDTH	(UPSP_RDDATA_WIDTH),
+		     .UPSP_WRTDATA_WIDTH(UPSP_WRTDATA_WIDTH),
 		     .SRC_IMG_WIDTH	(SRC_IMG_WIDTH),
 		     .SRC_IMG_HEIGHT	(SRC_IMG_HEIGHT),
 		     .DST_IMG_WIDTH	(DST_IMG_WIDTH),
-		     .DST_IMG_HEIGHT	(DST_IMG_HEIGHT))
+		     .DST_IMG_HEIGHT	(DST_IMG_HEIGHT),
+		     .OUT_FIFO_DEPTH	(OUT_FIFO_DEPTH))
     AAA_access_control(/*AUTOINST*/
 		       // Outputs
 		       .ac_crf_wrt	(ac_crf_wrt),
@@ -192,14 +201,14 @@ module bcci_ip
 		       .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
 		       .ac_crf_axiso_tready(ac_crf_axiso_tready),
 		       .ac_upsp_rvalid	(ac_upsp_rvalid),
-		       .ac_upsp_rdata	(ac_upsp_rdata[UPSP_DATA_WIDTH-1:0]),
+		       .ac_upsp_rdata	(ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]),
 		       .ac_upsp_wready	(ac_upsp_wready),
 		       .s_axis_tready	(s_axis_tready),
 		       .m_axis_tvalid	(m_axis_tvalid),
 		       .m_axis_tid	(m_axis_tid),
-		       .m_axis_tdata	(m_axis_tdata[AXIS_DATA_WIDTH-1:0]),
-		       .m_axis_tkeep	(m_axis_tkeep[AXIS_STRB_WIDTH-1:0]),
-		       .m_axis_tstrb	(m_axis_tstrb[AXIS_STRB_WIDTH-1:0]),
+		       .m_axis_tdata	(m_axis_tdata[AXISOUT_DATA_WIDTH-1:0]),
+		       .m_axis_tkeep	(m_axis_tkeep[AXISOUT_STRB_WIDTH-1:0]),
+		       .m_axis_tstrb	(m_axis_tstrb[AXISOUT_STRB_WIDTH-1:0]),
 		       .m_axis_tlast	(m_axis_tlast),
 		       .m_axis_tdest	(m_axis_tdest),
 		       .m_axis_user	(m_axis_user),
@@ -211,12 +220,12 @@ module bcci_ip
 		       .crf_ac_wbusy	(crf_ac_wbusy),
 		       .upsp_ac_rready	(upsp_ac_rready),
 		       .upsp_ac_wvalid	(upsp_ac_wvalid),
-		       .upsp_ac_wdata	(upsp_ac_wdata[UPSP_DATA_WIDTH-1:0]),
+		       .upsp_ac_wdata	(upsp_ac_wdata[UPSP_WRTDATA_WIDTH-1:0]),
 		       .s_axis_tvalid	(s_axis_tvalid),
 		       .s_axis_tid	(s_axis_tid),
-		       .s_axis_tdata	(s_axis_tdata[AXIS_DATA_WIDTH-1:0]),
-		       .s_axis_tstrb	(s_axis_tstrb[AXIS_STRB_WIDTH-1:0]),
-		       .s_axis_tkeep	(s_axis_tkeep[AXIS_STRB_WIDTH-1:0]),
+		       .s_axis_tdata	(s_axis_tdata[AXISIN_DATA_WIDTH-1:0]),
+		       .s_axis_tstrb	(s_axis_tstrb[AXISIN_STRB_WIDTH-1:0]),
+		       .s_axis_tkeep	(s_axis_tkeep[AXISIN_STRB_WIDTH-1:0]),
 		       .s_axis_tlast	(s_axis_tlast),
 		       .s_axis_tdest	(s_axis_tdest),
 		       .s_axis_user	(s_axis_user),
@@ -232,7 +241,7 @@ module bcci_ip
     AAA_bicubic_top(/*AUTOINST*/
 		    // Outputs
 		    .upsp_ac_rready	(upsp_ac_rready),
-		    .upsp_ac_wdata	(upsp_ac_wdata[BUFFER_WIDTH-1:0]),
+		    .upsp_ac_wdata	(upsp_ac_wdata[BUFFER_WIDTH*4-1:0]),
 		    .upsp_ac_wvalid	(upsp_ac_wvalid),
 		    // Inputs
 		    .clk		(clk),

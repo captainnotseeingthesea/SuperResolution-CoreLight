@@ -14,7 +14,7 @@ if(-d $tmp) {
 mkdir $tmp, 0755 or die "cannot mkdir $tmp:$!";
 
 $axidir = "../../axi-interface";
-$bicubdir = "../../bicubic";
+$bicubdir = "../../bicubic/v2";
 $bcciip = "bcci_ip.v";
 
 @srcfiles = glob "$axidir/src/*.v $bicubdir/src/*.v $bcciip";

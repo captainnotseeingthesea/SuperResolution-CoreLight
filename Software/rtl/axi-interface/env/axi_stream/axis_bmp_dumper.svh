@@ -57,11 +57,12 @@ endfunction: build_phase
 task axis_bmp_dumper::main_phase(uvm_phase phase);
     axi_stream_trans t;
     int pos = 0;
-    bit [23:0] data_in_pixel[];
     phase.raise_objection(this);
 
     data = new[height*width];
     pos = 0;
+
+    $display("dumper combined array size is %d\n", data.size());
 
     while(1) begin
         dump_port.get(t);
@@ -74,7 +75,7 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
             end
         end
         
-        if(pos == data.size()) begin
+        if(pos == data.size()*3) begin
             `uvm_info(get_name(), "start dumping file", UVM_LOW)
             $writememh(src_bin, data);
             BMP::bin2bmp(src_bin, dst_bmp, height, width);
@@ -83,5 +84,6 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
         end
     end
 
+    #1000;
     phase.drop_objection(this);
 endtask: main_phase

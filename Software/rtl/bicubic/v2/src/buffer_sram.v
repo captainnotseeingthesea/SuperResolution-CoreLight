@@ -207,7 +207,7 @@ module buffer_sram #(
     wire cur_row_cnt_is_last_1 = (cur_row_cnt == HEIGHT*4-1) ? 1'b1 : 1'b0;
 
     assign nxt_row_cnt = cur_row_cnt + 1;
-    wire row_cnt_ena = cur_col_cnt_is_width_plus_5;
+    wire row_cnt_ena = cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked;
     dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
 
 
@@ -239,8 +239,9 @@ module buffer_sram #(
     assign col_cnt_ena = init_finished & (    cur_col_cnt_is_0 & ((~init_finished_delayed) |  bcci_2_bf_hsked)
                                            | ((~cur_col_cnt_is_0) & cur_col_cnt_below_6) 
                                            | (cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) 
-                                           | (cur_col_cnt_is_width_plus_5 & row_cnt_ena)
+                                           | (cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked)
                                         );
+    wire end_of_data;
     wire shift_ena = (init_finished & (~end_of_data)) ? ((cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) | cur_col_cnt_below_6) : 1'b0;
 
 
@@ -256,7 +257,6 @@ module buffer_sram #(
                      | state_s2_exit_ena | state_s3_exit_ena
                      | state_s4_exit_ena | state_s5_exit_ena;
 
-    wire end_of_data;
 
     assign raddr_ena = init_finished ? shift_ena : 1'b0;
 
