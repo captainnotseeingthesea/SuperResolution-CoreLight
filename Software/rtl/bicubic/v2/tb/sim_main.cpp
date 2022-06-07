@@ -1,5 +1,5 @@
 // use verilator 
-#include "Vbicubic_top.h"
+#include "Vbicubic_processing_element.h"
 #include "verilated.h"
 #include <verilated_vcd_c.h>
 #include <iostream>
@@ -7,7 +7,7 @@ int main(int argc, char** argv, char** env) {
     VerilatedContext* contextp = new VerilatedContext;
     Verilated::traceEverOn(true);
     contextp->commandArgs(argc, argv);
-    Vbicubic_top* top = new Vbicubic_top{contextp};
+    Vbicubic_processing_element* top = new Vbicubic_processing_element{contextp};
 
 
     // VerilatedVcdC* tfp = new VerilatedVcdC;

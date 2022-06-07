@@ -1,6 +1,6 @@
 `ifndef SIM_WITH_VERILATOR
 `ifdef SIM_WITHOUT_AXI
-module bicubic_top_tb();
+module bicubic_processing_element_tb();
     reg clk_tb;
     reg rst_n_tb;
 
@@ -21,7 +21,7 @@ module bicubic_top_tb();
         $dumpvars(0, bicubic_top_tb);
     end
 
-    bicubic_top u_bicubic_top(
+    bicubic_processing_element u_processing_element(
         .clk(clk_tb),
         .rst_n(rst_n_tb),
 

@@ -2,7 +2,8 @@
 module bicubic_upsample #
 (
     parameter CHANNEL_WIDTH = 8,
-    parameter PRODUCT_WIDTH = 32
+    parameter PRODUCT_WIDTH = 32,
+    parameter BLOCK_SIZE = 960
 )
 
   (
@@ -42,7 +43,7 @@ module bicubic_upsample #
     wire bf_req_hsked = bf_req_valid & bcci_req_ready;
     wire bcci_rsp_hsked = bcci_rsp_valid & bf_rsp_ready;
 
-    localparam WIDTH = `SRC_IMG_WIDTH;
+    localparam WIDTH = BLOCK_SIZE;
     localparam WIDTH_LEN = $clog2(WIDTH);
 
     wire [WIDTH_LEN-1:0] cur_col_cnt, nxt_col_cnt;

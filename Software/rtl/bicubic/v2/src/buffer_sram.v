@@ -1,6 +1,7 @@
 // `include "../tb/define.v"
 module buffer_sram #(
-    parameter BUFFER_WIDTH=24
+    parameter BUFFER_WIDTH=24,
+    parameter BLOCK_SIZE=960
 ) (
     input wire clk,
     input wire rst_n,
@@ -48,9 +49,11 @@ module buffer_sram #(
 
 );
 
-    localparam WIDTH = `SRC_IMG_WIDTH;
+    // localparam WIDTH = `SRC_IMG_WIDTH;
+    localparam WIDTH = BLOCK_SIZE;
     localparam HEIGHT = `SRC_IMG_HEIGHT;
     
+// only valid when degree of parallelism is 1
 `ifdef SIM_WITHOUT_AXI
     wire axi_ready;
     wire [23:0] axi_data;

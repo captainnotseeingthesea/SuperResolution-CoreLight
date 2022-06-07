@@ -1,8 +1,9 @@
 
-module bicubic_top 
+module bicubic_processing_element
 #(
     parameter BUFFER_WIDTH = 24, 
-  parameter CHANNEL_WIDTH = 8
+    parameter CHANNEL_WIDTH = 8,
+    parameter BLOCK_SIZE = 960
 )
 (
     input clk,
@@ -49,7 +50,10 @@ module bicubic_top
     wire bcci_2_bf_hsked = upsp_ac_wvalid & ac_upsp_wready;
 
 
-    buffer_sram #(.BUFFER_WIDTH(BUFFER_WIDTH)) u_buffer (
+    buffer_sram #(
+        .BUFFER_WIDTH(BUFFER_WIDTH),
+        .BLOCK_SIZE(BLOCK_SIZE)
+    ) u_buffer (
         .clk(clk),
         .rst_n(rst_n),
 
@@ -187,7 +191,9 @@ module bicubic_top
     wire G_bf_rsp_ready = ac_upsp_wready;
     wire B_bf_rsp_ready = ac_upsp_wready;
 
-    bicubic_upsample u_R_bicubic_upsample(
+    bicubic_upsample #(
+        .BLOCK_SIZE(BLOCK_SIZE)
+    ) u_R_bicubic_upsample (
         .clk(clk),
         .rst_n(rst_n),
         .bf_req_valid(R_bf_req_valid),
@@ -219,7 +225,9 @@ module bicubic_top
     );
 
 
-    bicubic_upsample u_G_bicubic_upsample(
+    bicubic_upsample #(
+        .BLOCK_SIZE(BLOCK_SIZE)
+    ) u_G_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
         .bf_req_valid(G_bf_req_valid),
@@ -250,7 +258,9 @@ module bicubic_top
         .bcci_rsp_data4(G_bcci_rsp_data4)
     );
 
-    bicubic_upsample u_B_bicubic_upsample(
+    bicubic_upsample #(
+        .BLOCK_SIZE(BLOCK_SIZE)
+    ) u_B_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
         .bf_req_valid   (B_bf_req_valid),
