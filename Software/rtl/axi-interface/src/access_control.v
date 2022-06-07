@@ -280,10 +280,10 @@ module access_control # (
 	end
 
 	// Up_Sampling write count and output stream tranfer count.
-	reg [IMG_CNT_WIDTH-1:0]     upsp_wrtfifo_cnt;
-	reg [DST_IMG_WIDTH_LB2-1:0] upsp_wrtfifo_cnt_inrow;
-	reg [IMG_CNT_WIDTH-1:0]     ac_rdfifo_cnt;
-	reg [DST_IMG_WIDTH_LB2-1:0] ac_rdfifo_cnt_inrow;
+	reg [IMG_CNT_WIDTH-1:0]      upsp_wrtfifo_cnt;
+	reg [IMG_CNT_WIDTH-1:0]      ac_rdfifo_cnt;
+	wire [DST_IMG_WIDTH_LB2-1:0] upsp_wrtfifo_cnt_inrow;
+	wire [DST_IMG_WIDTH_LB2-1:0] ac_rdfifo_cnt_inrow;
 
 	assign upsp_wrtfifo_cnt_inrow = (upsp_wrtfifo_cnt % DST_IMG_WIDTH);
 	assign ac_rdfifo_cnt_inrow = (ac_rdfifo_cnt % DST_IMG_WIDTH);
