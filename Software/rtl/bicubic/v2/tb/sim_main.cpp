@@ -15,9 +15,9 @@ int main(int argc, char** argv, char** env) {
     // tfp->open ("wave.vcd");	// Open the dump file
 
     unsigned int clock = 0;
+    unsigned int random_wready;
     #define PERIOD 4
-
-    while (!contextp->gotFinish() && (clock < 12000000)) { 
+    while (!contextp->gotFinish() && (clock < 30000000)) { 
         clock++;
         top->ac_upsp_wready = 0x0;
         top->ac_upsp_rvalid = 0x0;
@@ -33,7 +33,8 @@ int main(int argc, char** argv, char** env) {
         } 
         else {
           top->rst_n = 0x1;
-          top->ac_upsp_wready = 0x1;
+          top->ac_upsp_wready = rand()%2;
+          // top->ac_upsp_wready = 0x1;
         }
 
         top->eval(); 

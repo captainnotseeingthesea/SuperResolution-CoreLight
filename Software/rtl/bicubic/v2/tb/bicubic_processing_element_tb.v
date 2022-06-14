@@ -18,10 +18,12 @@ module bicubic_processing_element_tb();
 
     initial begin
         $dumpfile("wave.vcd");
-        $dumpvars(0, bicubic_top_tb);
+        $dumpvars(0, bicubic_processing_element_tb);
     end
 
-    bicubic_processing_element u_processing_element(
+    bicubic_processing_element #(
+        .BLOCK_SIZE(11)
+    ) u_processing_element(
         .clk(clk_tb),
         .rst_n(rst_n_tb),
 
@@ -37,7 +39,7 @@ module bicubic_processing_element_tb();
     task random_wready();
         forever begin  
             @(posedge clk_tb) begin
-                ac_upsp_wready_tb = {$random}%2;
+                #1 ac_upsp_wready_tb = {$random}%2;
             end
         end
     endtask
@@ -48,7 +50,7 @@ module bicubic_processing_element_tb();
 
         // #1320
         #4000
-        // #26000
+        // #200000
         #5 $finish;
     end
 
@@ -64,7 +66,7 @@ module bicubic_processing_element_tb();
         // the following code is used to test the cur_col_cnt signal.   
         #180 ac_upsp_wready_tb = 1'b0;
         #8 ac_upsp_wready_tb = 1'b1;
-        #98   random_wready();
+        #1   random_wready();
 
     end
 

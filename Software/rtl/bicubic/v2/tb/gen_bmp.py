@@ -3,6 +3,12 @@
 # height=6
 # f = open("display.txt")
 
+# width=96
+# height=54
+# f = open("display.txt")
+
+
+
 width=960
 height=540
 f = open("display_verilator.txt")
@@ -42,8 +48,8 @@ for i in range(4*height):
 
 # print(des[0])
 
-# f = open("2.bmp","rb")
-f = open("0.bmp","rb")
+f = open("49_1k.bmp","rb")
+# f = open("onepiece54.bmp","rb")
 # f = open("4.bmp","rb")
 head = f.read(18)
 f.seek(f.tell()+8)
