@@ -34,7 +34,7 @@ bicubic_iverilog:
 	gtkwave wave.vcd
 
 gen_bmp:
-	rm -rf 49_4k.bmp tt.bmp 2_4k.bmp 4_4k.bmp
+	rm -rf 49_4k.bmp tt.bmp 2_4k.bmp 4_4k.bmp 0_4k.bmp
 	python3 gen_bmp.py
 
 bicubic_verilator:

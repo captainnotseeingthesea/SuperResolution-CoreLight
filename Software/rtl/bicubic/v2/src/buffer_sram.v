@@ -237,20 +237,19 @@ module buffer_sram #(
 
     assign col_cnt_ena = init_finished & (    cur_col_cnt_is_0 & ((~init_finished_delayed) |  bcci_2_bf_hsked)
                                            | ((~cur_col_cnt_is_0) & cur_col_cnt_below_6) 
-                                           | (cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) 
-                                           | (cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked)
+                                           | (cur_col_cnt_below_width_plus_6 & bcci_2_bf_hsked) 
+                                           | (cur_col_cnt_is_width_plus_6 & bcci_2_bf_hsked)
                                         );
     wire end_of_data;
     wire shift_ena = (init_finished & (~end_of_data)) ? ((cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) | cur_col_cnt_below_6) : 1'b0;
 
 
     assign state_s0_exit_ena = (cur_is_s0 & init_finished) ? 1'b1 : 1'b0;
-    // assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & cur_rd_end & cur_row_cnt_is_9) ? (~cur_row_cnt_is_last_3) : 1'b0;
-    assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & cur_rd_end & cur_row_cnt_is_4x_plus_6) ? ((~cur_row_cnt_is_last_3) & cur_row_cnt_over_9) | cur_row_cnt_is_9 : 1'b0;
-    assign state_s2_exit_ena = (cur_is_s2 & cur_wr_end & cur_rd_end & cur_row_cnt_is_4x_plus_6) ? (~cur_row_cnt_is_last_3) : 1'b0;
-    assign state_s3_exit_ena = (cur_is_s3 & cur_wr_end & cur_rd_end & cur_row_cnt_is_4x_plus_6) ? (~cur_row_cnt_is_last_3) : 1'b0;
-    assign state_s4_exit_ena = (cur_is_s4 & cur_wr_end & cur_rd_end & cur_row_cnt_is_4x_plus_6) ? (~cur_row_cnt_is_last_3) : 1'b0;
-    assign state_s5_exit_ena = (cur_is_s5 & cur_wr_end & cur_rd_end & cur_row_cnt_is_4x_plus_6) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? ((~cur_row_cnt_is_last_3) & cur_row_cnt_over_9) | cur_row_cnt_is_9 : 1'b0;
+    assign state_s2_exit_ena = (cur_is_s2 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    assign state_s3_exit_ena = (cur_is_s3 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    assign state_s4_exit_ena = (cur_is_s4 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    assign state_s5_exit_ena = (cur_is_s5 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? (~cur_row_cnt_is_last_3) : 1'b0;
 
     assign state_ena = state_s0_exit_ena | state_s1_exit_ena 
                      | state_s2_exit_ena | state_s3_exit_ena
@@ -330,7 +329,7 @@ module buffer_sram #(
     assign addr3 = (cur_is_s0 | (cur_is_s4 & (~cur_wr_end))) ? cur_waddr :
                    (cur_is_s1 | cur_is_s2 | cur_is_s3 | cur_is_s5) ? (shift_ena ? nxt_raddr : cur_raddr)  : {$clog2(WIDTH){1'b0}};
                    
-    assign addr4 = (cur_is_s0 | (cur_is_s5& (~cur_wr_end))) ? cur_waddr :
+    assign addr4 = (cur_is_s0 | (cur_is_s5 & (~cur_wr_end))) ? cur_waddr :
                    (cur_is_s1 | cur_is_s2 | cur_is_s3 | cur_is_s4) ? (shift_ena ? nxt_raddr : cur_raddr)  : {$clog2(WIDTH){1'b0}};
 
     assign addr5 = (cur_is_s1 & (~cur_wr_end)) ? cur_waddr :

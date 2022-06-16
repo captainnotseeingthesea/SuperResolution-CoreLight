@@ -10,14 +10,14 @@ int main(int argc, char** argv, char** env) {
     Vbicubic_processing_element* top = new Vbicubic_processing_element{contextp};
 
 
-    // VerilatedVcdC* tfp = new VerilatedVcdC;
-    // top->trace (tfp, 99);	// Trace 99 levels of hierarchy
-    // tfp->open ("wave.vcd");	// Open the dump file
+    VerilatedVcdC* tfp = new VerilatedVcdC;
+    top->trace (tfp, 99);	// Trace 99 levels of hierarchy
+    tfp->open ("wave.vcd");	// Open the dump file
 
     unsigned int clock = 0;
     unsigned int random_wready;
     #define PERIOD 4
-    while (!contextp->gotFinish() && (clock < 30000000)) { 
+    while (!contextp->gotFinish() && (clock < 10000000)) { 
         clock++;
         top->ac_upsp_wready = 0x0;
         top->ac_upsp_rvalid = 0x0;
@@ -33,19 +33,24 @@ int main(int argc, char** argv, char** env) {
         } 
         else {
           top->rst_n = 0x1;
-          top->ac_upsp_wready = rand()%2;
-          // top->ac_upsp_wready = 0x1;
+          // top->ac_upsp_wready = rand()%2;
+          top->ac_upsp_wready = 0x1;
         }
 
         top->eval(); 
 
         // if (tfp){
-        //   tfp->dump (clock);
-        // }
+        //   if(clock > 8340000 &&  clock < 8370000) {
+        //     tfp->dump (clock);
+        //   }
+          // if( clock < 100000) {
+          //   tfp->dump (clock);
+          // }
+        }
     }
-    // if (tfp){
-    //   tfp->close();
-    // }
+    if (tfp){
+      tfp->close();
+    }
 
     // Verilated::mkdir("logs");
     // Verilated::threadContextp()->coveragep()->write("logs/coverage.dat");

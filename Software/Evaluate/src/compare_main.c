@@ -46,7 +46,11 @@ int main(int argc, char const *argv[])
     
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
-            is_diff = pixel_diff(bmp_pixel_at(diff, x, y), bmp_pixel_at(p1, x, y), bmp_pixel_at(p2, x, y)) ? 1 : 0;
+            is_diff += pixel_diff(bmp_pixel_at(diff, x, y), bmp_pixel_at(p1, x, y), bmp_pixel_at(p2, x, y)) ? 1 : 0;
+            int t = pixel_diff(bmp_pixel_at(diff, x, y), bmp_pixel_at(p1, x, y), bmp_pixel_at(p2, x, y)) ? 1 : 0;
+            if(t) {
+                printf("%d, %d\n", x, y);
+            }
         }
     }
 

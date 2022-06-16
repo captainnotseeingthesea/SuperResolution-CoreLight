@@ -49,6 +49,7 @@ for i in range(4*height):
 # print(des[0])
 
 f = open("49_1k.bmp","rb")
+# f = open("2.bmp","rb")
 # f = open("onepiece54.bmp","rb")
 # f = open("4.bmp","rb")
 head = f.read(18)
@@ -61,8 +62,8 @@ f.seek(f.tell()+8)
 f.close()
 
 import struct
-# test = open("2_4k.bmp","wb+")
-test = open("49_4k.bmp","wb+")
+test = open("0_4k.bmp","wb+")
+# test = open("49_4k.bmp","wb+")
 # test = open("4_4k.bmp","wb+")
 test.write(struct.pack('B', head[0]))
 test.write(struct.pack('B', head[1]))

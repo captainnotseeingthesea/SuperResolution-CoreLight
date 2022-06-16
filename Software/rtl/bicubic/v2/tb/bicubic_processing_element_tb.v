@@ -64,9 +64,9 @@ module bicubic_processing_element_tb();
            ac_upsp_wready_tb = 1'b1;
 
         // the following code is used to test the cur_col_cnt signal.   
-        #180 ac_upsp_wready_tb = 1'b0;
-        #8 ac_upsp_wready_tb = 1'b1;
-        #1   random_wready();
+        // #180 ac_upsp_wready_tb = 1'b0;
+        // #8 ac_upsp_wready_tb = 1'b1;
+        // #10   random_wready();
 
     end
 

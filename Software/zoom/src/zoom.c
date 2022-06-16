@@ -1134,10 +1134,10 @@ void _zoom_bicubic_stream_opencv(
                     r_sum += pCurr[clip(sx + nn - 1, 0, info->width)].r * cbufY[mm]*cbufX[nn];
                     g_sum += pCurr[clip(sx + nn - 1, 0, info->width)].g * cbufY[mm]*cbufX[nn];
                     b_sum += pCurr[clip(sx + nn - 1, 0, info->width)].b * cbufY[mm]*cbufX[nn];
-                    // if(ii==0 && ((jj == 20) || (jj==21))) {
-                    //     printf("Y: %d X: %d \n", cbufY[mm]/16, cbufX[nn]/16);
-                    //     printf("pixel :%x ", pCurr[clip(sx + nn - 1, 0, info->width)].r);
-                    //     printf("sum: %d \n", r_sum/16/16);
+                    // if(ii==2145 && jj == 3835) {
+                    //     printf("Y: %d X: %d \n", cbufY[mm], cbufX[nn]);
+                    //     printf("pixel :%x ", pCurr[clip(sx + nn - 1, 0, info->width)].b);
+                    //     printf("sum: %d \n", r_sum);
                     // }
 
                 }
@@ -1150,6 +1150,9 @@ void _zoom_bicubic_stream_opencv(
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;
+            // if(ii==2145 && jj == 3835) {
+            //     printf("sum: %d \n", r_sum);
+            // }
             (pSamp + jj)->r = clip(r_sum, 0, 256);
             (pSamp + jj)->g = clip(g_sum, 0, 256);
             (pSamp + jj)->b = clip(b_sum, 0, 256);
@@ -1225,17 +1228,31 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
                 pCurr = info->rgb + clip((sy + mm - 1), 0, info->height) * info->width;
                 for(nn = 0; nn < 4; nn++) // cols
                 { 
+
                     r_sum += pCurr[clip(sx + nn - 1, 0, info->width)].r * cbufY[mm]*cbufX[nn];
                     g_sum += pCurr[clip(sx + nn - 1, 0, info->width)].g * cbufY[mm]*cbufX[nn];
                     b_sum += pCurr[clip(sx + nn - 1, 0, info->width)].b * cbufY[mm]*cbufX[nn];
+                    // if(ii==2159 && jj == 8) {
+                    //     printf("Y: %d X: %d \n", cbufY[mm], cbufX[nn]);
+                    //     printf("pixel :%d ", pCurr[clip(sx + nn - 1, 0, info->width)].g);
+                    //     printf("product: %d\n", pCurr[clip(sx + nn - 1, 0, info->width)].g * cbufY[mm]*cbufX[nn]);
+                    //     printf("sum: %d \n", g_sum);
+                    //     printf("\n");
+                    // }
                 }
             }
             r_sum >>= 22;
             g_sum >>= 22;
             b_sum >>= 22;
+            // if(ii==2159 && jj == 8) {
+            //     printf("sum: %d \n", g_sum);
+            // }
             info->rgbOut[ii * info->widthOut + jj].r = clip(r_sum, 0, 256);
             info->rgbOut[ii * info->widthOut + jj].g = clip(g_sum, 0, 256);
             info->rgbOut[ii * info->widthOut + jj].b = clip(b_sum, 0, 256);
+            r_sum = 0;
+            g_sum = 0;
+            b_sum = 0;       
         }
     }
     //多线程,处理完成行数
