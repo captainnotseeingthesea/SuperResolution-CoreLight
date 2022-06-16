@@ -33,6 +33,7 @@ copy $autofile, $bcciip or die "cannot copy $autofile:$!";
 system "rm $tmp -r";
 
 # Move files to synthesis dir
+system "rm ../../vivado-synthesis/*";
 $vivado = "../../vivado-synthesis";
 foreach $src (@srcfiles) {
     $dst = File::Spec->catfile($vivado, basename $src);

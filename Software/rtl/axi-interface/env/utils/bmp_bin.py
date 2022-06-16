@@ -12,7 +12,7 @@ def bmp2bin(bmpname = "", binname = ""):
     height, width = a.shape[0], a.shape[1];
 
     with open(binname, "w") as f:
-        for j in range(height):
+        for j in range(height-1, -1, -1):
             for i in range(width):
                 r,g,b = format(a[j,i,0], "02x"), format(a[j,i,1], "02x"), format(a[j,i,2], "02x");
                 f.writelines([r, g, b, os.linesep]);
@@ -27,7 +27,7 @@ def bin2bmp(binname = "", bmpname = "", height=None, width=None):
 
     a = np.zeros((height, width, 3), dtype=np.uint8);
     i = 0;
-    j = 0;
+    j = height-1;
     for line in lines:
         r,g,b = line[0:2], line[2:4], line[4:];
         a[j,i,0] = int(r, 16);
@@ -35,7 +35,7 @@ def bin2bmp(binname = "", bmpname = "", height=None, width=None):
         a[j,i,2] = int(b, 16);
         if(i == width-1):
             i = 0;
-            j += 1;
+            j -= 1;
         else:
             i += 1;
     
