@@ -46,7 +46,6 @@ int main(int argc, char** argv, char** env) {
           // if( clock < 100000) {
           //   tfp->dump (clock);
           // }
-        }
     }
     if (tfp){
       tfp->close();
