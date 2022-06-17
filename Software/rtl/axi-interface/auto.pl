@@ -18,7 +18,7 @@ mkdir $tmp, 0755 or die "cannot mkdir $tmp:$!";
 "src/*.v ".
 "env/dut/*.svh ".
 "env/testbench/*.sv ".
-"../bicubic/v2/src/bicubic_top.v ".
+"../bicubic/v2/src/bicubic_processing_element.v ".
 "../IP/bcci/*.v"
 ;
 

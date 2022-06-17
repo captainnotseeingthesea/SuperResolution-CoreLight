@@ -44,10 +44,36 @@ endfunction: build_phase
 
 task upsp_ostream_modifier::main_phase(uvm_phase phase);
     upsp_trans tmp;
+    int count = 0;
+    int img_width = `DST_IMG_WIDTH;
+    bit [95:0] full;
+    bit [47:0] half;
 
     while(1) begin
         istream.get(tmp);
-        ostream.write(tmp);
+
+        if(count%img_width == 0) begin
+            full = {>>{tmp.data}};
+            half = full[47:0];
+            count += 2;
+        end else if(count%img_width == img_width-2) begin
+            full = {>>{tmp.data}};
+            tmp.data.delete();
+            {>>{tmp.data}} = {half, full[95:48]};
+            count += 2;
+            // $display("modifier generated %d \n", count);
+            // tmp.print();
+            ostream.write(tmp);
+        end else begin
+            full = {>>{tmp.data}};
+            tmp.data.delete();
+            {>>{tmp.data}} = {half, full[95:48]};
+            half = full[47:0];
+            count += 4;
+            // $display("modifier generated %d \n", count);
+            // tmp.print();
+            ostream.write(tmp);
+        end
     end
     
 endtask: main_phase

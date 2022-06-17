@@ -79,7 +79,7 @@ task bmp_seq::body();
             t.tlast  == (i % width == width - 1); // VDMA will send a last singal for each row
             t.tdest  == 0;
             t.tuser  == 0;
-            t.delay  <= 2;
+            t.delay  == 0;
         });
         {>>{t.tdata}} = img[i];
 

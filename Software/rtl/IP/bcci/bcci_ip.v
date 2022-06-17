@@ -29,7 +29,14 @@ module bcci_ip
     parameter DST_IMG_HEIGHT     = `DST_IMG_HEIGHT    ,
 	parameter BUFFER_WIDTH       = `BUFFER_WIDTH      ,
 	parameter OUT_FIFO_DEPTH     = `OUT_FIFO_DEPTH    ,
-	parameter CHANNEL_WIDTH      = 8
+	parameter CHANNEL_WIDTH      = 8,
+
+	parameter AXI_STRB_WIDTH     = AXI_DATA_WIDTH/8    ,
+	parameter AXIS_STRB_WIDTH    = AXI_DATA_WIDTH/8    ,
+	parameter AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8 ,
+	parameter AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8,
+
+	parameter BLOCK_SIZE         = DST_IMG_WIDTH
 )
 (/*AUTOARG*/
    // Outputs
@@ -46,11 +53,6 @@ module bcci_ip
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user,
    m_axis_tready
    );
-	
-	localparam AXI_STRB_WIDTH     = AXI_DATA_WIDTH/8;
-	localparam AXIS_STRB_WIDTH    = AXI_DATA_WIDTH/8;
-	localparam AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8;
-	localparam AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8;
 
 	input clk;
 	input rst_n;
@@ -117,9 +119,9 @@ module bcci_ip
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
-    wire		upsp_ac_rready;		// From AAA_bicubic_top of bicubic_top.v
-    wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata;	// From AAA_bicubic_top of bicubic_top.v
-    wire		upsp_ac_wvalid;		// From AAA_bicubic_top of bicubic_top.v
+    wire		upsp_ac_rready;		// From AAA_bicubic_processing_element of bicubic_processing_element.v
+    wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata;	// From AAA_bicubic_processing_element of bicubic_processing_element.v
+    wire		upsp_ac_wvalid;		// From AAA_bicubic_processing_element of bicubic_processing_element.v
     // End of automatics
 
 
@@ -231,23 +233,24 @@ module bcci_ip
 		       .s_axis_user	(s_axis_user),
 		       .m_axis_tready	(m_axis_tready));
     
-    /* bicubic_top AUTO_TEMPLATE (
+    /* bicubic_processing_element AUTO_TEMPLATE (
     );
     */
-    bicubic_top #(/*AUTOINSTPARAM*/
-		  // Parameters
-		  .BUFFER_WIDTH		(BUFFER_WIDTH),
-		  .CHANNEL_WIDTH	(CHANNEL_WIDTH))
-    AAA_bicubic_top(/*AUTOINST*/
-		    // Outputs
-		    .upsp_ac_rready	(upsp_ac_rready),
-		    .upsp_ac_wdata	(upsp_ac_wdata[BUFFER_WIDTH*4-1:0]),
-		    .upsp_ac_wvalid	(upsp_ac_wvalid),
-		    // Inputs
-		    .clk		(clk),
-		    .rst_n		(rst_n),
-		    .ac_upsp_rdata	(ac_upsp_rdata[23:0]),
-		    .ac_upsp_rvalid	(ac_upsp_rvalid),
-		    .ac_upsp_wready	(ac_upsp_wready));
+    bicubic_processing_element #(/*AUTOINSTPARAM*/
+				 // Parameters
+				 .BUFFER_WIDTH		(BUFFER_WIDTH),
+				 .CHANNEL_WIDTH		(CHANNEL_WIDTH),
+				 .BLOCK_SIZE		(BLOCK_SIZE))
+    AAA_bicubic_processing_element(/*AUTOINST*/
+				   // Outputs
+				   .upsp_ac_rready	(upsp_ac_rready),
+				   .upsp_ac_wdata	(upsp_ac_wdata[BUFFER_WIDTH*4-1:0]),
+				   .upsp_ac_wvalid	(upsp_ac_wvalid),
+				   // Inputs
+				   .clk			(clk),
+				   .rst_n		(rst_n),
+				   .ac_upsp_rdata	(ac_upsp_rdata[23:0]),
+				   .ac_upsp_rvalid	(ac_upsp_rvalid),
+				   .ac_upsp_wready	(ac_upsp_wready));
 
 endmodule
