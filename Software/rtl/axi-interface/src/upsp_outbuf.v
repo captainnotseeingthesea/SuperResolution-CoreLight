@@ -66,9 +66,10 @@ module upsp_outbuf # (
     end
 
     reg [IMG_CNT_WIDTH-1:0] write_num;
+    integer i;
     always@(*) begin: WRT_NUM
         write_num = 0;
-        for(int i = 0; i < N_BUF_FIFO; i++) begin
+        for(i = 0; i < N_BUF_FIFO; i=i+1) begin
             if(write_mask[i])
                 write_num = write_num + 1;
             else
@@ -95,7 +96,7 @@ module upsp_outbuf # (
     wire [N_BUF_FIFO-1:0] fifo_wrt;
     wire [N_BUF_FIFO-1:0] fifo_rd;
     wire [23:0] fifo_odata[N_BUF_FIFO-1:0];
-    reg  [23:0] fifo_idata[N_BUF_FIFO-1:0];
+    wire [23:0] fifo_idata[N_BUF_FIFO-1:0];
 
     assign fifo_wrt = buf_wvalid?{N_BUF_FIFO{1'b1}}:{N_BUF_FIFO{1'b0}};
     assign buf_wready = ~(|fifo_full);
@@ -104,7 +105,7 @@ module upsp_outbuf # (
 
     genvar j;
     generate
-        for(j = 0; j < N_BUF_FIFO; j++) begin
+        for(j = 0; j < N_BUF_FIFO; j=j+1) begin
             fifo #(
 	           .FIFO_DEPTH			(DEPTH),
 	           .FIFO_WIDTH			(24))
