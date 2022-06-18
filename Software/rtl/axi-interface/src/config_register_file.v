@@ -26,6 +26,7 @@ module config_register_file # (
    s_axi_awready, s_axi_wready, s_axi_bvalid, s_axi_bresp,
    s_axi_arready, s_axi_rvalid, s_axi_rdata, s_axi_rresp,
    interrupt_updone, crf_ac_UPSTART, crf_ac_UPEND, crf_ac_wbusy,
+   ac_crf_UPINHSKCNT,
    // Inputs
    clk, rst_n, s_axi_awvalid, s_axi_awaddr, s_axi_awprot,
    s_axi_wvalid, s_axi_wdata, s_axi_wstrb, s_axi_bready,
@@ -81,6 +82,7 @@ module config_register_file # (
 	output                      crf_ac_UPSTART;
 	output                      crf_ac_UPEND;
 	output                      crf_ac_wbusy;
+	output [CRF_DATA_WIDTH-1:0] ac_crf_UPINHSKCNT;
 
 	// Input and output axi-stream handshake signals
 	input                       ac_crf_axisi_tvalid;
@@ -95,6 +97,7 @@ module config_register_file # (
 
 	/*AUTOREG*/
 	// Beginning of automatic regs (for this module's undeclared outputs)
+	reg [CRF_DATA_WIDTH-1:0] ac_crf_UPINHSKCNT;
 	reg		s_axi_arready;
 	reg		s_axi_awready;
 	reg		s_axi_bvalid;

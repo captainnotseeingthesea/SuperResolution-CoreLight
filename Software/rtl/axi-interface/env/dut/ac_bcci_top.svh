@@ -35,6 +35,7 @@ module ac_bcci_top(ac_if acif);
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    wire [CRF_DATA_WIDTH-1:0] ac_crf_UPINHSKCNT;// From AAA_config_register_file of config_register_file.v
     wire		ac_crf_axisi_tready;	// From AAA_access_control of access_control.v
     wire		ac_crf_axisi_tvalid;	// From AAA_access_control of access_control.v
     wire		ac_crf_axiso_tready;	// From AAA_access_control of access_control.v
@@ -97,6 +98,7 @@ module ac_bcci_top(ac_if acif);
 			     .crf_ac_UPSTART	(crf_ac_UPSTART),
 			     .crf_ac_UPEND	(crf_ac_UPEND),
 			     .crf_ac_wbusy	(crf_ac_wbusy),
+			     .ac_crf_UPINHSKCNT	(ac_crf_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 			     // Inputs
 			     .clk		(acif.clk),	 // Templated
 			     .rst_n		(acif.rst_n),	 // Templated
@@ -163,7 +165,8 @@ module ac_bcci_top(ac_if acif);
 		     .SRC_IMG_HEIGHT	(SRC_IMG_HEIGHT),
 		     .DST_IMG_WIDTH	(DST_IMG_WIDTH),
 		     .DST_IMG_HEIGHT	(DST_IMG_HEIGHT),
-		     .OUT_FIFO_DEPTH	(OUT_FIFO_DEPTH))
+		     .OUT_FIFO_DEPTH	(OUT_FIFO_DEPTH),
+		     .N_PARALLEL	(N_PARALLEL))
     AAA_access_control(/*AUTOINST*/
 		       // Outputs
 		       .ac_crf_wrt	(ac_crf_wrt),
@@ -192,6 +195,7 @@ module ac_bcci_top(ac_if acif);
 		       .crf_ac_UPSTART	(crf_ac_UPSTART),
 		       .crf_ac_UPEND	(crf_ac_UPEND),
 		       .crf_ac_wbusy	(crf_ac_wbusy),
+		       .ac_crf_UPINHSKCNT(ac_crf_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 		       .upsp_ac_rready	(acif.usif.upsp_ac_rready), // Templated
 		       .upsp_ac_wvalid	(acif.usif.upsp_ac_wvalid), // Templated
 		       .upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_WRTDATA_WIDTH-1:0]), // Templated
