@@ -33,7 +33,7 @@ module access_control # (
 
 		parameter OUT_FIFO_DEPTH = 32,
 
-		parameter N_PARALLEL	 = 2
+		parameter N_PARALLEL	 = 1
 	) (/*AUTOARG*/
    // Outputs
    ac_crf_wrt, ac_crf_wdata, ac_crf_waddr, ac_crf_processing,
@@ -252,12 +252,12 @@ module access_control # (
 		end else if(write_done) begin
 			ac_rdbuf_cnt <= {IMG_CNT_WIDTH{1'b0}};
 		end else if(|obuf_rd) begin
-			ac_rdbuf_cnt <= ac_rdbuf_cnt + 4;
+			ac_rdbuf_cnt <= ac_rdbuf_cnt + 4*N_PARALLEL;
 		end
 	end
 
 	// Output tranfer valid depends on obuf_rd. tlast should be asserted for every row
-	wire last_of_row_remain = (ac_rdbuf_cnt_inrow == DST_IMG_WIDTH - 4);
+	wire last_of_row_remain = (ac_rdbuf_cnt_inrow == DST_IMG_WIDTH - 4*N_PARALLEL);
 
 	always @(posedge clk or negedge rst_n) begin: M_TVALID
 		if(~rst_n) begin
@@ -293,7 +293,7 @@ module access_control # (
 
 	genvar j;
 	generate
-		if(N_PARALLEL = 0) begin
+		if(N_PARALLEL = 1) begin
 			// If there is only one upsp element, its outbuf depth could be very small, since
 			// we don't need to save data from other sources when transfer data from one source,
 			// there is only one source.

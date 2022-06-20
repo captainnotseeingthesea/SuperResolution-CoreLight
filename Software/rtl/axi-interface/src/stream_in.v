@@ -77,7 +77,7 @@ module stream_in # (
 
 	// Because VDMA in xilinx will send a tlast signal for every row. So we need to track it.
 	reg [DST_IMG_HEIGHT_LB2-1:0] input_row_cnt;
-	always@(posedge clk or negedge rst_n) begin
+	always@(posedge clk or negedge rst_n) begin: INROW_CNT
 		if(~rst_n)
 			input_row_cnt <= {DST_IMG_HEIGHT_LB2{1'b0}};
 		else if(one_row_hsked)
@@ -107,12 +107,14 @@ module stream_in # (
 
 	// Send input stream to one upsp processing element, or multiple elements
 	// when the data is in boundary
-
+	localparam BLOCK_SIZE = (SRC_IMG_WIDTH/N_PARALLEL);
 	wire [CRF_DATA_WIDTH-1:0] cur_row_pos = UPINHSKCNT % SRC_IMG_WIDTH;
 
-	// If not frame_done, bypass the signals.
-	assign s_axis_tready  = (|upsp_ac_rready) & ~frame_done;
+	// If not frame_done, generate tready signals depending on upsp ready.
+	wire [N_PARALLEL-1:0] tready;
+	assign s_axis_tready  = |tready & ~frame_done;
 	assign ac_upsp_rdata  = s_axis_tdata;
+
 
 	genvar j;
 	generate
@@ -120,24 +122,19 @@ module stream_in # (
 			
 			if(j == 0) begin
 				
-				localparam BLOCK_SIZE = (SRC_IMG_WIDTH/N_PARALLEL);
 				localparam START = 0;
-				localparam END = START + BLOCK_SIZE;
-				assign ac_upsp_rvalid[j] = ((cur_row_pos >= START) && (cur_row_pos <= END))?1'b1:1'b0;
-
-			end else if(j == N_PARALLEL-1) begin
+				localparam END = START + BLOCK_SIZE -1 + 3;
+				wire inside = ((cur_row_pos >= START) && (cur_row_pos <= END))?1'b1:1'b0;
+				assign ac_upsp_rvalid[j] = inside & s_axis_tvalid;
+				assign tready[j] = inside & ac_upsp_wready[j];
 				
-				localparam BLOCK_SIZE = (SRC_IMG_WIDTH/N_PARALLEL);
-				localparam START = 0;
-				localparam END = START + BLOCK_SIZE;
-				assign ac_upsp_rvalid[j] = ((cur_row_pos >= START) && (cur_row_pos <= END))?1'b1:1'b0;
-
 			end else begin
 				
-				localparam BLOCK_SIZE = (SRC_IMG_WIDTH/N_PARALLEL);
-				localparam START = (SRC_IMG_WIDTH/N_PARALLEL)+j*BLOCK_SIZE;
-				localparam END = START + BLOCK_SIZE;
-				assign ac_upsp_rvalid[j] = ((cur_row_pos >= START) && (cur_row_pos <= END))?1'b1:1'b0;
+				localparam START = j*BLOCK_SIZE;
+				localparam END = START + BLOCK_SIZE -1;
+				wire inside = ((cur_row_pos >= START) && (cur_row_pos <= END))?1'b1:1'b0;
+				assign ac_upsp_rvalid[j] = inside & s_axis_tvalid;
+				assign tready[j] = inside & ac_upsp_wready[j];
 
 			end
 
