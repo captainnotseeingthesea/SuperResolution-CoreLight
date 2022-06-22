@@ -82,9 +82,10 @@ endtask: configure_phase
 
 
 task m_axi_lite_driver::post_main_phase(uvm_phase phase);
+    `uvm_info("m_axi_lite_driver", "\nwaiting for interrupt\n", UVM_NONE)
     
     while(acif.interrupt_updone == 1'b0) @(posedge vif.aclk);
-
+    `uvm_info("m_axi_lite_driver", "\nSee interrupt!\n", UVM_NONE)
     while(1) begin
         seq_item_port.get_next_item(req);
         write_one_trans(req);

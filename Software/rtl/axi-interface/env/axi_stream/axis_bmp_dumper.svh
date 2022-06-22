@@ -68,7 +68,7 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
     while(1) begin
         dump_port.get(t);
 
-        for(int k = 0; k < t.tkeep.size(); k++) begin
+        for(int k = t.tkeep.size()-1; k >= 0; k--) begin
             if(t.tkeep[k]) begin
                 if(t.tstrb[k]) 
                     data[pos/3][2-pos%3] = t.tdata[k];

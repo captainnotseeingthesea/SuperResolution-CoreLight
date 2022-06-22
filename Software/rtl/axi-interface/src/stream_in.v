@@ -20,6 +20,7 @@ module stream_in # (
 		parameter UPSP_RDDATA_WIDTH = 32,
 		parameter SRC_IMG_WIDTH  = 1920,
 		parameter SRC_IMG_HEIGHT = 1080,
+		parameter CRF_DATA_WIDTH = 32,
 		parameter N_PARALLEL	 = 2
 	) (/*AUTOARG*/
    // Outputs
@@ -111,33 +112,24 @@ module stream_in # (
 	wire [CRF_DATA_WIDTH-1:0] cur_row_pos = UPINHSKCNT % SRC_IMG_WIDTH;
 
 	// If not frame_done, generate tready signals depending on upsp ready.
+	// The tready for output will be asserted if all elements requiring the data are ready
 	wire [N_PARALLEL-1:0] tready;
-	assign s_axis_tready  = |tready & ~frame_done;
+	wire all_ready = ~(|(ac_upsp_rvalid^tready)) & (|tready);
+	assign s_axis_tready  = all_ready & ~frame_done;
 	assign ac_upsp_rdata  = s_axis_tdata;
 
+	wire [N_PARALLEL-1:0] in_range;
 
 	genvar j;
 	generate
 		for(j = 0; j < N_PARALLEL; j=j+1) begin
-			
-			if(j == 0) begin
-				
-				localparam START = 0;
-				localparam END = START + BLOCK_SIZE -1 + 3;
-				wire inside = ((cur_row_pos >= START) && (cur_row_pos <= END))?1'b1:1'b0;
-				assign ac_upsp_rvalid[j] = inside & s_axis_tvalid;
-				assign tready[j] = inside & ac_upsp_wready[j];
-				
-			end else begin
-				
-				localparam START = j*BLOCK_SIZE;
-				localparam END = START + BLOCK_SIZE -1;
-				wire inside = ((cur_row_pos >= START) && (cur_row_pos <= END))?1'b1:1'b0;
-				assign ac_upsp_rvalid[j] = inside & s_axis_tvalid;
-				assign tready[j] = inside & ac_upsp_wready[j];
+			localparam START = (j == 0)?0:j*BLOCK_SIZE;
+			localparam END = (j == 0)?((N_PARALLEL==1)?(START + BLOCK_SIZE -1):(START + BLOCK_SIZE -1 + 3))
+									:START + BLOCK_SIZE -1;
 
-			end
-
+			assign in_range[j] = (cur_row_pos >= START) && (cur_row_pos <= END);
+			assign ac_upsp_rvalid[j] = in_range[j] & s_axis_tvalid;
+			assign tready[j] = in_range[j] & upsp_ac_rready[j];
 		end
 	endgenerate
 

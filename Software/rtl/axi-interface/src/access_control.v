@@ -44,7 +44,7 @@ module access_control # (
    m_axis_user,
    // Inputs
    clk, rst_n, crf_ac_UPSTART, crf_ac_UPEND, crf_ac_wbusy,
-   ac_crf_UPINHSKCNT, upsp_ac_rready, upsp_ac_wvalid, upsp_ac_wdata,
+   crf_ac_UPINHSKCNT, upsp_ac_rready, upsp_ac_wvalid, upsp_ac_wdata,
    s_axis_tvalid, s_axis_tid, s_axis_tdata, s_axis_tstrb,
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user,
    m_axis_tready
@@ -52,8 +52,57 @@ module access_control # (
 
 	localparam AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8;
 	localparam AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8;
-	localparam IMG_CNT_WIDTH      = $clog2(DST_IMG_WIDTH*DST_IMG_HEIGHT);
-	localparam DST_IMG_WIDTH_LB2  = $clog2(DST_IMG_WIDTH);
+	localparam SRC_BASE_BSIZE     = SRC_IMG_WIDTH/N_PARALLEL;
+	localparam DST_BASE_BSIZE     = SRC_BASE_BSIZE*4;
+	localparam N_UPSP_WRT         = UPSP_WRTDATA_WIDTH/24;
+
+	function integer start_of_rd;
+		input integer i;
+		integer pos, j;
+		integer data_size;
+		begin
+			data_size = N_UPSP_WRT*N_PARALLEL;
+			if(i == 0)
+				start_of_rd = 0;
+			else begin
+				pos = (SRC_BASE_BSIZE+3)*4 - 1;
+				pos = pos / data_size;
+				pos = (pos+1) * data_size;
+				for(j = 1; j < i; j=j+1) begin
+					pos = pos + SRC_BASE_BSIZE*4 - 1;
+					pos = pos / data_size;
+					pos = (pos+1) * data_size;
+				end
+				start_of_rd = pos;
+			end
+		end
+	endfunction
+
+	function integer end_of_rd;
+		input integer i;
+		integer pos;
+		integer data_size;
+		begin
+			data_size = N_UPSP_WRT*N_PARALLEL;
+			if(i == 0) begin
+				pos = (SRC_BASE_BSIZE+3)*4 - 1;
+				pos = pos / data_size;
+			end else begin
+				pos = start_of_rd(i);
+				pos = pos + SRC_BASE_BSIZE*4 - 1;
+				pos = pos / data_size;
+			end
+			pos = pos * data_size;
+			end_of_rd = pos;
+		end
+	endfunction
+
+	localparam DST_GEN_WIDTH      = (N_PARALLEL==1)?DST_IMG_WIDTH
+									:(end_of_rd(N_PARALLEL-1)+8);
+
+	localparam IMG_CNT_WIDTH      = $clog2(DST_GEN_WIDTH*DST_IMG_HEIGHT);
+	localparam DST_IMG_WIDTH_LB2  = $clog2(DST_GEN_WIDTH);
+
 
 	input clk;
 	input rst_n;
@@ -65,7 +114,7 @@ module access_control # (
 	input                       crf_ac_UPSTART;
 	input                       crf_ac_UPEND  ;
 	input                       crf_ac_wbusy;
-	input [CRF_DATA_WIDTH-1:0]  ac_crf_UPINHSKCNT;
+	input [CRF_DATA_WIDTH-1:0]  crf_ac_UPINHSKCNT;
 	output                      ac_crf_processing;
 	output                      ac_crf_axisi_tvalid;
 	output                      ac_crf_axisi_tready;
@@ -79,7 +128,7 @@ module access_control # (
 	output [UPSP_RDDATA_WIDTH-1:0]            ac_upsp_rdata;
 	output [N_PARALLEL-1:0]                   ac_upsp_wready;
 	input  [N_PARALLEL-1:0]                   upsp_ac_wvalid;
-	input  [N_PARALLEL*UPSP_RDDATA_WIDTH-1:0] upsp_ac_wdata;
+	input  [N_PARALLEL*UPSP_WRTDATA_WIDTH-1:0] upsp_ac_wdata;
 
 
 
@@ -113,10 +162,6 @@ module access_control # (
 
 
 	/*AUTOWIRE*/
-	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		obuf_empty;		// From obuf of upsp_outbuf.v
-	wire		obuf_wready;		// From obuf of upsp_outbuf.v
-	// End of automatics
 
 	/*AUTOREG*/
 	// Beginning of automatic regs (for this module's undeclared outputs)
@@ -126,14 +171,17 @@ module access_control # (
 	reg		m_axis_tlast;
 	reg		m_axis_tvalid;
 	// End of automatics
+	reg [AXISOUT_DATA_WIDTH-1:0] m_axis_tdata;
+	reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep;
+	reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb;
 
-
+	genvar j;
 
 
 	// Rename config registers and output UPSTART and UPEND
 	wire UPSTART = crf_ac_UPSTART;
 	wire UPEND   = crf_ac_UPEND;
-	wire [CRF_DATA_WIDTH-1:0] UPINHSKCNT = ac_crf_UPINHSKCNT;
+	wire [CRF_DATA_WIDTH-1:0] UPINHSKCNT = crf_ac_UPINHSKCNT;
 
 
 	// Whether IP is under processing or not. This signal will be asserted 
@@ -195,7 +243,9 @@ module access_control # (
 		    // Parameters
 		    .AXISIN_DATA_WIDTH	(AXISIN_DATA_WIDTH),
 		    .UPSP_RDDATA_WIDTH	(UPSP_RDDATA_WIDTH),
+		    .SRC_IMG_WIDTH	(SRC_IMG_WIDTH),
 		    .SRC_IMG_HEIGHT	(SRC_IMG_HEIGHT),
+		    .CRF_DATA_WIDTH	(CRF_DATA_WIDTH),
 		    .N_PARALLEL		(N_PARALLEL))
 	AAA_stream_in(
 			  .s_axis_aclk	(clk),
@@ -220,28 +270,21 @@ module access_control # (
 		      .s_axis_user	(s_axis_user));
 
 
-
-
-
-
-
-	output [N_PARALLEL-1:0]                   ac_upsp_wready;
-	input  [N_PARALLEL-1:0]                   upsp_ac_wvalid;
-	input  [N_PARALLEL*UPSP_RDDATA_WIDTH-1:0] upsp_ac_wdata;
-
 	// One outbuf per element
+
 	wire [N_PARALLEL-1:0] obuf_wvalid;
 	wire [N_PARALLEL-1:0] obuf_rd;
 	wire [N_PARALLEL-1:0] obuf_rdmask;
 	wire [N_PARALLEL-1:0] obuf_wready;
 	wire [N_PARALLEL-1:0] obuf_empty;
+	wire  [AXISOUT_DATA_WIDTH*N_PARALLEL-1:0] obuf_odata;
 
 
 	// Read buf total count.
 	reg [IMG_CNT_WIDTH-1:0]      ac_rdbuf_cnt;
 	wire [DST_IMG_WIDTH_LB2-1:0] ac_rdbuf_cnt_inrow;
-	assign ac_rdbuf_cnt_inrow = (ac_rdbuf_cnt % DST_IMG_WIDTH);
-	assign last_one_remain = (ac_rdbuf_cnt  == DST_IMG_HEIGHT*DST_IMG_WIDTH)?1'b1:1'b0;
+	assign ac_rdbuf_cnt_inrow = (ac_rdbuf_cnt % DST_GEN_WIDTH);
+	assign last_one_remain = (ac_rdbuf_cnt  == DST_IMG_HEIGHT*DST_GEN_WIDTH)?1'b1:1'b0;
 
 	always @(posedge clk or negedge rst_n) begin: BUFRD_COUNT
 		if(~rst_n) begin
@@ -252,12 +295,12 @@ module access_control # (
 		end else if(write_done) begin
 			ac_rdbuf_cnt <= {IMG_CNT_WIDTH{1'b0}};
 		end else if(|obuf_rd) begin
-			ac_rdbuf_cnt <= ac_rdbuf_cnt + 4*N_PARALLEL;
+			ac_rdbuf_cnt <= ac_rdbuf_cnt + N_UPSP_WRT*N_PARALLEL;
 		end
 	end
 
 	// Output tranfer valid depends on obuf_rd. tlast should be asserted for every row
-	wire last_of_row_remain = (ac_rdbuf_cnt_inrow == DST_IMG_WIDTH - 4*N_PARALLEL);
+	wire last_of_row_remain = (ac_rdbuf_cnt_inrow == DST_GEN_WIDTH - N_UPSP_WRT*N_PARALLEL);
 
 	always @(posedge clk or negedge rst_n) begin: M_TVALID
 		if(~rst_n) begin
@@ -286,21 +329,25 @@ module access_control # (
 	assign m_axis_tdest = 1'b0;
 	assign m_axis_user  = 1'b0;
 
-	// Throw away some pixels between element
-	assign m_axis_tkeep = {AXISOUT_STRB_WIDTH{1'b1}};
-	assign m_axis_tstrb = {AXISOUT_STRB_WIDTH{1'b1}};
 
-
-	genvar j;
 	generate
-		if(N_PARALLEL = 1) begin
+		if(N_PARALLEL == 1) begin: ONE_ELE
 			// If there is only one upsp element, its outbuf depth could be very small, since
 			// we don't need to save data from other sources when transfer data from one source,
 			// there is only one source.
 
 			// When only one source, all its data are desired, so
-			assign m_axis_tkeep = {AXISOUT_STRB_WIDTH{1'b1}};
-			assign m_axis_tstrb = {AXISOUT_STRB_WIDTH{1'b1}};
+			always@(*) begin
+				m_axis_tkeep = {AXISOUT_STRB_WIDTH{1'b1}};
+				m_axis_tstrb = {AXISOUT_STRB_WIDTH{1'b1}};		
+			end
+
+			always@(*) begin: ONE_ELE_TDATA
+				integer i;
+				for(i = 0; i < AXISOUT_STRB_WIDTH; i=i+1) begin
+					m_axis_tdata[i*8+:8] = obuf_odata[((AXISOUT_STRB_WIDTH-i)*8-1)-:8];
+				end
+			end
 
 			// Only in time-window can Up-Sampling write to fifo.
 			assign obuf_wvalid = upsp_ac_wvalid & time_window;
@@ -314,111 +361,178 @@ module access_control # (
 				  .DEPTH		(OUT_FIFO_DEPTH),
 				  .DST_IMG_HEIGHT		(DST_IMG_HEIGHT),
 				  .DST_IMG_WIDTH	(DST_IMG_WIDTH))
-			obuf(/*AUTOINST*/
+			obuf(
 			     // Outputs
-			     .buf_wready		(obuf_wready),		 // Templated
-			     .buf_rdata			(m_axis_tdata),		 // Templated
-			     .buf_empty			(obuf_empty),		 // Templated
+			     .buf_wready		(obuf_wready),
+			     .buf_rdata			(obuf_odata),
+			     .buf_empty			(obuf_empty),
 			     // Inputs
-			     .clk			(clk),			 // Templated
-			     .rst_n			(rst_n&(~write_done)),	 // Templated
-			     .buf_wvalid		(obuf_wvalid),		 // Templated
-			     .buf_wdata			(upsp_ac_wdata),	 // Templated
-			     .buf_rd			(obuf_rd));		 // Templated
+			     .clk			(clk),
+			     .rst_n			(rst_n&(~write_done)),
+			     .buf_wvalid		(obuf_wvalid),
+			     .buf_wdata			(upsp_ac_wdata),
+			     .buf_rd			(obuf_rd));
 
 			
-		end else begin
+		end else begin:MULTI_ELE
 			// When there are multiple elements, we need to throw some data at boundary
-			begin
 
-				assign m_axis_tkeep = {AXISOUT_STRB_WIDTH{1'b1}};
-				assign m_axis_tstrb = {AXISOUT_STRB_WIDTH{1'b1}};
-
+			// Select output data from one of the buf
+			reg  [N_PARALLEL-1:0] obuf_rd_r;
+			always@(posedge clk or negedge rst_n) begin
+				if(~rst_n)
+					obuf_rd_r <= {N_PARALLEL{1'b0}};
+				else if(~m_axis_tvalid | m_axis_tready) begin
+						obuf_rd_r <= obuf_rd;
+				end
 			end
 
-			for(j = 0; j < N_PARALLEL; j=j+1) begin
+			reg [AXISOUT_DATA_WIDTH-1:0] axis_tdata_tmp;
+			always@(*) begin: MULTIELE_TDATA
+				integer i;
+				for(i = 0; i < N_PARALLEL; i=i+1) begin
+					if(obuf_rd_r[i] == 1)
+						axis_tdata_tmp = obuf_odata[i*AXISOUT_DATA_WIDTH+:AXISOUT_DATA_WIDTH];
+				end
+				for(i = 0; i < AXISOUT_STRB_WIDTH; i=i+1) begin
+					m_axis_tdata[i*8+:8] = axis_tdata_tmp[((AXISOUT_STRB_WIDTH-i)*8-1)-:8];
+				end
+			end
+			
 
+			reg [AXISOUT_STRB_WIDTH-1:0] keep[N_PARALLEL-1:0];
+			reg [AXISOUT_STRB_WIDTH-1:0] strb[N_PARALLEL-1:0];
+
+			for(j = 0; j < N_PARALLEL; j=j+1) begin:OBUF_PER_ELE
+				
+				localparam SRC_BSIZE = (j==0)?(SRC_BASE_BSIZE + 3):SRC_BASE_BSIZE;
+				localparam DST_BSIZE = SRC_BSIZE * 4;
+				// Start and End position of this block, when pixels are arranged as N_PARALLEL*N_UPSP_WRT
+				// aligned.
+				localparam START = start_of_rd(j);
+				localparam END = end_of_rd(j);
+				// If the last 6 pixels of a block-line only locate at the last transfer or not.
+				localparam CORSS_BOUNDARY = ((START + DST_BSIZE - 6) >= END)?0:1;
+				// The number of the last valid pixel in block-line.
+				localparam N_LAST_VALID = (j == N_PARALLEL - 1)?(START + DST_BSIZE - 1 - END) + 1
+										  :CORSS_BOUNDARY?(START + DST_BSIZE - 6 - 1 - (END - N_PARALLEL*N_UPSP_WRT)) + 1
+										  :(START + DST_BSIZE - 6 - 1 - END) + 1;
+
+				assign obuf_wvalid[j] = upsp_ac_wvalid[j] & time_window;
+				assign ac_upsp_wready[j] = obuf_wready[j];
+
+				// If fifo is not empty, and there is no transfer or the tranfer will complete, and this
+				// buf contains the desired data, read from fifo.
+				assign obuf_rdmask [j] = (ac_rdbuf_cnt_inrow >= START) && (ac_rdbuf_cnt_inrow <= END);
+				assign obuf_rd[j] = obuf_rdmask[j] & ~obuf_empty[j] & (~m_axis_tvalid | m_axis_tready) & time_window;
+
+		    	ac_outbuf #(
+        			  .UPSP_WRTDATA_WIDTH (UPSP_WRTDATA_WIDTH),
+        			  .DST_IMG_WIDTH      (DST_BSIZE),
+        			  .DST_IMG_HEIGHT     (DST_IMG_HEIGHT),
+        			  .N_PARALLEL	      (N_PARALLEL))
+				obuf(
+				     // Outputs
+				     .buf_wready		(obuf_wready[j]),
+				     .buf_rdata			(obuf_odata[j*AXISOUT_DATA_WIDTH+:AXISOUT_DATA_WIDTH]),
+				     .buf_empty			(obuf_empty[j]),
+				     // Inputs
+				     .clk			(clk),
+				     .rst_n			(rst_n&(~write_done)),
+				     .buf_wvalid		(obuf_wvalid[j]),
+				     .buf_wdata			(upsp_ac_wdata[j*UPSP_WRTDATA_WIDTH+:UPSP_WRTDATA_WIDTH]),
+				     .buf_rd			(obuf_rd[j]));
+
+				// Generate corresponding keep and strb signals
 				if(j == 0) begin
-					localparam OBUF_DEPTH = (DST_IMG_WIDTH/N_PARALLEL);
 
-					assign obuf_wvalid[j] = upsp_ac_wvalid[j] & time_window;
-					assign ac_upsp_wready[j] = obuf_wready[j];
+					always@(posedge clk or negedge rst_n) begin
+						if(~rst_n) begin
+							keep[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
+							strb[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
+						end else if(~m_axis_tvalid | m_axis_tready) begin
+							if(ac_rdbuf_cnt_inrow == END - N_PARALLEL*N_UPSP_WRT) begin
+								keep[j] <= (CORSS_BOUNDARY)?{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}}
+											:{AXISOUT_STRB_WIDTH{1'b1}};
+								strb[j] <= (CORSS_BOUNDARY)?{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}}
+											:{AXISOUT_STRB_WIDTH{1'b1}};
+							end else if(ac_rdbuf_cnt_inrow == END) begin
+								keep[j] <= (CORSS_BOUNDARY)?{AXISOUT_STRB_WIDTH{1'b0}}
+											:{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}};
+								strb[j] <= (CORSS_BOUNDARY)?{AXISOUT_STRB_WIDTH{1'b0}}
+											:{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}};
+							end else begin
+								keep[j] <= {AXISOUT_STRB_WIDTH{1'b1}};
+								strb[j] <= {AXISOUT_STRB_WIDTH{1'b1}};
+							end
+						end
+					end
 
-					// If fifo is not empty, and there is no transfer or the tranfer will complete, and this
-					// buf contains the desired data, read from fifo.
-					assign obuf_rd[j] = obuf_rdmask[j] & ~obuf_empty[j] & (~m_axis_tvalid | m_axis_tready) & time_window;
+				end else if(j == N_PARALLEL - 1) begin
 
-		    		upsp_outbuf #(
-						  .DATA_WIDTH		(AXISOUT_DATA_WIDTH),
-						  .DEPTH		(OUT_FIFO_DEPTH),
-						  .DST_IMG_HEIGHT		(DST_IMG_HEIGHT),
-						  .DST_IMG_WIDTH	(DST_IMG_WIDTH))
-					obuf(/*AUTOINST*/
-					     // Outputs
-					     .buf_wready		(obuf_wready[j]),		 // Templated
-					     .buf_rdata			(m_axis_tdata),		 // Templated
-					     .buf_empty			(obuf_empty[j]),		 // Templated
-					     // Inputs
-					     .clk			(clk),			 // Templated
-					     .rst_n			(rst_n&(~write_done)),	 // Templated
-					     .buf_wvalid		(obuf_wvalid[j]),		 // Templated
-					     .buf_wdata			(upsp_ac_wdata[j*UPSP_RDDATA_WIDTH+UPSP_RDDATA_WIDTH-1:j*UPSP_RDDATA_WIDTH]),	 // Templated
-					     .buf_rd			(obuf_rd[j]));		 // Templated
-
-
-
-				end else if(j == N_PARALLEL-1) begin
+					always@(posedge clk or negedge rst_n) begin
+						if(~rst_n) begin
+							keep[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
+							strb[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
+						end else if(~m_axis_tvalid | m_axis_tready) begin
+							if(ac_rdbuf_cnt_inrow == START) begin
+								keep[j] <= {18'b0, {(AXISOUT_STRB_WIDTH-18){1'b1}}};
+								strb[j] <= {18'b0, {(AXISOUT_STRB_WIDTH-18){1'b1}}};
+							end else if(ac_rdbuf_cnt_inrow == END) begin
+								keep[j] <= {{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}};
+								strb[j] <= {{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}};
+							end else begin
+								keep[j] <= {AXISOUT_STRB_WIDTH{1'b1}};
+								strb[j] <= {AXISOUT_STRB_WIDTH{1'b1}};
+							end
+						end
+					end
 
 				end else begin
+
+					always@(posedge clk or negedge rst_n) begin
+						if(~rst_n) begin
+							keep[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
+							strb[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
+						end else if(~m_axis_tvalid | m_axis_tready) begin
+							if(ac_rdbuf_cnt_inrow == START) begin
+								keep[j] <= {18'b0, {(AXISOUT_STRB_WIDTH-18){1'b1}}};
+								strb[j] <= {18'b0, {(AXISOUT_STRB_WIDTH-18){1'b1}}};
+							end else if(ac_rdbuf_cnt_inrow == END - N_PARALLEL*N_UPSP_WRT) begin
+								keep[j] <= (CORSS_BOUNDARY)?{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}}
+											:{AXISOUT_STRB_WIDTH{1'b1}};
+								strb[j] <= (CORSS_BOUNDARY)?{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}}
+											:{AXISOUT_STRB_WIDTH{1'b1}};
+							end else if(ac_rdbuf_cnt_inrow == END) begin
+								keep[j] <= (CORSS_BOUNDARY)?{AXISOUT_STRB_WIDTH{1'b0}}
+											:{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}};
+								strb[j] <= (CORSS_BOUNDARY)?{AXISOUT_STRB_WIDTH{1'b0}}
+											:{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}};
+							end else begin
+								keep[j] <= {AXISOUT_STRB_WIDTH{1'b1}};
+								strb[j] <= {AXISOUT_STRB_WIDTH{1'b1}};
+							end
+						end
+					end
 
 				end
 
 			end
+
+			always@(*) begin: MULTIELE_TKEEP
+				integer i;
+				m_axis_tkeep = {AXISOUT_STRB_WIDTH{1'b1}};
+				m_axis_tstrb = {AXISOUT_STRB_WIDTH{1'b1}};
+				for(i = 0; i < N_PARALLEL; i=i+1) begin
+					if(obuf_rd_r[i] == 1'b1) begin
+						m_axis_tkeep = keep[i];
+						m_axis_tstrb = strb[i];
+					end
+				end
+			end
+
 		end
 	endgenerate
-
-	// Output buffer
-
-	// Only in time-window can Up-Sampling write to fifo.
-	wire obuf_wvalid = upsp_ac_wvalid & time_window;
-	assign ac_upsp_wready = obuf_wready;
-
-	// If fifo is not empty, and there is no transfer or the tranfer will complete, read from fifo.
-	wire obuf_rd = ~obuf_empty & (~m_axis_tvalid | m_axis_tready) & time_window;
-
-
-    /*upsp_outbuf AUTO_TEMPLATE(
-	     .buf_wready		(obuf_wready),
-	     .buf_rdata			(m_axis_tdata),
-	     .buf_empty			(obuf_empty),
-	     .clk				(clk),
-	     .rst_n				(rst_n&(~write_done)),
-	     .buf_wvalid		(obuf_wvalid),
-	     .buf_wdata			(upsp_ac_wdata),
-	     .buf_rd			(obuf_rd),
-    )*/
-
-    upsp_outbuf #(
-		  .DATA_WIDTH		(AXISOUT_DATA_WIDTH),
-		  .DEPTH		(OUT_FIFO_DEPTH),
-		  .DST_IMG_HEIGHT		(DST_IMG_HEIGHT),
-		  .DST_IMG_WIDTH	(DST_IMG_WIDTH))
-	obuf(/*AUTOINST*/
-	     // Outputs
-	     .buf_wready		(obuf_wready),		 // Templated
-	     .buf_rdata			(m_axis_tdata),		 // Templated
-	     .buf_empty			(obuf_empty),		 // Templated
-	     // Inputs
-	     .clk			(clk),			 // Templated
-	     .rst_n			(rst_n&(~write_done)),	 // Templated
-	     .buf_wvalid		(obuf_wvalid),		 // Templated
-	     .buf_wdata			(upsp_ac_wdata),	 // Templated
-	     .buf_rd			(obuf_rd));		 // Templated
-
-
-
-
-
 
 
 // Additional code for easy debugging
@@ -432,6 +546,14 @@ module access_control # (
 			startup <= 1'b1;
 		else
 			startup <= 1'b0;
+	end
+
+	integer out_line_count;
+	always@(posedge clk or negedge rst_n) begin: LINE_COUNT
+		if(~rst_n | write_done)
+			out_line_count <= 1'b0;
+		else if(m_axis_tvalid & m_axis_tready & m_axis_tlast)
+			out_line_count <= out_line_count + 1;
 	end
 
 `endif

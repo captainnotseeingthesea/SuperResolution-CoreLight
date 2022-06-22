@@ -36,7 +36,7 @@ module bcci_ip
 	parameter AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8 ,
 	parameter AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8,
 
-	parameter BLOCK_SIZE         = DST_IMG_WIDTH
+	parameter N_PARALLEL         = `N_PARALLEL
 )
 (/*AUTOARG*/
    // Outputs
@@ -113,15 +113,10 @@ module bcci_ip
     wire [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;	// From AAA_access_control of access_control.v
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
-    wire [UPSP_RDDATA_WIDTH-1:0] ac_upsp_rdata;	// From AAA_access_control of access_control.v
-    wire		ac_upsp_rvalid;		// From AAA_access_control of access_control.v
-    wire		ac_upsp_wready;		// From AAA_access_control of access_control.v
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
+    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPINHSKCNT;// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
-    wire		upsp_ac_rready;		// From AAA_bicubic_processing_element of bicubic_processing_element.v
-    wire [BUFFER_WIDTH*4-1:0] upsp_ac_wdata;	// From AAA_bicubic_processing_element of bicubic_processing_element.v
-    wire		upsp_ac_wvalid;		// From AAA_bicubic_processing_element of bicubic_processing_element.v
     // End of automatics
 
 
@@ -153,6 +148,7 @@ module bcci_ip
 			     .crf_ac_UPSTART	(crf_ac_UPSTART),
 			     .crf_ac_UPEND	(crf_ac_UPEND),
 			     .crf_ac_wbusy	(crf_ac_wbusy),
+			     .crf_ac_UPINHSKCNT	(crf_ac_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 			     // Inputs
 			     .clk		(clk),
 			     .rst_n		(rst_n),
@@ -176,6 +172,17 @@ module bcci_ip
 			     .ac_crf_axiso_tready(ac_crf_axiso_tready),
 			     .ac_crf_processing	(ac_crf_processing));
 
+
+
+
+
+	wire [N_PARALLEL-1:0]					 upsp_ac_rready;
+	wire [N_PARALLEL-1:0]         		     ac_upsp_rvalid;
+	wire [UPSP_RDDATA_WIDTH-1:0]             ac_upsp_rdata;
+	wire [N_PARALLEL-1:0]                    ac_upsp_wready;
+	wire [N_PARALLEL-1:0]                    upsp_ac_wvalid;
+	wire [N_PARALLEL*UPSP_WRTDATA_WIDTH-1:0] upsp_ac_wdata;
+
     /* access_control AUTO_TEMPLATE (
     );
     */
@@ -191,7 +198,8 @@ module bcci_ip
 		     .SRC_IMG_HEIGHT	(SRC_IMG_HEIGHT),
 		     .DST_IMG_WIDTH	(DST_IMG_WIDTH),
 		     .DST_IMG_HEIGHT	(DST_IMG_HEIGHT),
-		     .OUT_FIFO_DEPTH	(OUT_FIFO_DEPTH))
+		     .OUT_FIFO_DEPTH	(OUT_FIFO_DEPTH),
+		     .N_PARALLEL	(N_PARALLEL))
     AAA_access_control(/*AUTOINST*/
 		       // Outputs
 		       .ac_crf_wrt	(ac_crf_wrt),
@@ -202,9 +210,9 @@ module bcci_ip
 		       .ac_crf_axisi_tready(ac_crf_axisi_tready),
 		       .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
 		       .ac_crf_axiso_tready(ac_crf_axiso_tready),
-		       .ac_upsp_rvalid	(ac_upsp_rvalid),
+		       .ac_upsp_rvalid	(ac_upsp_rvalid[N_PARALLEL-1:0]),
 		       .ac_upsp_rdata	(ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]),
-		       .ac_upsp_wready	(ac_upsp_wready),
+		       .ac_upsp_wready	(ac_upsp_wready[N_PARALLEL-1:0]),
 		       .s_axis_tready	(s_axis_tready),
 		       .m_axis_tvalid	(m_axis_tvalid),
 		       .m_axis_tid	(m_axis_tid),
@@ -220,9 +228,10 @@ module bcci_ip
 		       .crf_ac_UPSTART	(crf_ac_UPSTART),
 		       .crf_ac_UPEND	(crf_ac_UPEND),
 		       .crf_ac_wbusy	(crf_ac_wbusy),
-		       .upsp_ac_rready	(upsp_ac_rready),
-		       .upsp_ac_wvalid	(upsp_ac_wvalid),
-		       .upsp_ac_wdata	(upsp_ac_wdata[UPSP_WRTDATA_WIDTH-1:0]),
+		       .crf_ac_UPINHSKCNT(crf_ac_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
+		       .upsp_ac_rready	(upsp_ac_rready[N_PARALLEL-1:0]),
+		       .upsp_ac_wvalid	(upsp_ac_wvalid[N_PARALLEL-1:0]),
+		       .upsp_ac_wdata	(upsp_ac_wdata[N_PARALLEL*UPSP_WRTDATA_WIDTH-1:0]),
 		       .s_axis_tvalid	(s_axis_tvalid),
 		       .s_axis_tid	(s_axis_tid),
 		       .s_axis_tdata	(s_axis_tdata[AXISIN_DATA_WIDTH-1:0]),
@@ -236,21 +245,32 @@ module bcci_ip
     /* bicubic_processing_element AUTO_TEMPLATE (
     );
     */
-    bicubic_processing_element #(/*AUTOINSTPARAM*/
-				 // Parameters
-				 .BUFFER_WIDTH		(BUFFER_WIDTH),
-				 .CHANNEL_WIDTH		(CHANNEL_WIDTH),
-				 .BLOCK_SIZE		(BLOCK_SIZE))
-    AAA_bicubic_processing_element(/*AUTOINST*/
-				   // Outputs
-				   .upsp_ac_rready	(upsp_ac_rready),
-				   .upsp_ac_wdata	(upsp_ac_wdata[BUFFER_WIDTH*4-1:0]),
-				   .upsp_ac_wvalid	(upsp_ac_wvalid),
-				   // Inputs
-				   .clk			(clk),
-				   .rst_n		(rst_n),
-				   .ac_upsp_rdata	(ac_upsp_rdata[23:0]),
-				   .ac_upsp_rvalid	(ac_upsp_rvalid),
-				   .ac_upsp_wready	(ac_upsp_wready));
+
+	genvar j;
+	generate
+		for(j = 0; j < N_PARALLEL; j=j+1) begin
+
+			localparam BLOCK_SIZE = (j==0)?(((N_PARALLEL==1)?SRC_IMG_WIDTH/N_PARALLEL:(SRC_IMG_WIDTH/N_PARALLEL) + 3))
+								    :SRC_IMG_WIDTH/N_PARALLEL;
+
+    		bicubic_processing_element #(
+						 // Parameters
+						 .BUFFER_WIDTH		(BUFFER_WIDTH),
+						 .CHANNEL_WIDTH		(CHANNEL_WIDTH),
+						 .BLOCK_SIZE		(BLOCK_SIZE))
+    		AAA_bicubic_processing_element(
+						   // Outputs
+						   .upsp_ac_rready	(upsp_ac_rready[j]),
+						   .upsp_ac_wdata	(upsp_ac_wdata[j*UPSP_WRTDATA_WIDTH+:UPSP_WRTDATA_WIDTH]),
+						   .upsp_ac_wvalid	(upsp_ac_wvalid[j]),
+						   // Inputs
+						   .clk			(clk),
+						   .rst_n		(rst_n),
+						   .ac_upsp_rdata	(ac_upsp_rdata),
+						   .ac_upsp_rvalid	(ac_upsp_rvalid[j]),
+						   .ac_upsp_wready	(ac_upsp_wready[j]));
+
+		end
+	endgenerate
 
 endmodule

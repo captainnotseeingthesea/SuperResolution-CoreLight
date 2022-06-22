@@ -48,13 +48,16 @@ module fifo # (
 	reg [FIFO_COUNT_WIDTH:0]  fifo_rd_count, fifo_wrt_count;
     
 	// fifo read/write pointer
-	wire [FIFO_COUNT_WIDTH-1:0] fifo_rd_ptr  = fifo_rd_count[FIFO_COUNT_WIDTH-1:0]; 
-	wire [FIFO_COUNT_WIDTH-1:0] fifo_wrt_ptr = fifo_wrt_count[FIFO_COUNT_WIDTH-1:0];
+	wire [FIFO_COUNT_WIDTH:0] rd_sub = fifo_rd_count - FIFO_DEPTH;
+	wire [FIFO_COUNT_WIDTH:0] wrt_sub = fifo_wrt_count - FIFO_DEPTH;
+
+	wire [FIFO_COUNT_WIDTH-1:0] fifo_rd_ptr  = (fifo_rd_count<FIFO_DEPTH)?fifo_rd_count:rd_sub;
+	wire [FIFO_COUNT_WIDTH-1:0] fifo_wrt_ptr = (fifo_wrt_count<FIFO_DEPTH)?fifo_wrt_count:wrt_sub;
 
 	// Empty and full signals
 	wire fifo_ptrsame = (fifo_rd_ptr == fifo_wrt_ptr)?1'b1:1'b0;
-	wire fifo_empty = fifo_ptrsame & (fifo_rd_count[FIFO_COUNT_WIDTH] ^~ fifo_wrt_count[FIFO_COUNT_WIDTH]);
-	wire fifo_full  = fifo_ptrsame & (fifo_rd_count[FIFO_COUNT_WIDTH] ^  fifo_wrt_count[FIFO_COUNT_WIDTH]);
+	wire fifo_empty = fifo_ptrsame & (fifo_rd_count == fifo_wrt_count);
+	wire fifo_full  = fifo_ptrsame & (fifo_rd_count != fifo_wrt_count);
 
 	// Fifo count management
 	always @(posedge clk or negedge rst_n) begin: fifo_MANAGE
@@ -66,9 +69,9 @@ module fifo # (
 			// End of automatics
 		end else begin
 			if(fifo_wrt & ~fifo_full)
-				fifo_wrt_count <= fifo_wrt_count + 1;
+				fifo_wrt_count <= (fifo_wrt_count + 1) % (2 * FIFO_DEPTH);
 			if(fifo_rd & ~fifo_empty)
-				fifo_rd_count  <= fifo_rd_count + 1;
+				fifo_rd_count  <= (fifo_rd_count + 1) % (2 * FIFO_DEPTH);
 		end
 	end
 
@@ -96,7 +99,7 @@ module fifo # (
 	.waddr				(fifo_wrt_ptr),		 // Templated
 	.cs				(fifo_rd|fifo_wrt),	 // Templated
 	.re				(fifo_rd),		 // Templated
-	.we				(fifo_wrt));		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated,
+	.we				(fifo_wrt));		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated,
 
 
 endmodule
