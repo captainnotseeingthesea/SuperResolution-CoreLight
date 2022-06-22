@@ -333,12 +333,12 @@ module access_control # (
 			// If there is only one upsp element, its outbuf depth could be very small, since
 			// we don't need to save data from other sources when transfer data from one source,
 			// there is only one source.
-			wire [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep;
-			wire [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb;
 
 			// When only one source, all its data are desired, so
-			assign m_axis_tkeep = {AXISOUT_STRB_WIDTH{1'b1}};
-			assign m_axis_tstrb = {AXISOUT_STRB_WIDTH{1'b1}};
+			wire [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
+			wire [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
+			assign m_axis_tkeep = m_axis_tkeep_tmp;
+			assign m_axis_tstrb = m_axis_tstrb_tmp;
 
 			always@(*) begin: ONE_ELE_TDATA
 				integer i;
@@ -374,8 +374,10 @@ module access_control # (
 			
 		end else begin:MULTI_ELE
 			// When there are multiple elements, we need to throw some data at boundary
-			reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep;
-			reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb;
+			reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep_tmp;
+			reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb_tmp;
+			assign m_axis_tkeep = m_axis_tkeep_tmp;
+			assign m_axis_tstrb = m_axis_tstrb_tmp;
 
 			// Select output data from one of the buf
 			reg  [N_PARALLEL-1:0] obuf_rd_r;
@@ -521,12 +523,12 @@ module access_control # (
 
 			always@(*) begin: MULTIELE_TKEEP
 				integer i;
-				m_axis_tkeep = {AXISOUT_STRB_WIDTH{1'b1}};
-				m_axis_tstrb = {AXISOUT_STRB_WIDTH{1'b1}};
+				m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
+				m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
 				for(i = 0; i < N_PARALLEL; i=i+1) begin
 					if(obuf_rd_r[i] == 1'b1) begin
-						m_axis_tkeep = keep[i];
-						m_axis_tstrb = strb[i];
+						m_axis_tkeep_tmp = keep[i];
+						m_axis_tkeep_tmp = strb[i];
 					end
 				end
 			end
