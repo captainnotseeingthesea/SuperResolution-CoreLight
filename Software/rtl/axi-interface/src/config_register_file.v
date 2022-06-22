@@ -284,7 +284,7 @@ module config_register_file # (
 
 	// Read data channel
 	wire   axi_read    = s_axi_arvalid & s_axi_arready;
-	wire   axi_raddr   = s_axi_araddr[CRF_ADDR_WIDTH-1:0];
+	wire [CRF_ADDR_WIDTH-1:0]  axi_raddr   = s_axi_araddr[CRF_ADDR_WIDTH-1:0];
 	assign s_axi_rresp = RESP_OKAY;
 
 	always@(posedge clk or negedge rst_n) begin: READ_PROC

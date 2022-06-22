@@ -172,8 +172,6 @@ module access_control # (
 	reg		m_axis_tvalid;
 	// End of automatics
 	reg [AXISOUT_DATA_WIDTH-1:0] m_axis_tdata;
-	reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep;
-	reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb;
 
 	genvar j;
 
@@ -335,12 +333,12 @@ module access_control # (
 			// If there is only one upsp element, its outbuf depth could be very small, since
 			// we don't need to save data from other sources when transfer data from one source,
 			// there is only one source.
+			wire [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep;
+			wire [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb;
 
 			// When only one source, all its data are desired, so
-			always@(*) begin
-				m_axis_tkeep = {AXISOUT_STRB_WIDTH{1'b1}};
-				m_axis_tstrb = {AXISOUT_STRB_WIDTH{1'b1}};		
-			end
+			assign m_axis_tkeep = {AXISOUT_STRB_WIDTH{1'b1}};
+			assign m_axis_tstrb = {AXISOUT_STRB_WIDTH{1'b1}};
 
 			always@(*) begin: ONE_ELE_TDATA
 				integer i;
@@ -376,6 +374,8 @@ module access_control # (
 			
 		end else begin:MULTI_ELE
 			// When there are multiple elements, we need to throw some data at boundary
+			reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep;
+			reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb;
 
 			// Select output data from one of the buf
 			reg  [N_PARALLEL-1:0] obuf_rd_r;
