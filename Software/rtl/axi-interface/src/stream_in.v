@@ -18,22 +18,26 @@
 module stream_in # (
 		parameter AXISIN_DATA_WIDTH = 32,
 		parameter UPSP_RDDATA_WIDTH = 32,
-		parameter SRC_IMG_HEIGHT = 2160
+		parameter SRC_IMG_WIDTH  = 1920,
+		parameter SRC_IMG_HEIGHT = 1080,
+		parameter CRF_DATA_WIDTH = 32,
+		parameter N_PARALLEL	 = 2
 	) (/*AUTOARG*/
    // Outputs
    ac_upsp_rvalid, ac_upsp_rdata, s_axis_tready,
    // Inputs
-   upsp_ac_rready, UPSTART, UPEND, s_axis_aclk, s_axis_arstn,
-   s_axis_tvalid, s_axis_tid, s_axis_tdata, s_axis_tstrb,
-   s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user
+   upsp_ac_rready, UPSTART, UPEND, UPINHSKCNT, s_axis_aclk,
+   s_axis_arstn, s_axis_tvalid, s_axis_tid, s_axis_tdata,
+   s_axis_tstrb, s_axis_tkeep, s_axis_tlast, s_axis_tdest,
+   s_axis_user
    );
 
 	localparam AXISIN_STRB_WIDTH    = AXISIN_DATA_WIDTH/8;
 	localparam DST_IMG_HEIGHT_LB2   = $clog2(SRC_IMG_HEIGHT);
 	
 	// Interface for upsp read
-	input                        upsp_ac_rready;
-	output                       ac_upsp_rvalid;
+	input  [N_PARALLEL-1:0]		   upsp_ac_rready;
+	output [N_PARALLEL-1:0]        ac_upsp_rvalid;
 	output [UPSP_RDDATA_WIDTH-1:0] ac_upsp_rdata;
 
 
@@ -41,6 +45,8 @@ module stream_in # (
 	input UPSTART;
 	// Use UPEND to indicate Up-Sampling module has done its work
 	input UPEND;
+	// Input pixel count
+	input [CRF_DATA_WIDTH-1:0] UPINHSKCNT;
 
 
     // Interface as a AXI-Stream slave
@@ -72,7 +78,7 @@ module stream_in # (
 
 	// Because VDMA in xilinx will send a tlast signal for every row. So we need to track it.
 	reg [DST_IMG_HEIGHT_LB2-1:0] input_row_cnt;
-	always@(posedge clk or negedge rst_n) begin
+	always@(posedge clk or negedge rst_n) begin: INROW_CNT
 		if(~rst_n)
 			input_row_cnt <= {DST_IMG_HEIGHT_LB2{1'b0}};
 		else if(one_row_hsked)
@@ -99,10 +105,35 @@ module stream_in # (
 			frame_done <= 1'b0;
 	end
 
-	// If not frame_done, bypass the signals.
-	assign s_axis_tready  = upsp_ac_rready & ~frame_done;
-	assign ac_upsp_rvalid = s_axis_tvalid & ~frame_done;
+
+	// Send input stream to one upsp processing element, or multiple elements
+	// when the data is in boundary
+	localparam BLOCK_SIZE = (SRC_IMG_WIDTH/N_PARALLEL);
+	wire [CRF_DATA_WIDTH-1:0] cur_row_pos = UPINHSKCNT % SRC_IMG_WIDTH;
+
+	// If not frame_done, generate tready signals depending on upsp ready.
+	// The tready for output will be asserted if all elements requiring the data are ready
+	wire [N_PARALLEL-1:0] tready;
+	wire all_ready = ~(|(ac_upsp_rvalid^tready)) & (|tready);
+	assign s_axis_tready  = all_ready & ~frame_done;
 	assign ac_upsp_rdata  = s_axis_tdata;
+
+	wire [N_PARALLEL-1:0] in_range;
+
+	genvar j;
+	generate
+		for(j = 0; j < N_PARALLEL; j=j+1) begin
+			localparam START = (j == 0)?0:j*BLOCK_SIZE;
+			localparam END = (j == 0)?((N_PARALLEL==1)?(START + BLOCK_SIZE -1):(START + BLOCK_SIZE -1 + 3))
+									:START + BLOCK_SIZE -1;
+
+			assign in_range[j] = (cur_row_pos >= START) && (cur_row_pos <= END);
+			assign ac_upsp_rvalid[j] = in_range[j] & s_axis_tvalid;
+			assign tready[j] = in_range[j] & upsp_ac_rready[j];
+		end
+	endgenerate
+
+
 
 
 // Additional code for easy debugging

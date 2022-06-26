@@ -21,7 +21,7 @@ module ac_bcci_top(ac_if acif);
     localparam AXISOUT_DATA_WIDTH = `AXISOUT_DATA_WIDTH;
     localparam CRF_DATA_WIDTH     = `CRF_DATA_WIDTH    ;
     localparam CRF_ADDR_WIDTH     = `CRF_ADDR_WIDTH    ;
-	localparam UPSP_RDDATA_WIDTH = `UPSP_RDDATA_WIDTH  ;
+	localparam UPSP_RDDATA_WIDTH  = `UPSP_RDDATA_WIDTH  ;
 	localparam UPSP_WRTDATA_WIDTH = `UPSP_WRTDATA_WIDTH;
     localparam SRC_IMG_WIDTH      = `SRC_IMG_WIDTH     ;
     localparam SRC_IMG_HEIGHT     = `SRC_IMG_HEIGHT    ;
@@ -30,6 +30,8 @@ module ac_bcci_top(ac_if acif);
 	localparam BUFFER_WIDTH       = `BUFFER_WIDTH      ;
 	localparam OUT_FIFO_DEPTH     = `OUT_FIFO_DEPTH    ;
 	localparam CHANNEL_WIDTH      = 8;
+	localparam N_PARALLEL         = `N_PARALLEL;
+
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -42,6 +44,7 @@ module ac_bcci_top(ac_if acif);
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
+    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPINHSKCNT;// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
     // End of automatics
@@ -95,6 +98,7 @@ module ac_bcci_top(ac_if acif);
 			     .crf_ac_UPSTART	(crf_ac_UPSTART),
 			     .crf_ac_UPEND	(crf_ac_UPEND),
 			     .crf_ac_wbusy	(crf_ac_wbusy),
+			     .crf_ac_UPINHSKCNT	(crf_ac_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 			     // Inputs
 			     .clk		(acif.clk),	 // Templated
 			     .rst_n		(acif.rst_n),	 // Templated
@@ -161,7 +165,8 @@ module ac_bcci_top(ac_if acif);
 		     .SRC_IMG_HEIGHT	(SRC_IMG_HEIGHT),
 		     .DST_IMG_WIDTH	(DST_IMG_WIDTH),
 		     .DST_IMG_HEIGHT	(DST_IMG_HEIGHT),
-		     .OUT_FIFO_DEPTH	(OUT_FIFO_DEPTH))
+		     .OUT_FIFO_DEPTH	(OUT_FIFO_DEPTH),
+		     .N_PARALLEL	(N_PARALLEL))
     AAA_access_control(/*AUTOINST*/
 		       // Outputs
 		       .ac_crf_wrt	(ac_crf_wrt),
@@ -190,6 +195,7 @@ module ac_bcci_top(ac_if acif);
 		       .crf_ac_UPSTART	(crf_ac_UPSTART),
 		       .crf_ac_UPEND	(crf_ac_UPEND),
 		       .crf_ac_wbusy	(crf_ac_wbusy),
+		       .crf_ac_UPINHSKCNT(crf_ac_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 		       .upsp_ac_rready	(acif.usif.upsp_ac_rready), // Templated
 		       .upsp_ac_wvalid	(acif.usif.upsp_ac_wvalid), // Templated
 		       .upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_WRTDATA_WIDTH-1:0]), // Templated
@@ -204,7 +210,7 @@ module ac_bcci_top(ac_if acif);
 		       .m_axis_tready	(acif.stream_slave.axis_tready)); // Templated
      
 	
-    /* bicubic_top AUTO_TEMPLATE (
+    /* bicubic_processing_element AUTO_TEMPLATE (
 		    .upsp_ac_rready	(acif.usif.upsp_ac_rready),
 		    .upsp_ac_wdata	(acif.usif.upsp_ac_wdata),
 		    .upsp_ac_wvalid	(acif.usif.upsp_ac_wvalid),
@@ -215,21 +221,22 @@ module ac_bcci_top(ac_if acif);
 			.ac_upsp_wready   (acif.usif.ac_upsp_wready),
      );
      */
-    bicubic_top #(/*AUTOINSTPARAM*/
-		  // Parameters
-		  .BUFFER_WIDTH		(BUFFER_WIDTH),
-		  .CHANNEL_WIDTH	(CHANNEL_WIDTH))
-    AAA_bicubic_top(/*AUTOINST*/
-		    // Outputs
-		    .upsp_ac_rready	(acif.usif.upsp_ac_rready), // Templated
-		    .upsp_ac_wdata	(acif.usif.upsp_ac_wdata), // Templated
-		    .upsp_ac_wvalid	(acif.usif.upsp_ac_wvalid), // Templated
-		    // Inputs
-		    .clk		(acif.clk),		 // Templated
-		    .rst_n		(acif.rst_n),		 // Templated
-		    .ac_upsp_rdata	(acif.usif.ac_upsp_rdata), // Templated
-		    .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid), // Templated
-		    .ac_upsp_wready	(acif.usif.ac_upsp_wready)); // Templated
+    bicubic_processing_element #(/*AUTOINSTPARAM*/
+				 // Parameters
+				 .BUFFER_WIDTH		(BUFFER_WIDTH),
+				 .CHANNEL_WIDTH		(CHANNEL_WIDTH),
+				 .BLOCK_SIZE		(BLOCK_SIZE))
+    AAA_bicubic_processing_element(/*AUTOINST*/
+				   // Outputs
+				   .upsp_ac_rready	(acif.usif.upsp_ac_rready), // Templated
+				   .upsp_ac_wdata	(acif.usif.upsp_ac_wdata), // Templated
+				   .upsp_ac_wvalid	(acif.usif.upsp_ac_wvalid), // Templated
+				   // Inputs
+				   .clk			(acif.clk),	 // Templated
+				   .rst_n		(acif.rst_n),	 // Templated
+				   .ac_upsp_rdata	(acif.usif.ac_upsp_rdata), // Templated
+				   .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid), // Templated
+				   .ac_upsp_wready	(acif.usif.ac_upsp_wready)); // Templated
 
 endmodule
  

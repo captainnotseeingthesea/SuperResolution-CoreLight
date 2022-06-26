@@ -395,6 +395,9 @@ void _zoom_linear_opencv(Zoom_Info *info)
             info->rgbOut[ii * info->widthOut + jj].r = clip(r_sum, 0, 256);
             info->rgbOut[ii * info->widthOut + jj].g = clip(g_sum, 0, 256);
             info->rgbOut[ii * info->widthOut + jj].b = clip(b_sum, 0, 256);
+            r_sum = 0;
+            g_sum = 0;
+            b_sum = 0;  
         }
     }
     //多线程,处理完成行数
@@ -588,6 +591,9 @@ void _zoom_linear_stream_opencv(
             (pSamp + jj)->r = clip(r_sum, 0, 256);
             (pSamp + jj)->g = clip(g_sum, 0, 256);
             (pSamp + jj)->b = clip(b_sum, 0, 256);
+            r_sum = 0;
+            g_sum = 0;
+            b_sum = 0;  
         }
         distWrite(objDist, (unsigned char *)info->rgbOut, 1);
     }
@@ -1156,6 +1162,9 @@ void _zoom_bicubic_stream_opencv(
             (pSamp + jj)->r = clip(r_sum, 0, 256);
             (pSamp + jj)->g = clip(g_sum, 0, 256);
             (pSamp + jj)->b = clip(b_sum, 0, 256);
+            r_sum = 0;
+            g_sum = 0;
+            b_sum = 0;  
         }
         //输出一行数据
         distWrite(objDist, (unsigned char *)info->rgbOut, 1);

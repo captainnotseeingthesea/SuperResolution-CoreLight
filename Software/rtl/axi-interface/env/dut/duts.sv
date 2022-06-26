@@ -15,8 +15,8 @@
 
  **************************************************/
 
-`include "ac_crf_top.svh"
+// `include "ac_crf_top.svh"
 
-`include "ac_bcci_top.svh"
+// `include "ac_bcci_top.svh"
 
 `include "bcci_ip_top.svh"

@@ -15,21 +15,26 @@
 
  module bcci_ip_top(ac_if acif);
  
-    localparam AXI_DATA_WIDTH     = `AXI_DATA_WIDTH    ;
-    localparam AXI_ADDR_WIDTH     = `AXI_ADDR_WIDTH    ;
-    localparam AXISIN_DATA_WIDTH  = `AXISIN_DATA_WIDTH ;
-    localparam AXISOUT_DATA_WIDTH = `AXISOUT_DATA_WIDTH;
-    localparam CRF_DATA_WIDTH     = `CRF_DATA_WIDTH    ;
-    localparam CRF_ADDR_WIDTH     = `CRF_ADDR_WIDTH    ;
-	localparam UPSP_RDDATA_WIDTH = `UPSP_RDDATA_WIDTH  ;
-	localparam UPSP_WRTDATA_WIDTH = `UPSP_WRTDATA_WIDTH;
-    localparam SRC_IMG_WIDTH      = `SRC_IMG_WIDTH     ;
-    localparam SRC_IMG_HEIGHT     = `SRC_IMG_HEIGHT    ;
-    localparam DST_IMG_WIDTH      = `DST_IMG_WIDTH     ;
-    localparam DST_IMG_HEIGHT     = `DST_IMG_HEIGHT    ;
-	localparam BUFFER_WIDTH       = `BUFFER_WIDTH      ;
-	localparam OUT_FIFO_DEPTH     = `OUT_FIFO_DEPTH    ;
-	localparam CHANNEL_WIDTH      = 8;
+    localparam AXI_DATA_WIDTH     = `AXI_DATA_WIDTH     ;
+    localparam AXI_ADDR_WIDTH     = `AXI_ADDR_WIDTH     ;
+    localparam AXISIN_DATA_WIDTH  = `AXISIN_DATA_WIDTH  ;
+    localparam AXISOUT_DATA_WIDTH = `AXISOUT_DATA_WIDTH ;
+    localparam CRF_DATA_WIDTH     = `CRF_DATA_WIDTH     ;
+    localparam CRF_ADDR_WIDTH     = `CRF_ADDR_WIDTH     ;
+	localparam UPSP_RDDATA_WIDTH  = `UPSP_RDDATA_WIDTH  ;
+	localparam UPSP_WRTDATA_WIDTH = `UPSP_WRTDATA_WIDTH ;
+    localparam SRC_IMG_WIDTH      = `SRC_IMG_WIDTH      ;
+    localparam SRC_IMG_HEIGHT     = `SRC_IMG_HEIGHT     ;
+    localparam DST_IMG_WIDTH      = `DST_IMG_WIDTH      ;
+    localparam DST_IMG_HEIGHT     = `DST_IMG_HEIGHT     ;
+	localparam BUFFER_WIDTH       = `BUFFER_WIDTH       ;
+	localparam OUT_FIFO_DEPTH     = `OUT_FIFO_DEPTH     ;
+	localparam CHANNEL_WIDTH      = 8                   ;
+	localparam AXI_STRB_WIDTH     = AXI_DATA_WIDTH/8    ;
+	localparam AXIS_STRB_WIDTH    = AXI_DATA_WIDTH/8    ;
+	localparam AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8 ;
+	localparam AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8;
+	localparam N_PARALLEL         = `N_PARALLEL         ;
 
     /*AUTOWIRE*/
  
@@ -97,7 +102,12 @@
 	      .DST_IMG_HEIGHT		(DST_IMG_HEIGHT),
 	      .BUFFER_WIDTH		(BUFFER_WIDTH),
 	      .OUT_FIFO_DEPTH		(OUT_FIFO_DEPTH),
-	      .CHANNEL_WIDTH		(CHANNEL_WIDTH))
+	      .CHANNEL_WIDTH		(CHANNEL_WIDTH),
+	      .AXI_STRB_WIDTH		(AXI_STRB_WIDTH),
+	      .AXIS_STRB_WIDTH		(AXIS_STRB_WIDTH),
+	      .AXISIN_STRB_WIDTH	(AXISIN_STRB_WIDTH),
+	      .AXISOUT_STRB_WIDTH	(AXISOUT_STRB_WIDTH),
+	      .N_PARALLEL		(N_PARALLEL))
     AAA_bcci(/*AUTOINST*/
 	     // Outputs
 	     .s_axi_awready		(acif.lite_master.axi_awready), // Templated

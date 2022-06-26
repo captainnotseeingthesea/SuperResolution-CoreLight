@@ -35,6 +35,7 @@ class axis_bmp_dumper extends uvm_component;
 
     extern virtual function void build_phase(uvm_phase phase);
     extern virtual task main_phase(uvm_phase phase);
+    extern function void do_dump();
 
 endclass
 
@@ -67,7 +68,7 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
     while(1) begin
         dump_port.get(t);
 
-        for(int k = 0; k < t.tkeep.size(); k++) begin
+        for(int k = t.tkeep.size()-1; k >= 0; k--) begin
             if(t.tkeep[k]) begin
                 if(t.tstrb[k]) 
                     data[pos/3][2-pos%3] = t.tdata[k];
@@ -77,7 +78,7 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
         
         if(pos == data.size()*3) begin
             `uvm_info(get_name(), "start dumping file", UVM_LOW)
-            $writememh(src_bin, data);
+            do_dump();
             BMP::bin2bmp(src_bin, dst_bmp, height, width);
             `uvm_info(get_name(), "dumping over", UVM_LOW)
             break; 
@@ -87,3 +88,16 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
     #1000;
     phase.drop_objection(this);
 endtask: main_phase
+
+
+function void axis_bmp_dumper::do_dump();
+    int fd;
+
+    $display("dump to file %s\n", src_bin);
+
+    fd = $fopen(src_bin, "w");
+    for(int i = 0; i < height*width; i++)
+        $fwrite(fd, "%h\n", data[i]);
+    $fclose(fd);
+
+endfunction
