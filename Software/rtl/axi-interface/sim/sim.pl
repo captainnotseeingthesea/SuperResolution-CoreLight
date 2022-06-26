@@ -19,7 +19,12 @@ $incdir =
 '-incdir ../../bicubic/v2/src ';
 
 $verbo = "+UVM_VERBOSITY=UVM_LOW";
-$top = "tb_ac_bcci";
+$top = "tb_bcci_ip";
+
+# UVM debug
+$uvmdbg = 
+"+UVM_OBJECTION_TRACE"
+;
 
 # Multicore simulation support. 
 # -mce_top and -top must be specified simultaneously
@@ -30,7 +35,8 @@ $xcmd =
 ."$mceoption "
 ."-sv -UVM -access rwc $incdir "
 ."-f macros -f filelist "
-."$verbo ";
+."$verbo "
+."$uvmdbg";
 
 system "rm xcelium.d -r";
 system $xcmd;

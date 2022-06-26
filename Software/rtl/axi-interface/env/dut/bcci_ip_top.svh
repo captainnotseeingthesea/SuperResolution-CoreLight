@@ -149,7 +149,7 @@
 	     .s_axis_tkeep		(acif.stream_master.axis_tkeep), // Templated
 	     .s_axis_tlast		(acif.stream_master.axis_tlast), // Templated
 	     .s_axis_tdest		(acif.stream_master.axis_tdest), // Templated
-	     .s_axis_user		(acif.stream_master.axis_user), // Templated
+	     .s_axis_tuser		(s_axis_tuser),
 	     .m_axis_tready		(acif.stream_slave.axis_tready)); // Templated
 
 endmodule

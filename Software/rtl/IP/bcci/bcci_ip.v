@@ -50,7 +50,7 @@ module bcci_ip
    s_axi_wvalid, s_axi_wdata, s_axi_wstrb, s_axi_bready,
    s_axi_arvalid, s_axi_araddr, s_axi_arprot, s_axi_rready,
    s_axis_tvalid, s_axis_tid, s_axis_tdata, s_axis_tstrb,
-   s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user,
+   s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_tuser,
    m_axis_tready
    );
 
@@ -87,7 +87,7 @@ module bcci_ip
 	input [AXISIN_STRB_WIDTH-1:0] s_axis_tkeep;
 	input                       s_axis_tlast;
 	input                       s_axis_tdest;
-	input                       s_axis_user;
+	input                       s_axis_tuser;
 
 	// Interface as AXI-Stream master, out
 	output                       m_axis_tvalid;	
@@ -113,14 +113,27 @@ module bcci_ip
     wire [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;	// From AAA_access_control of access_control.v
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
+    wire [AXISOUT_DATA_WIDTH-1:0] ac_m_axis_tdata;// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tdest;	// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tid;		// From AAA_access_control of access_control.v
+    wire [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tkeep;// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tlast;	// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tready;	// From AAA_stream_transformer of stream_transformer.v
+    wire [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tstrb;// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tuser;	// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tvalid;	// From AAA_access_control of access_control.v
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
     wire [CRF_DATA_WIDTH-1:0] crf_ac_UPINHSKCNT;// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
+    wire		m_axis_tuser;		// From AAA_stream_transformer of stream_transformer.v
     // End of automatics
 
 
     /*AUTOREG*/
+    // Beginning of automatic regs (for this module's undeclared outputs)
+    reg			m_axis_user;
+    // End of automatics
 
 
 
@@ -214,14 +227,14 @@ module bcci_ip
 		       .ac_upsp_rdata	(ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]),
 		       .ac_upsp_wready	(ac_upsp_wready[N_PARALLEL-1:0]),
 		       .s_axis_tready	(s_axis_tready),
-		       .m_axis_tvalid	(m_axis_tvalid),
-		       .m_axis_tid	(m_axis_tid),
-		       .m_axis_tdata	(m_axis_tdata[AXISOUT_DATA_WIDTH-1:0]),
-		       .m_axis_tkeep	(m_axis_tkeep[AXISOUT_STRB_WIDTH-1:0]),
-		       .m_axis_tstrb	(m_axis_tstrb[AXISOUT_STRB_WIDTH-1:0]),
-		       .m_axis_tlast	(m_axis_tlast),
-		       .m_axis_tdest	(m_axis_tdest),
-		       .m_axis_user	(m_axis_user),
+		       .ac_m_axis_tvalid(ac_m_axis_tvalid),
+		       .ac_m_axis_tid	(ac_m_axis_tid),
+		       .ac_m_axis_tdata	(ac_m_axis_tdata[AXISOUT_DATA_WIDTH-1:0]),
+		       .ac_m_axis_tkeep	(ac_m_axis_tkeep[AXISOUT_STRB_WIDTH-1:0]),
+		       .ac_m_axis_tstrb	(ac_m_axis_tstrb[AXISOUT_STRB_WIDTH-1:0]),
+		       .ac_m_axis_tlast	(ac_m_axis_tlast),
+		       .ac_m_axis_tdest	(ac_m_axis_tdest),
+		       .ac_m_axis_tuser	(ac_m_axis_tuser),
 		       // Inputs
 		       .clk		(clk),
 		       .rst_n		(rst_n),
@@ -239,9 +252,39 @@ module bcci_ip
 		       .s_axis_tkeep	(s_axis_tkeep[AXISIN_STRB_WIDTH-1:0]),
 		       .s_axis_tlast	(s_axis_tlast),
 		       .s_axis_tdest	(s_axis_tdest),
-		       .s_axis_user	(s_axis_user),
-		       .m_axis_tready	(m_axis_tready));
+		       .s_axis_tuser	(s_axis_tuser),
+		       .ac_m_axis_tready(ac_m_axis_tready));
     
+	
+	stream_transformer #(/*AUTOINSTPARAM*/
+			     // Parameters
+			     .AXISOUT_DATA_WIDTH(AXISOUT_DATA_WIDTH),
+			     .DST_IMG_WIDTH	(DST_IMG_WIDTH))
+	AAA_stream_transformer(/*AUTOINST*/
+			       // Outputs
+			       .ac_m_axis_tready(ac_m_axis_tready),
+			       .m_axis_tvalid	(m_axis_tvalid),
+			       .m_axis_tid	(m_axis_tid),
+			       .m_axis_tdata	(m_axis_tdata[AXISOUT_DATA_WIDTH-1:0]),
+			       .m_axis_tkeep	(m_axis_tkeep[AXISOUT_STRB_WIDTH-1:0]),
+			       .m_axis_tstrb	(m_axis_tstrb[AXISOUT_STRB_WIDTH-1:0]),
+			       .m_axis_tlast	(m_axis_tlast),
+			       .m_axis_tdest	(m_axis_tdest),
+			       .m_axis_tuser	(m_axis_tuser),
+			       // Inputs
+			       .clk		(clk),
+			       .rst_n		(rst_n),
+			       .ac_m_axis_tvalid(ac_m_axis_tvalid),
+			       .ac_m_axis_tid	(ac_m_axis_tid),
+			       .ac_m_axis_tdata	(ac_m_axis_tdata[AXISOUT_DATA_WIDTH-1:0]),
+			       .ac_m_axis_tkeep	(ac_m_axis_tkeep[AXISOUT_STRB_WIDTH-1:0]),
+			       .ac_m_axis_tstrb	(ac_m_axis_tstrb[AXISOUT_STRB_WIDTH-1:0]),
+			       .ac_m_axis_tlast	(ac_m_axis_tlast),
+			       .ac_m_axis_tdest	(ac_m_axis_tdest),
+			       .ac_m_axis_tuser	(ac_m_axis_tuser),
+			       .m_axis_tready	(m_axis_tready));
+
+
     /* bicubic_processing_element AUTO_TEMPLATE (
     );
     */

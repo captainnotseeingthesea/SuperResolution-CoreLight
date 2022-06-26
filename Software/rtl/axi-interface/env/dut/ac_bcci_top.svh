@@ -43,6 +43,14 @@ module ac_bcci_top(ac_if acif);
     wire [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;	// From AAA_access_control of access_control.v
     wire [CRF_DATA_WIDTH-1:0] ac_crf_wdata;	// From AAA_access_control of access_control.v
     wire		ac_crf_wrt;		// From AAA_access_control of access_control.v
+    wire [AXISOUT_DATA_WIDTH-1:0] ac_m_axis_tdata;// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tdest;	// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tid;		// From AAA_access_control of access_control.v
+    wire [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tkeep;// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tlast;	// From AAA_access_control of access_control.v
+    wire [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tstrb;// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tuser;	// From AAA_access_control of access_control.v
+    wire		ac_m_axis_tvalid;	// From AAA_access_control of access_control.v
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
     wire [CRF_DATA_WIDTH-1:0] crf_ac_UPINHSKCNT;// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
@@ -181,14 +189,14 @@ module ac_bcci_top(ac_if acif);
 		       .ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]), // Templated
 		       .ac_upsp_wready	(acif.usif.ac_upsp_wready), // Templated
 		       .s_axis_tready	(acif.stream_master.axis_tready), // Templated
-		       .m_axis_tvalid	(acif.stream_slave.axis_tvalid), // Templated
-		       .m_axis_tid	(acif.stream_slave.axis_tid), // Templated
-		       .m_axis_tdata	(acif.stream_slave.axis_tdata[AXISOUT_DATA_WIDTH-1:0]), // Templated
-		       .m_axis_tkeep	(acif.stream_slave.axis_tkeep), // Templated
-		       .m_axis_tstrb	(acif.stream_slave.axis_tstrb), // Templated
-		       .m_axis_tlast	(acif.stream_slave.axis_tlast), // Templated
-		       .m_axis_tdest	(acif.stream_slave.axis_tdest), // Templated
-		       .m_axis_user	(acif.stream_slave.axis_user), // Templated
+		       .ac_m_axis_tvalid(ac_m_axis_tvalid),
+		       .ac_m_axis_tid	(ac_m_axis_tid),
+		       .ac_m_axis_tdata	(ac_m_axis_tdata[AXISOUT_DATA_WIDTH-1:0]),
+		       .ac_m_axis_tkeep	(ac_m_axis_tkeep[AXISOUT_STRB_WIDTH-1:0]),
+		       .ac_m_axis_tstrb	(ac_m_axis_tstrb[AXISOUT_STRB_WIDTH-1:0]),
+		       .ac_m_axis_tlast	(ac_m_axis_tlast),
+		       .ac_m_axis_tdest	(ac_m_axis_tdest),
+		       .ac_m_axis_tuser	(ac_m_axis_tuser),
 		       // Inputs
 		       .clk		(acif.clk),		 // Templated
 		       .rst_n		(acif.rst_n),		 // Templated
@@ -206,8 +214,8 @@ module ac_bcci_top(ac_if acif);
 		       .s_axis_tkeep	(acif.stream_master.axis_tkeep), // Templated
 		       .s_axis_tlast	(acif.stream_master.axis_tlast), // Templated
 		       .s_axis_tdest	(acif.stream_master.axis_tdest), // Templated
-		       .s_axis_user	(acif.stream_master.axis_user), // Templated
-		       .m_axis_tready	(acif.stream_slave.axis_tready)); // Templated
+		       .s_axis_tuser	(s_axis_tuser),
+		       .ac_m_axis_tready(ac_m_axis_tready));
      
 	
     /* bicubic_processing_element AUTO_TEMPLATE (

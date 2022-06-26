@@ -6,7 +6,10 @@
 "../src/config_register_file.v"
 "../src/stream_in.v"
 "../src/bram_subbank.v"
-"../src/axis_outbuf.v"
+"../src/fifo.v"
+"../src/upsp_outbuf.v"
+"../src/ac_outbuf.v"
+"../src/stream_transformer.v"
 
 "../../bicubic/v2/src/bicubic_mult.v"
 "../../bicubic/v2/src/bicubic_pvector_mult_wmatrix.v"
@@ -23,7 +26,7 @@
 "../../bicubic/v2/src/dffs.v"
 # "../../bicubic/v2/src/line_buffer.v"
 "../../bicubic/v2/src/sram.v"
-"../../bicubic/v2/src/bicubic_top.v"
+"../../bicubic/v2/src/bicubic_processing_element.v"
 
 
 // DUT
@@ -41,7 +44,7 @@
 
 
 // TB
-"../env/testbench/tb_ac_bcci.sv"
+"../env/testbench/tb_bcci_ip.sv"
 
 // IP
 "../../IP/bcci/bcci_ip.v"
