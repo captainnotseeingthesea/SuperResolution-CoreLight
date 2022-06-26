@@ -114,28 +114,28 @@ module bicubic_upsample #
     );
 
 
-    localparam WEIGHT_WIDTH = 4;
+    localparam WEIGHT_WIDTH = 3;
 
 // u(5/8):
-    localparam S_U1_1 = {1'b1, 3'd1}; // -8.5    9
-    localparam S_U1_2 = {1'b0, 3'd5}; // 54.5    5
-    localparam S_U1_3 = {1'b0, 3'd6}; // 96      6
-    localparam S_U1_4 = {1'b1, 3'd3}; // -14     b
+    localparam S_U1_1 = {3'd1}; // -8.5    9
+    localparam S_U1_2 = {3'd5}; // 54.5    5
+    localparam S_U1_3 = {3'd6}; // 96      6
+    localparam S_U1_4 = {3'd3}; // -14     b
 // u(7/8):
-    localparam S_U2_1 = {1'b1, 3'd0}; // -1.5    8
-    localparam S_U2_2 = {1'b0, 3'd4}; // 14.5    4
-    localparam S_U2_3 = {1'b0, 3'd7}; // 124     7
-    localparam S_U2_4 = {1'b1, 3'd2}; // -9      a
+    localparam S_U2_1 = {3'd0}; // -1.5    8
+    localparam S_U2_2 = {3'd4}; // 14.5    4
+    localparam S_U2_3 = {3'd7}; // 124     7
+    localparam S_U2_4 = {3'd2}; // -9      a
 // u(1/8):
-    localparam S_U3_1 = {1'b1, 3'd2}; // -9      a
-    localparam S_U3_2 = {1'b0, 3'd7}; // 124     7  
-    localparam S_U3_3 = {1'b0, 3'd4}; // 14.5    4   
-    localparam S_U3_4 = {1'b1, 3'd0}; // -1.5    8
+    localparam S_U3_1 = {3'd2}; // -9      a
+    localparam S_U3_2 = {3'd7}; // 124     7  
+    localparam S_U3_3 = {3'd4}; // 14.5    4   
+    localparam S_U3_4 = {3'd0}; // -1.5    8
 // u(3/8):
-    localparam S_U4_1 = {1'b1, 3'd3}; // -14     b
-    localparam S_U4_2 = {1'b0, 3'd6}; // 96      6
-    localparam S_U4_3 = {1'b0, 3'd5}; // 54.5    5 
-    localparam S_U4_4 = {1'b1, 3'd1}; // -8.5    9
+    localparam S_U4_1 = {3'd3}; // -14     b
+    localparam S_U4_2 = {3'd6}; // 96      6
+    localparam S_U4_3 = {3'd5}; // 54.5    5 
+    localparam S_U4_4 = {3'd1}; // -8.5    9
  
 
     wire [WEIGHT_WIDTH-1:0] w1, w2, w3, w4;
@@ -172,15 +172,10 @@ module bicubic_upsample #
         .p4_3(p4_3),
         .p4_4(p4_4),
 
-        .inner_product1(nxt_product1_t[PRODUCT_WIDTH - 2:0]),
-        .inner_product2(nxt_product2_t[PRODUCT_WIDTH - 2:0]),
-        .inner_product3(nxt_product3_t[PRODUCT_WIDTH - 2:0]),
-        .inner_product4(nxt_product4_t[PRODUCT_WIDTH - 2:0]),
-
-        .inner_product_sign1(nxt_product1_t[PRODUCT_WIDTH - 1]),
-        .inner_product_sign2(nxt_product2_t[PRODUCT_WIDTH - 1]),
-        .inner_product_sign3(nxt_product3_t[PRODUCT_WIDTH - 1]),
-        .inner_product_sign4(nxt_product4_t[PRODUCT_WIDTH - 1]) 
+        .inner_product1(nxt_product1_t),
+        .inner_product2(nxt_product2_t),
+        .inner_product3(nxt_product3_t),
+        .inner_product4(nxt_product4_t)
     );
 
     assign w1 = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_1)
@@ -277,37 +272,11 @@ module bicubic_upsample #
         .p3(cur_product3_t),
         .p4(cur_product4_t),
 
-        .inner_product1(product1[PRODUCT_WIDTH - 2:0]),
-        .inner_product2(product2[PRODUCT_WIDTH - 2:0]),
-        .inner_product3(product3[PRODUCT_WIDTH - 2:0]),
-        .inner_product4(product4[PRODUCT_WIDTH - 2:0]),
-
-        .inner_product_sign1(product1[PRODUCT_WIDTH - 1]),
-        .inner_product_sign2(product2[PRODUCT_WIDTH - 1]),
-        .inner_product_sign3(product3[PRODUCT_WIDTH - 1]),
-        .inner_product_sign4(product4[PRODUCT_WIDTH - 1])  
+        .inner_product1(product1),
+        .inner_product2(product2),
+        .inner_product3(product3),
+        .inner_product4(product4)
     );
-
-    // assign w1_1 = S_U1_1;
-    // assign w1_2 = S_U1_2;
-    // assign w1_3 = S_U1_3;
-    // assign w1_4 = S_U1_4;    
-
-    // assign w2_1 = S_U2_1;
-    // assign w2_2 = S_U2_2;
-    // assign w2_3 = S_U2_3;
-    // assign w2_4 = S_U2_4;  
-
-    // assign w3_1 = S_U3_1;
-    // assign w3_2 = S_U3_2;
-    // assign w3_3 = S_U3_3;
-    // assign w3_4 = S_U3_4;  
-
-    // assign w4_1 = S_U4_1;
-    // assign w4_2 = S_U4_2;
-    // assign w4_3 = S_U4_3;
-    // assign w4_4 = S_U4_4;  
-
 
     assign w1_1 = S_U3_1;
     assign w1_2 = S_U3_2;

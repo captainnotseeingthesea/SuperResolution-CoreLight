@@ -17,7 +17,7 @@ int main(int argc, char** argv, char** env) {
     unsigned int clock = 0;
     unsigned int random_wready;
     #define PERIOD 4
-    while (!contextp->gotFinish() && (clock < 10000000)) { 
+    while (!contextp->gotFinish() && (clock < 20000000)) { 
         clock++;
         top->ac_upsp_wready = 0x0;
         top->ac_upsp_rvalid = 0x0;
@@ -39,13 +39,13 @@ int main(int argc, char** argv, char** env) {
 
         top->eval(); 
 
-        // if (tfp){
-        //   if(clock > 8340000 &&  clock < 8370000) {
-        //     tfp->dump (clock);
-        //   }
-          // if( clock < 100000) {
+        if (tfp){
+          // if(clock > 8340000 &&  clock < 8370000) {
           //   tfp->dump (clock);
           // }
+          if( clock < 100000) {
+            tfp->dump (clock);
+          }
         }
     }
     if (tfp){

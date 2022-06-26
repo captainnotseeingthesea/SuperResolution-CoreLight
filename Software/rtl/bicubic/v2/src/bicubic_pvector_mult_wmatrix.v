@@ -4,22 +4,22 @@ module bicubic_pvector_mult_wmatrix #
     parameter PRODUCT_WIDTH = 32
 )
 (
-    input wire [3:0] w1_1,
-    input wire [3:0] w1_2,
-    input wire [3:0] w1_3,
-    input wire [3:0] w1_4,
-    input wire [3:0] w2_1,
-    input wire [3:0] w2_2,
-    input wire [3:0] w2_3,
-    input wire [3:0] w2_4,
-    input wire [3:0] w3_1,
-    input wire [3:0] w3_2,
-    input wire [3:0] w3_3,
-    input wire [3:0] w3_4,
-    input wire [3:0] w4_1,
-    input wire [3:0] w4_2,
-    input wire [3:0] w4_3,
-    input wire [3:0] w4_4,
+    input wire [2:0] w1_1,
+    input wire [2:0] w1_2,
+    input wire [2:0] w1_3,
+    input wire [2:0] w1_4,
+    input wire [2:0] w2_1,
+    input wire [2:0] w2_2,
+    input wire [2:0] w2_3,
+    input wire [2:0] w2_4,
+    input wire [2:0] w3_1,
+    input wire [2:0] w3_2,
+    input wire [2:0] w3_3,
+    input wire [2:0] w3_4,
+    input wire [2:0] w4_1,
+    input wire [2:0] w4_2,
+    input wire [2:0] w4_3,
+    input wire [2:0] w4_4,
 
 
     input wire [PRODUCT_WIDTH - 1:0] p1,
@@ -27,15 +27,10 @@ module bicubic_pvector_mult_wmatrix #
     input wire [PRODUCT_WIDTH - 1:0] p3,
     input wire [PRODUCT_WIDTH - 1:0] p4,
 
-    output wire [PRODUCT_WIDTH - 2:0] inner_product1,
-    output wire [PRODUCT_WIDTH - 2:0] inner_product2,
-    output wire [PRODUCT_WIDTH - 2:0] inner_product3,
-    output wire [PRODUCT_WIDTH - 2:0] inner_product4,
-
-    output wire inner_product_sign1,
-    output wire inner_product_sign2,
-    output wire inner_product_sign3,
-    output wire inner_product_sign4  
+    output wire [PRODUCT_WIDTH - 1:0] inner_product1,
+    output wire [PRODUCT_WIDTH - 1:0] inner_product2,
+    output wire [PRODUCT_WIDTH - 1:0] inner_product3,
+    output wire [PRODUCT_WIDTH - 1:0] inner_product4
     
 );
 
@@ -50,8 +45,7 @@ module bicubic_pvector_mult_wmatrix #
         .pixel_3(p3),
         .pixel_4(p4),
 
-        .inner_product(inner_product1),
-        .inner_product_sign(inner_product_sign1)
+        .inner_product(inner_product1)
     );
 
     bicubic_vector_mult u_bicubic_vector_mult2(
@@ -65,8 +59,7 @@ module bicubic_pvector_mult_wmatrix #
         .pixel_3(p3),
         .pixel_4(p4),
 
-        .inner_product(inner_product2),
-        .inner_product_sign(inner_product_sign2)
+        .inner_product(inner_product2)
     );
 
     bicubic_vector_mult u_bicubic_vector_mult3(
@@ -80,8 +73,7 @@ module bicubic_pvector_mult_wmatrix #
         .pixel_3(p3),
         .pixel_4(p4),
 
-        .inner_product(inner_product3),
-        .inner_product_sign(inner_product_sign3)
+        .inner_product(inner_product3)
     );
 
     bicubic_vector_mult u_bicubic_vector_mult4(
@@ -95,8 +87,7 @@ module bicubic_pvector_mult_wmatrix #
         .pixel_3(p3),
         .pixel_4(p4),
 
-        .inner_product(inner_product4),
-        .inner_product_sign(inner_product_sign4)
+        .inner_product(inner_product4)
     );
 
 
