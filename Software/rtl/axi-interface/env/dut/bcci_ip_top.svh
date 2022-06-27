@@ -59,7 +59,7 @@
 	     .m_axis_tstrb		(acif.stream_slave.axis_tstrb),
 	     .m_axis_tlast		(acif.stream_slave.axis_tlast),
 	     .m_axis_tdest		(acif.stream_slave.axis_tdest),
-	     .m_axis_user		(acif.stream_slave.axis_user),
+	     .m_axis_tuser		(acif.stream_slave.axis_tuser),
 	     .interrupt_updone	(acif.interrupt_updone),
 	     // Inputs
 	     .clk			    (acif.clk),
@@ -82,7 +82,7 @@
 	     .s_axis_tkeep		(acif.stream_master.axis_tkeep),
 	     .s_axis_tlast		(acif.stream_master.axis_tlast),
 	     .s_axis_tdest		(acif.stream_master.axis_tdest),
-	     .s_axis_user		(acif.stream_master.axis_user),
+	     .s_axis_tuser		(acif.stream_master.axis_tuser),
 	     .m_axis_tready		(acif.stream_slave.axis_tready),
     )*/
 
@@ -126,7 +126,7 @@
 	     .m_axis_tstrb		(acif.stream_slave.axis_tstrb), // Templated
 	     .m_axis_tlast		(acif.stream_slave.axis_tlast), // Templated
 	     .m_axis_tdest		(acif.stream_slave.axis_tdest), // Templated
-	     .m_axis_user		(acif.stream_slave.axis_user), // Templated
+	     .m_axis_tuser		(acif.stream_slave.axis_tuser), // Templated
 	     .interrupt_updone		(acif.interrupt_updone), // Templated
 	     // Inputs
 	     .clk			(acif.clk),		 // Templated
@@ -149,7 +149,7 @@
 	     .s_axis_tkeep		(acif.stream_master.axis_tkeep), // Templated
 	     .s_axis_tlast		(acif.stream_master.axis_tlast), // Templated
 	     .s_axis_tdest		(acif.stream_master.axis_tdest), // Templated
-	     .s_axis_user		(acif.stream_master.axis_user), // Templated
+	     .s_axis_tuser		(acif.stream_master.axis_tuser), // Templated
 	     .m_axis_tready		(acif.stream_slave.axis_tready)); // Templated
 
 endmodule

@@ -6,7 +6,7 @@
 
  Author: NUDT_CoreLight
 
- Date: 2021-03-27
+ Date: 2021-06-18
 
 
  Description:
@@ -99,7 +99,7 @@ module fifo # (
 	.waddr				(fifo_wrt_ptr),		 // Templated
 	.cs				(fifo_rd|fifo_wrt),	 // Templated
 	.re				(fifo_rd),		 // Templated
-	.we				(fifo_wrt));		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated,
+	.we				(fifo_wrt));		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated,
 
 
 endmodule

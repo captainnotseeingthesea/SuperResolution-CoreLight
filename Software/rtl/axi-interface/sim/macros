@@ -1,3 +1,6 @@
+// Number of parallel processing blocks
+-define N_PARALLEL=1
+
 // AXI-Lite
 -define AXI_DATA_WIDTH=32
 -define AXI_ADDR_WIDTH=32
@@ -7,10 +10,10 @@
 -define AXISIN_DATA_WIDTH=24
 
 // output AXI-Stream
--define AXISOUT_DATA_WIDTH=24*4
+-define AXISOUT_DATA_WIDTH=24*4*(`N_PARALLEL)
 
 -define CRF_DATA_WIDTH=32
--define CRF_ADDR_WIDTH=2
+-define CRF_ADDR_WIDTH=5
 -define UPSP_RDDATA_WIDTH=24
 -define UPSP_WRTDATA_WIDTH=24*4
 -define OUT_FIFO_DEPTH=128
@@ -23,3 +26,6 @@
 
 // For bcci ip
 -define BUFFER_WIDTH=24
+
+// For verification
+//-define DISABLE_SV_ASSERTION

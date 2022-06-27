@@ -29,7 +29,7 @@ module stream_in # (
    upsp_ac_rready, UPSTART, UPEND, UPINHSKCNT, s_axis_aclk,
    s_axis_arstn, s_axis_tvalid, s_axis_tid, s_axis_tdata,
    s_axis_tstrb, s_axis_tkeep, s_axis_tlast, s_axis_tdest,
-   s_axis_user
+   s_axis_tuser
    );
 
 	localparam AXISIN_STRB_WIDTH    = AXISIN_DATA_WIDTH/8;
@@ -56,13 +56,13 @@ module stream_in # (
 	input s_axis_tvalid;	
 	output s_axis_tready;
 
-	input                       s_axis_tid;
+	input                         s_axis_tid;
 	input [AXISIN_DATA_WIDTH-1:0] s_axis_tdata;
 	input [AXISIN_STRB_WIDTH-1:0] s_axis_tstrb;
 	input [AXISIN_STRB_WIDTH-1:0] s_axis_tkeep;
-	input                       s_axis_tlast;
-	input                       s_axis_tdest;
-	input                       s_axis_user;
+	input                         s_axis_tlast;
+	input                         s_axis_tdest;
+	input                         s_axis_tuser;
 
 
 

@@ -39,15 +39,16 @@ module access_control # (
    ac_crf_wrt, ac_crf_wdata, ac_crf_waddr, ac_crf_processing,
    ac_crf_axisi_tvalid, ac_crf_axisi_tready, ac_crf_axiso_tvalid,
    ac_crf_axiso_tready, ac_upsp_rvalid, ac_upsp_rdata, ac_upsp_wready,
-   s_axis_tready, m_axis_tvalid, m_axis_tid, m_axis_tdata,
-   m_axis_tkeep, m_axis_tstrb, m_axis_tlast, m_axis_tdest,
-   m_axis_user,
+   s_axis_tready, ac_m_axis_tvalid, ac_m_axis_tid, ac_m_axis_tdata,
+   ac_m_axis_tkeep, ac_m_axis_tstrb, ac_m_axis_tlast, ac_m_axis_tdest,
+   ac_m_axis_tuser,
    // Inputs
    clk, rst_n, crf_ac_UPSTART, crf_ac_UPEND, crf_ac_wbusy,
    crf_ac_UPINHSKCNT, upsp_ac_rready, upsp_ac_wvalid, upsp_ac_wdata,
    s_axis_tvalid, s_axis_tid, s_axis_tdata, s_axis_tstrb,
-   s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_user,
-   m_axis_tready
+   s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_tuser,
+   ac_m_axis_tready, trans_m_axis_tvalid, trans_m_axis_tready,
+   trans_m_axis_tlast
    );
 
 	localparam AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8;
@@ -143,22 +144,28 @@ module access_control # (
 	input [AXISIN_STRB_WIDTH-1:0] s_axis_tkeep;
 	input                         s_axis_tlast;
 	input                         s_axis_tdest;
-	input                         s_axis_user;
+	input                         s_axis_tuser;
 
 
 
 	// Interface as AXI-Stream master
 	// input s_axis_aclk;
     // input s_axis_arstn;
-	output                       m_axis_tvalid;	
-	input                        m_axis_tready;
-	output                       m_axis_tid;
-	output [AXISOUT_DATA_WIDTH-1:0] m_axis_tdata;
-	output [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep;
-	output [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb;
-	output                       m_axis_tlast;
-	output                       m_axis_tdest;
-	output                       m_axis_user;
+	output                          ac_m_axis_tvalid;	
+	input                           ac_m_axis_tready;
+	output                          ac_m_axis_tid;
+	output [AXISOUT_DATA_WIDTH-1:0] ac_m_axis_tdata;
+	output [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tkeep;
+	output [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tstrb;
+	output                          ac_m_axis_tlast;
+	output                          ac_m_axis_tdest;
+	output                          ac_m_axis_tuser;
+
+
+	// Interface with out stream transformer
+    input trans_m_axis_tvalid;
+	input trans_m_axis_tready;
+	input trans_m_axis_tlast ;
 
 
 	/*AUTOWIRE*/
@@ -168,10 +175,10 @@ module access_control # (
 	reg [CRF_ADDR_WIDTH-1:0] ac_crf_waddr;
 	reg [CRF_DATA_WIDTH-1:0] ac_crf_wdata;
 	reg		ac_crf_wrt;
-	reg		m_axis_tlast;
-	reg		m_axis_tvalid;
+	reg		ac_m_axis_tlast;
+	reg		ac_m_axis_tvalid;
 	// End of automatics
-	reg [AXISOUT_DATA_WIDTH-1:0] m_axis_tdata;
+	reg [AXISOUT_DATA_WIDTH-1:0] ac_m_axis_tdata;
 
 	genvar j;
 
@@ -196,7 +203,7 @@ module access_control # (
 
 	// After finish upsampling, clear UPSTART and write UPEND.
 	wire last_one_remain;
-	wire write_done = m_axis_tvalid & m_axis_tready & m_axis_tlast & last_one_remain;
+	wire write_done = trans_m_axis_tvalid & trans_m_axis_tready & trans_m_axis_tlast & last_one_remain;
 	always@(posedge clk or negedge rst_n) begin
 		if(~rst_n) begin
 			/*AUTORESET*/
@@ -231,8 +238,8 @@ module access_control # (
 	// axi-s handshake signals to crf
 	wire ac_crf_axisi_tvalid = s_axis_tvalid;
 	wire ac_crf_axisi_tready = s_axis_tready;
-	wire ac_crf_axiso_tvalid = m_axis_tvalid;
-	wire ac_crf_axiso_tready = m_axis_tready;
+	wire ac_crf_axiso_tvalid = ac_m_axis_tvalid;
+	wire ac_crf_axiso_tready = ac_m_axis_tready;
 	wire ac_crf_processing   = processing;
 
 
@@ -265,7 +272,7 @@ module access_control # (
 		      .s_axis_tkeep	(s_axis_tkeep[AXISIN_STRB_WIDTH-1:0]),
 		      .s_axis_tlast	(s_axis_tlast),
 		      .s_axis_tdest	(s_axis_tdest),
-		      .s_axis_user	(s_axis_user));
+		      .s_axis_tuser	(s_axis_tuser));
 
 
 	// One outbuf per element
@@ -304,28 +311,28 @@ module access_control # (
 		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			m_axis_tlast <= 1'h0;
-			m_axis_tvalid <= 1'h0;
+			ac_m_axis_tlast <= 1'h0;
+			ac_m_axis_tvalid <= 1'h0;
 			// End of automatics
-		end else if(~m_axis_tvalid) begin
+		end else if(~ac_m_axis_tvalid) begin
 			if(|obuf_rd) begin
-				m_axis_tvalid <= 1'b1;
-				m_axis_tlast  <= last_of_row_remain;
+				ac_m_axis_tvalid <= 1'b1;
+				ac_m_axis_tlast  <= last_of_row_remain;
 			end else
-				m_axis_tlast  <= 1'b0;
+				ac_m_axis_tlast  <= 1'b0;
 		end else begin
-			if(m_axis_tready) begin
-				m_axis_tvalid <= |obuf_rd?1'b1:1'b0;
-				m_axis_tlast  <= |obuf_rd?last_of_row_remain:1'b0;
+			if(ac_m_axis_tready) begin
+				ac_m_axis_tvalid <= |obuf_rd?1'b1:1'b0;
+				ac_m_axis_tlast  <= |obuf_rd?last_of_row_remain:1'b0;
 			end
 		end
 	end
 
 
 	// Hard-wired signals
-	assign m_axis_tid   = 1'b0;
-	assign m_axis_tdest = 1'b0;
-	assign m_axis_user  = 1'b0;
+	assign ac_m_axis_tid   = 1'b0;
+	assign ac_m_axis_tdest = 1'b0;
+	assign ac_m_axis_tuser  = 1'b0;
 
 
 	generate
@@ -335,15 +342,15 @@ module access_control # (
 			// there is only one source.
 
 			// When only one source, all its data are desired, so
-			wire [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
-			wire [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
-			assign m_axis_tkeep = m_axis_tkeep_tmp;
-			assign m_axis_tstrb = m_axis_tstrb_tmp;
+			wire [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
+			wire [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tstrb_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
+			assign ac_m_axis_tkeep = ac_m_axis_tkeep_tmp;
+			assign ac_m_axis_tstrb = ac_m_axis_tstrb_tmp;
 
 			always@(*) begin: ONE_ELE_TDATA
 				integer i;
-				for(i = 0; i < AXISOUT_STRB_WIDTH; i=i+1) begin
-					m_axis_tdata[i*8+:8] = obuf_odata[((AXISOUT_STRB_WIDTH-i)*8-1)-:8];
+				for(i = 0; i < AXISOUT_STRB_WIDTH/3; i=i+1) begin
+					ac_m_axis_tdata[i*24+:24] = obuf_odata[((AXISOUT_STRB_WIDTH/3-i)*24-1)-:24];
 				end
 			end
 
@@ -352,7 +359,7 @@ module access_control # (
 			assign ac_upsp_wready = obuf_wready;
 
 			// If fifo is not empty, and there is no transfer or the tranfer will complete, read from fifo.
-			assign obuf_rd = ~obuf_empty & (~m_axis_tvalid | m_axis_tready) & time_window;
+			assign obuf_rd = ~obuf_empty & (~ac_m_axis_tvalid | ac_m_axis_tready) & time_window;
 
 		    upsp_outbuf #(
 				  .DATA_WIDTH		(AXISOUT_DATA_WIDTH),
@@ -374,17 +381,17 @@ module access_control # (
 			
 		end else begin:MULTI_ELE
 			// When there are multiple elements, we need to throw some data at boundary
-			reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tkeep_tmp;
-			reg [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb_tmp;
-			assign m_axis_tkeep = m_axis_tkeep_tmp;
-			assign m_axis_tstrb = m_axis_tstrb_tmp;
+			reg [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tkeep_tmp;
+			reg [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tstrb_tmp;
+			assign ac_m_axis_tkeep = ac_m_axis_tkeep_tmp;
+			assign ac_m_axis_tstrb = ac_m_axis_tstrb_tmp;
 
 			// Select output data from one of the buf
 			reg  [N_PARALLEL-1:0] obuf_rd_r;
 			always@(posedge clk or negedge rst_n) begin
 				if(~rst_n)
 					obuf_rd_r <= {N_PARALLEL{1'b0}};
-				else if(~m_axis_tvalid | m_axis_tready) begin
+				else if(~ac_m_axis_tvalid | ac_m_axis_tready) begin
 						obuf_rd_r <= obuf_rd;
 				end
 			end
@@ -396,8 +403,8 @@ module access_control # (
 					if(obuf_rd_r[i] == 1)
 						axis_tdata_tmp = obuf_odata[i*AXISOUT_DATA_WIDTH+:AXISOUT_DATA_WIDTH];
 				end
-				for(i = 0; i < AXISOUT_STRB_WIDTH; i=i+1) begin
-					m_axis_tdata[i*8+:8] = axis_tdata_tmp[((AXISOUT_STRB_WIDTH-i)*8-1)-:8];
+				for(i = 0; i < AXISOUT_STRB_WIDTH/3; i=i+1) begin
+					ac_m_axis_tdata[i*24+:24] = axis_tdata_tmp[((AXISOUT_STRB_WIDTH/3-i)*24-1)-:24];
 				end
 			end
 			
@@ -426,7 +433,7 @@ module access_control # (
 				// If fifo is not empty, and there is no transfer or the tranfer will complete, and this
 				// buf contains the desired data, read from fifo.
 				assign obuf_rdmask [j] = (ac_rdbuf_cnt_inrow >= START) && (ac_rdbuf_cnt_inrow <= END);
-				assign obuf_rd[j] = obuf_rdmask[j] & ~obuf_empty[j] & (~m_axis_tvalid | m_axis_tready) & time_window;
+				assign obuf_rd[j] = obuf_rdmask[j] & ~obuf_empty[j] & (~ac_m_axis_tvalid | ac_m_axis_tready) & time_window;
 
 		    	ac_outbuf #(
         			  .UPSP_WRTDATA_WIDTH (UPSP_WRTDATA_WIDTH),
@@ -452,7 +459,7 @@ module access_control # (
 						if(~rst_n) begin
 							keep[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
 							strb[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
-						end else if(~m_axis_tvalid | m_axis_tready) begin
+						end else if(~ac_m_axis_tvalid | ac_m_axis_tready) begin
 							if(ac_rdbuf_cnt_inrow == END - N_PARALLEL*N_UPSP_WRT) begin
 								keep[j] <= (CORSS_BOUNDARY)?{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}}
 											:{AXISOUT_STRB_WIDTH{1'b1}};
@@ -476,10 +483,10 @@ module access_control # (
 						if(~rst_n) begin
 							keep[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
 							strb[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
-						end else if(~m_axis_tvalid | m_axis_tready) begin
+						end else if(~ac_m_axis_tvalid | ac_m_axis_tready) begin
 							if(ac_rdbuf_cnt_inrow == START) begin
-								keep[j] <= {18'b0, {(AXISOUT_STRB_WIDTH-18){1'b1}}};
-								strb[j] <= {18'b0, {(AXISOUT_STRB_WIDTH-18){1'b1}}};
+								keep[j] <= {{(AXISOUT_STRB_WIDTH-18){1'b1}}, 18'b0};
+								strb[j] <= {{(AXISOUT_STRB_WIDTH-18){1'b1}}, 18'b0};
 							end else if(ac_rdbuf_cnt_inrow == END) begin
 								keep[j] <= {{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}};
 								strb[j] <= {{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}};
@@ -496,10 +503,10 @@ module access_control # (
 						if(~rst_n) begin
 							keep[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
 							strb[j] <= {AXISOUT_STRB_WIDTH{1'b0}};
-						end else if(~m_axis_tvalid | m_axis_tready) begin
+						end else if(~ac_m_axis_tvalid | ac_m_axis_tready) begin
 							if(ac_rdbuf_cnt_inrow == START) begin
-								keep[j] <= {18'b0, {(AXISOUT_STRB_WIDTH-18){1'b1}}};
-								strb[j] <= {18'b0, {(AXISOUT_STRB_WIDTH-18){1'b1}}};
+								keep[j] <= {{(AXISOUT_STRB_WIDTH-18){1'b1}}, 18'b0};
+								strb[j] <= {{(AXISOUT_STRB_WIDTH-18){1'b1}}, 18'b0};
 							end else if(ac_rdbuf_cnt_inrow == END - N_PARALLEL*N_UPSP_WRT) begin
 								keep[j] <= (CORSS_BOUNDARY)?{{(AXISOUT_STRB_WIDTH-3*N_LAST_VALID){1'b0}}, {3*N_LAST_VALID{1'b1}}}
 											:{AXISOUT_STRB_WIDTH{1'b1}};
@@ -523,12 +530,12 @@ module access_control # (
 
 			always@(*) begin: MULTIELE_TKEEP
 				integer i;
-				m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
-				m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
+				ac_m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
+				ac_m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
 				for(i = 0; i < N_PARALLEL; i=i+1) begin
 					if(obuf_rd_r[i] == 1'b1) begin
-						m_axis_tkeep_tmp = keep[i];
-						m_axis_tkeep_tmp = strb[i];
+						ac_m_axis_tkeep_tmp = keep[i];
+						ac_m_axis_tkeep_tmp = strb[i];
 					end
 				end
 			end
@@ -554,7 +561,7 @@ module access_control # (
 	always@(posedge clk or negedge rst_n) begin: LINE_COUNT
 		if(~rst_n | write_done)
 			out_line_count <= 1'b0;
-		else if(m_axis_tvalid & m_axis_tready & m_axis_tlast)
+		else if(trans_m_axis_tvalid & trans_m_axis_tready & trans_m_axis_tlast)
 			out_line_count <= out_line_count + 1;
 	end
 

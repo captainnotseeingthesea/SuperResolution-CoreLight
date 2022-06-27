@@ -31,7 +31,7 @@ interface axi_stream_if();
 	logic [AXIS_STRB_WIDTH-1:0] axis_tkeep;
 	logic                       axis_tlast;
 	logic                       axis_tdest;
-	logic                       axis_user;
+	logic                       axis_tuser;
 
 	function get_strb_width();
 		return AXIS_STRB_WIDTH;
