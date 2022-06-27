@@ -169,7 +169,6 @@ module access_control # (
 	reg [CRF_DATA_WIDTH-1:0] ac_crf_wdata;
 	reg		ac_crf_wrt;
 	reg		ac_m_axis_tlast;
-	reg		ac_m_axis_tuser;
 	reg		ac_m_axis_tvalid;
 	// End of automatics
 	reg [AXISOUT_DATA_WIDTH-1:0] ac_m_axis_tdata;
@@ -326,7 +325,7 @@ module access_control # (
 	// Hard-wired signals
 	assign ac_m_axis_tid   = 1'b0;
 	assign ac_m_axis_tdest = 1'b0;
-	assign ac_m_axis_user  = 1'b0;
+	assign ac_m_axis_tuser  = 1'b0;
 
 
 	generate

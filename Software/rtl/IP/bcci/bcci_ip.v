@@ -44,7 +44,7 @@ module bcci_ip
    s_axi_arready, s_axi_rvalid, s_axi_rdata, s_axi_rresp,
    s_axis_tready, m_axis_tvalid, m_axis_tid, m_axis_tdata,
    m_axis_tkeep, m_axis_tstrb, m_axis_tlast, m_axis_tdest,
-   m_axis_user, interrupt_updone,
+   m_axis_tuser, interrupt_updone,
    // Inputs
    clk, rst_n, s_axi_awvalid, s_axi_awaddr, s_axi_awprot,
    s_axi_wvalid, s_axi_wdata, s_axi_wstrb, s_axi_bready,
@@ -98,7 +98,7 @@ module bcci_ip
 	output [AXISOUT_STRB_WIDTH-1:0] m_axis_tstrb;
 	output                       m_axis_tlast;
 	output                       m_axis_tdest;
-	output                       m_axis_user;
+	output                       m_axis_tuser;
 
 	// Intterupt when finished
 	output interrupt_updone;
@@ -126,19 +126,14 @@ module bcci_ip
     wire [CRF_DATA_WIDTH-1:0] crf_ac_UPINHSKCNT;// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
-    wire		m_axis_tuser;		// From AAA_stream_transformer of stream_transformer.v
     // End of automatics
 
 
     /*AUTOREG*/
-    // Beginning of automatic regs (for this module's undeclared outputs)
-    reg			m_axis_user;
-    // End of automatics
 
 
 
     /* config_register_file AUTO_TEMPLATE(
-
     );
     */
     config_register_file #(/*AUTOINSTPARAM*/
@@ -253,9 +248,40 @@ module bcci_ip
 		       .s_axis_tlast	(s_axis_tlast),
 		       .s_axis_tdest	(s_axis_tdest),
 		       .s_axis_tuser	(s_axis_tuser),
-		       .ac_m_axis_tready(ac_m_axis_tready));
-    
-	
+		       .ac_m_axis_tready(ac_m_axis_tready));	
+
+	// N processing elements
+	genvar j;
+	generate
+		for(j = 0; j < N_PARALLEL; j=j+1) begin: MULTI_PROC_ELE
+
+			localparam BLOCK_SIZE = (j==0)?(((N_PARALLEL==1)?SRC_IMG_WIDTH/N_PARALLEL:(SRC_IMG_WIDTH/N_PARALLEL) + 3))
+								    :SRC_IMG_WIDTH/N_PARALLEL;
+
+    		bicubic_processing_element #(
+						 // Parameters
+						 .BUFFER_WIDTH		(BUFFER_WIDTH),
+						 .CHANNEL_WIDTH		(CHANNEL_WIDTH),
+						 .BLOCK_SIZE		(BLOCK_SIZE))
+    		AAA_bicubic_processing_element(
+						   // Outputs
+						   .upsp_ac_rready	(upsp_ac_rready[j]),
+						   .upsp_ac_wdata	(upsp_ac_wdata[j*UPSP_WRTDATA_WIDTH+:UPSP_WRTDATA_WIDTH]),
+						   .upsp_ac_wvalid	(upsp_ac_wvalid[j]),
+						   // Inputs
+						   .clk			(clk),
+						   .rst_n		(rst_n),
+						   .ac_upsp_rdata	(ac_upsp_rdata),
+						   .ac_upsp_rvalid	(ac_upsp_rvalid[j]),
+						   .ac_upsp_wready	(ac_upsp_wready[j]));
+
+		end
+	endgenerate
+
+
+    /* stream_transformer AUTO_TEMPLATE (
+    );
+    */
 	stream_transformer #(/*AUTOINSTPARAM*/
 			     // Parameters
 			     .AXISOUT_DATA_WIDTH(AXISOUT_DATA_WIDTH),
@@ -283,37 +309,5 @@ module bcci_ip
 			       .ac_m_axis_tdest	(ac_m_axis_tdest),
 			       .ac_m_axis_tuser	(ac_m_axis_tuser),
 			       .m_axis_tready	(m_axis_tready));
-
-
-    /* bicubic_processing_element AUTO_TEMPLATE (
-    );
-    */
-
-	genvar j;
-	generate
-		for(j = 0; j < N_PARALLEL; j=j+1) begin
-
-			localparam BLOCK_SIZE = (j==0)?(((N_PARALLEL==1)?SRC_IMG_WIDTH/N_PARALLEL:(SRC_IMG_WIDTH/N_PARALLEL) + 3))
-								    :SRC_IMG_WIDTH/N_PARALLEL;
-
-    		bicubic_processing_element #(
-						 // Parameters
-						 .BUFFER_WIDTH		(BUFFER_WIDTH),
-						 .CHANNEL_WIDTH		(CHANNEL_WIDTH),
-						 .BLOCK_SIZE		(BLOCK_SIZE))
-    		AAA_bicubic_processing_element(
-						   // Outputs
-						   .upsp_ac_rready	(upsp_ac_rready[j]),
-						   .upsp_ac_wdata	(upsp_ac_wdata[j*UPSP_WRTDATA_WIDTH+:UPSP_WRTDATA_WIDTH]),
-						   .upsp_ac_wvalid	(upsp_ac_wvalid[j]),
-						   // Inputs
-						   .clk			(clk),
-						   .rst_n		(rst_n),
-						   .ac_upsp_rdata	(ac_upsp_rdata),
-						   .ac_upsp_rvalid	(ac_upsp_rvalid[j]),
-						   .ac_upsp_wready	(ac_upsp_wready[j]));
-
-		end
-	endgenerate
 
 endmodule

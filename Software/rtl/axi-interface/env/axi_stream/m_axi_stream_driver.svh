@@ -61,7 +61,7 @@ task m_axi_stream_driver::reset_phase(uvm_phase phase);
     vif.axis_tstrb  <= 0;
     vif.axis_tlast  <= 0;
     vif.axis_tdest  <= 0;
-    vif.axis_user   <= 0;
+    vif.axis_tuser   <= 0;
     while(!vif.arstn) @(posedge vif.aclk);
 
     phase.drop_objection(this);
@@ -94,7 +94,7 @@ task m_axi_stream_driver::write_one_trans(axi_stream_trans t);
 
     vif.axis_tlast  <= t.tlast ;
     vif.axis_tdest  <= t.tdest ;
-    vif.axis_user   <= t.tuser ;
+    vif.axis_tuser   <= t.tuser ;
 
     for(i = 0; i < t.timeout; i++) begin
         if(vif.axis_tvalid && vif.axis_tready) break;

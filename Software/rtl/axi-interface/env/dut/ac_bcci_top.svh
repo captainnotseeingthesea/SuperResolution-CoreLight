@@ -144,7 +144,7 @@ module ac_bcci_top(ac_if acif);
 		.m_axis_tstrb	(acif.stream_slave.axis_tstrb),
 		.m_axis_tlast	(acif.stream_slave.axis_tlast),
 		.m_axis_tdest	(acif.stream_slave.axis_tdest),
-		.m_axis_user		(acif.stream_slave.axis_user),
+		.m_axis_tuser		(acif.stream_slave.axis_tuser),
 		.clk				(acif.clk),
 		.rst_n			(acif.rst_n),
 		.upsp_ac_rready		(acif.usif.upsp_ac_rready),
@@ -157,7 +157,7 @@ module ac_bcci_top(ac_if acif);
 		.s_axis_tkeep	(acif.stream_master.axis_tkeep),
 		.s_axis_tlast	(acif.stream_master.axis_tlast),
 		.s_axis_tdest	(acif.stream_master.axis_tdest),
-		.s_axis_user		(acif.stream_master.axis_user),
+		.s_axis_tuser		(acif.stream_master.axis_tuser),
 		.s_axis_tready	(acif.stream_master.axis_tready),
     );
     */
@@ -214,7 +214,7 @@ module ac_bcci_top(ac_if acif);
 		       .s_axis_tkeep	(acif.stream_master.axis_tkeep), // Templated
 		       .s_axis_tlast	(acif.stream_master.axis_tlast), // Templated
 		       .s_axis_tdest	(acif.stream_master.axis_tdest), // Templated
-		       .s_axis_tuser	(s_axis_tuser),
+		       .s_axis_tuser	(acif.stream_master.axis_tuser), // Templated
 		       .ac_m_axis_tready(ac_m_axis_tready));
      
 	

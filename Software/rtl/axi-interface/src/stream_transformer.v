@@ -71,13 +71,12 @@ module stream_transformer # (
     // Beginning of automatic regs (for this module's undeclared outputs)
     reg [AXISOUT_DATA_WIDTH-1:0] m_axis_tdata;
     reg			m_axis_tlast;
-    reg			m_axis_tuser;
     // End of automatics
 
 
     /* Transform input data into a LSB packed form */
     reg [N_FIFO-1:0] valid_pixel;
-    reg [$clog2(N_FIFO)-1:0] pos[AXISOUT_STRB_WIDTH-1:0];
+    wire [$clog2(N_FIFO)-1:0] pos[AXISOUT_STRB_WIDTH-1:0];
     reg [AXISOUT_DATA_WIDTH-1:0] intermediate_ac_data;
     
     always@(*) begin: VALID_PIXEL
@@ -90,12 +89,23 @@ module stream_transformer # (
     genvar j;
     generate
         for(j = 0; j < N_FIFO; j=j+1) begin: FORMER_VALID_CNT
-            integer idx;
-            always@(*) begin
-                pos[j] = 0;
-                for(idx = 0; idx < j; idx=idx+1) begin
-                    pos[j] = pos[j] + valid_pixel[idx];
-                end  
+            if(j == 0) begin
+
+                assign pos[j] = '0;
+
+            end else begin
+
+                reg [$clog2(N_FIFO)-1:0] sum;
+                integer idx;
+                always@(*) begin
+                    sum = 0;
+                    for(idx = 0; idx < j; idx=idx+1) begin
+                        sum = sum + valid_pixel[idx];
+                    end  
+                end
+
+                assign pos[j] = sum;
+
             end
         end
     endgenerate
@@ -211,7 +221,7 @@ module stream_transformer # (
 
     assign m_axis_tvalid = fifo_rd_r;
     assign m_axis_tid    = ac_m_axis_tid;
-    assign m_axis_user   = ac_m_axis_tuser;
+    assign m_axis_tuser  = ac_m_axis_tuser;
     assign m_axis_tdest  = ac_m_axis_tdest;
     assign m_axis_tkeep  = {AXISOUT_STRB_WIDTH{1'b1}};
     assign m_axis_tstrb  = {AXISOUT_STRB_WIDTH{1'b1}};
