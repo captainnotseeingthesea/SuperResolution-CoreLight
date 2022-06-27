@@ -215,7 +215,10 @@ module ac_bcci_top(ac_if acif);
 		       .s_axis_tlast	(acif.stream_master.axis_tlast), // Templated
 		       .s_axis_tdest	(acif.stream_master.axis_tdest), // Templated
 		       .s_axis_tuser	(acif.stream_master.axis_tuser), // Templated
-		       .ac_m_axis_tready(ac_m_axis_tready));
+		       .ac_m_axis_tready(ac_m_axis_tready),
+		       .trans_m_axis_tvalid(trans_m_axis_tvalid),
+		       .trans_m_axis_tready(trans_m_axis_tready),
+		       .trans_m_axis_tlast(trans_m_axis_tlast));
      
 	
     /* bicubic_processing_element AUTO_TEMPLATE (

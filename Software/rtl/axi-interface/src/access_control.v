@@ -47,7 +47,8 @@ module access_control # (
    crf_ac_UPINHSKCNT, upsp_ac_rready, upsp_ac_wvalid, upsp_ac_wdata,
    s_axis_tvalid, s_axis_tid, s_axis_tdata, s_axis_tstrb,
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_tuser,
-   ac_m_axis_tready
+   ac_m_axis_tready, trans_m_axis_tvalid, trans_m_axis_tready,
+   trans_m_axis_tlast
    );
 
 	localparam AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8;
@@ -161,6 +162,12 @@ module access_control # (
 	output                          ac_m_axis_tuser;
 
 
+	// Interface with out stream transformer
+    input trans_m_axis_tvalid;
+	input trans_m_axis_tready;
+	input trans_m_axis_tlast ;
+
+
 	/*AUTOWIRE*/
 
 	/*AUTOREG*/
@@ -196,7 +203,7 @@ module access_control # (
 
 	// After finish upsampling, clear UPSTART and write UPEND.
 	wire last_one_remain;
-	wire write_done = ac_m_axis_tvalid & ac_m_axis_tready & ac_m_axis_tlast & last_one_remain;
+	wire write_done = trans_m_axis_tvalid & trans_m_axis_tready & trans_m_axis_tlast & last_one_remain;
 	always@(posedge clk or negedge rst_n) begin
 		if(~rst_n) begin
 			/*AUTORESET*/
@@ -342,8 +349,8 @@ module access_control # (
 
 			always@(*) begin: ONE_ELE_TDATA
 				integer i;
-				for(i = 0; i < AXISOUT_STRB_WIDTH; i=i+1) begin
-					ac_m_axis_tdata[i*8+:8] = obuf_odata[((AXISOUT_STRB_WIDTH-i)*8-1)-:8];
+				for(i = 0; i < AXISOUT_STRB_WIDTH/3; i=i+1) begin
+					ac_m_axis_tdata[i*24+:24] = obuf_odata[((AXISOUT_STRB_WIDTH/3-i)*24-1)-:24];
 				end
 			end
 
@@ -397,7 +404,7 @@ module access_control # (
 						axis_tdata_tmp = obuf_odata[i*AXISOUT_DATA_WIDTH+:AXISOUT_DATA_WIDTH];
 				end
 				for(i = 0; i < AXISOUT_STRB_WIDTH/3; i=i+1) begin
-					ac_m_axis_tdata[i*24+:24] = axis_tdata_tmp[((AXISOUT_STRB_WIDTH-i)*24-1)-:24];
+					ac_m_axis_tdata[i*24+:24] = axis_tdata_tmp[((AXISOUT_STRB_WIDTH/3-i)*24-1)-:24];
 				end
 			end
 			
@@ -554,7 +561,7 @@ module access_control # (
 	always@(posedge clk or negedge rst_n) begin: LINE_COUNT
 		if(~rst_n | write_done)
 			out_line_count <= 1'b0;
-		else if(ac_m_axis_tvalid & ac_m_axis_tready & ac_m_axis_tlast)
+		else if(trans_m_axis_tvalid & trans_m_axis_tready & trans_m_axis_tlast)
 			out_line_count <= out_line_count + 1;
 	end
 

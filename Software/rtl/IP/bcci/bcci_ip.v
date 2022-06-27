@@ -126,6 +126,9 @@ module bcci_ip
     wire [CRF_DATA_WIDTH-1:0] crf_ac_UPINHSKCNT;// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
+    wire		trans_m_axis_tlast;	// From AAA_stream_transformer of stream_transformer.v
+    wire		trans_m_axis_tready;	// From AAA_stream_transformer of stream_transformer.v
+    wire		trans_m_axis_tvalid;	// From AAA_stream_transformer of stream_transformer.v
     // End of automatics
 
 
@@ -248,7 +251,10 @@ module bcci_ip
 		       .s_axis_tlast	(s_axis_tlast),
 		       .s_axis_tdest	(s_axis_tdest),
 		       .s_axis_tuser	(s_axis_tuser),
-		       .ac_m_axis_tready(ac_m_axis_tready));	
+		       .ac_m_axis_tready(ac_m_axis_tready),
+		       .trans_m_axis_tvalid(trans_m_axis_tvalid),
+		       .trans_m_axis_tready(trans_m_axis_tready),
+		       .trans_m_axis_tlast(trans_m_axis_tlast));	
 
 	// N processing elements
 	genvar j;
@@ -278,14 +284,10 @@ module bcci_ip
 		end
 	endgenerate
 
-
-    /* stream_transformer AUTO_TEMPLATE (
-    );
-    */
-	stream_transformer #(/*AUTOINSTPARAM*/
-			     // Parameters
-			     .AXISOUT_DATA_WIDTH(AXISOUT_DATA_WIDTH),
-			     .DST_IMG_WIDTH	(DST_IMG_WIDTH))
+	stream_transformer # (/*AUTOINSTPARAM*/
+			      // Parameters
+			      .AXISOUT_DATA_WIDTH(AXISOUT_DATA_WIDTH),
+			      .DST_IMG_WIDTH	(DST_IMG_WIDTH))
 	AAA_stream_transformer(/*AUTOINST*/
 			       // Outputs
 			       .ac_m_axis_tready(ac_m_axis_tready),
@@ -297,6 +299,9 @@ module bcci_ip
 			       .m_axis_tlast	(m_axis_tlast),
 			       .m_axis_tdest	(m_axis_tdest),
 			       .m_axis_tuser	(m_axis_tuser),
+			       .trans_m_axis_tvalid(trans_m_axis_tvalid),
+			       .trans_m_axis_tready(trans_m_axis_tready),
+			       .trans_m_axis_tlast(trans_m_axis_tlast),
 			       // Inputs
 			       .clk		(clk),
 			       .rst_n		(rst_n),

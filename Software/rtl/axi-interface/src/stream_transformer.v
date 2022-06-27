@@ -24,7 +24,8 @@ module stream_transformer # (
    // Outputs
    ac_m_axis_tready, m_axis_tvalid, m_axis_tid, m_axis_tdata,
    m_axis_tkeep, m_axis_tstrb, m_axis_tlast, m_axis_tdest,
-   m_axis_tuser,
+   m_axis_tuser, trans_m_axis_tvalid, trans_m_axis_tready,
+   trans_m_axis_tlast,
    // Inputs
    clk, rst_n, ac_m_axis_tvalid, ac_m_axis_tid, ac_m_axis_tdata,
    ac_m_axis_tkeep, ac_m_axis_tstrb, ac_m_axis_tlast, ac_m_axis_tdest,
@@ -61,8 +62,10 @@ module stream_transformer # (
 	output                          m_axis_tdest;
 	output                          m_axis_tuser;
 
-
-
+    // Interface to access control
+    output trans_m_axis_tvalid;	
+	output trans_m_axis_tready;
+	output trans_m_axis_tlast;
 
     /*AUTOWIRE*/
 
@@ -74,9 +77,16 @@ module stream_transformer # (
     // End of automatics
 
 
+    // Send to access control to signal some event
+    assign trans_m_axis_tvalid = m_axis_tvalid;
+	assign trans_m_axis_tready = m_axis_tready;
+	assign trans_m_axis_tlast  = m_axis_tlast;
+
+
+
     /* Transform input data into a LSB packed form */
     reg [N_FIFO-1:0] valid_pixel;
-    wire [$clog2(N_FIFO)-1:0] pos[AXISOUT_STRB_WIDTH-1:0];
+    wire [$clog2(N_FIFO)-1:0] pos[N_FIFO-1:0];
     reg [AXISOUT_DATA_WIDTH-1:0] intermediate_ac_data;
     
     always@(*) begin: VALID_PIXEL
@@ -98,7 +108,7 @@ module stream_transformer # (
                 reg [$clog2(N_FIFO)-1:0] sum;
                 integer idx;
                 always@(*) begin
-                    sum = 0;
+                    sum = '0;
                     for(idx = 0; idx < j; idx=idx+1) begin
                         sum = sum + valid_pixel[idx];
                     end  
@@ -119,7 +129,7 @@ module stream_transformer # (
                 intermediate_ac_data[j*24+:24] = 24'b0;
                 intermediate_valid_pixel[j] = 1'b0;
                 for(i = 0; i < N_FIFO; i=i+1) begin
-                    if(pos[i] == j) begin
+                    if(pos[i] == j && valid_pixel[i]) begin
                         intermediate_ac_data[j*24+:24] = ac_m_axis_tdata[i*24+:24];
                         intermediate_valid_pixel[j] = 1'b1;
                     end
@@ -131,18 +141,19 @@ module stream_transformer # (
 
     /* We us fifos to store valid data bytes in a transfer, ignore null bytes*/
     reg [$clog2(N_FIFO)-1:0] write_pos;
-    reg [$clog2(N_FIFO)-1:0] write_num;
+    reg [$clog2(N_FIFO+1)-1:0] write_num;
     always@(*) begin: WRT_NUM
         integer i;
-        write_num = 0;
+        write_num = '0;
         for(i = 0; i < N_FIFO; i=i+1) begin
             write_num = write_num + intermediate_valid_pixel[i];
         end
     end
 
+
     always@(posedge clk or negedge rst_n) begin: WRT_CNT
         if(~rst_n)
-            write_pos <= {$clog2(N_FIFO){1'b1}};
+            write_pos <= {$clog2(N_FIFO){1'b0}};
         else if(ac_m_axis_tvalid & ac_m_axis_tready)
             write_pos <= (write_pos + write_num) % N_FIFO;
     end
@@ -175,19 +186,19 @@ module stream_transformer # (
     wire fifo_wready;
 
     assign fifo_wrt = ac_m_axis_tvalid;
-    assign fifo_wready = (|fifo_full);
+    assign fifo_wready = ~(|fifo_full);
 
     assign ac_m_axis_tready = fifo_wready;
 
     // If fifo is not empty, and there is no transfer or the tranfer will complete, read from fifo.
     assign fifo_rd = ~(|fifo_empty) & (~m_axis_tvalid | m_axis_tready);
-	reg [N_FIFO-1:0] fifo_rd_r;
+	reg fifo_rd_r;
     reg [$clog2(DST_IMG_WIDTH)-1:0] fifo_rd_cnt;
 
 	always@(posedge clk or negedge rst_n) begin
 		if(~rst_n)
 			fifo_rd_r <= 1'b0;
-		else if(~ac_m_axis_tvalid | ac_m_axis_tready) begin
+		else if(~m_axis_tvalid | m_axis_tready) begin
 			fifo_rd_r <= fifo_rd;
             m_axis_tlast <= (fifo_rd_cnt == DST_IMG_WIDTH - N_FIFO)?1'b1:1'b0;
 		end
