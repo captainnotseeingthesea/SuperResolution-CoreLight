@@ -1,0 +1,9 @@
+
+`define GEN_IN_TWO
+
+`define SIM_WITH_VERILATOR  
+`define SIM_WITHOUT_AXI
+
+`define UPSP_DATA_WIDTH 24
+`define SRC_IMG_WIDTH 960
+`define SRC_IMG_HEIGHT 540

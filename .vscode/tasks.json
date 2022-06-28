@@ -1,0 +1,61 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build_target",
+            "options": {
+                "cwd": "${workspaceFolder}/Software/zoom"
+            },
+            "command": "make",
+            "args": [
+                "target"
+            ],
+            "type": "shell",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "build_libs",
+            "options": {
+                "cwd": "${workspaceFolder}/Software/zoom"
+            },
+            "command": "make",
+            "args": [
+                "libs"
+            ],
+            "type": "shell",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "clean",
+            "options": {
+                "cwd": "${workspaceFolder}/Software/zoom"
+            },
+            "command": "make",
+            "args": [
+                "clean"
+            ],
+            "type": "shell"
+        },
+        {
+            "label": "run",
+            "options": {
+                "cwd": "${workspaceFolder}/Software/zoom"
+            },
+            "command": "./app",
+            "args": [
+                "./1080p.bmp",
+                "./out.bmp"
+            ],
+            "type": "shell",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

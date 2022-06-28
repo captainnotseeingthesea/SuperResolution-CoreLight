@@ -3,6 +3,7 @@
 # @Author: xuanyi
 # @File : edi_rgb.py
 
+import os
 import cv2
 import numpy as np
 import math
@@ -193,30 +194,19 @@ def EDI_predict(img, m, s, method="canny"):
 
 
 if __name__ == '__main__':
-    img_path = "Set14/original/lenna.png"
-    img = cv2.imread(img_path)
+    if(len(sys.argv) < 5):
+        print("too few args!!, usage: python edi_rgb.py <src_filename> <dst_filename> <factor> <method>")
+        exit(0)
+    
+    if(not os.path.isfile(sys.argv[1])):
+        print("Invalid input image!!")
+        exit(0)
 
-    # 完成downscale
-    factor = 4
-    downscale_img = EDI_predict(img, 4, 1 / factor)
-    cv2.imwrite("lenna_downscale.jpg", downscale_img)
-
-    # 使用线性插值
-    linear_img = cv2.resize(downscale_img, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
-    bicubic_img = cv2.resize(downscale_img, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC)
-    cv2.imwrite("linear_lenna.jpg", linear_img)
-    cv2.imwrite("bicubic_lenna.jpg", bicubic_img)
+    src_img = cv2.imread(sys.argv[1]) # 原图片
+    factor = int(sys.argv[3]) # 上采样系数
 
     # 使用NEDI进行插值（非边缘部分选择Bicubic算法，边缘部分使用NEDI算法）
     size = 4
-    nedi_img = EDI_predict(downscale_img, size, factor, "canny")
-    cv2.imwrite("nedi_canny_lenna.jpg", nedi_img)
-
-    # 输出各种upscaling算法的pnsr和ssim
-    src_img_path = img_path
-    upscale_img_paths = ["linear_lenna.jpg", "bicubic_lenna.jpg", "nedi_lenna.jpg", "nedi_sobel_lenna.jpg", "nedi_canny_lenna.jpg"]
-    psnr, ssim = pnsr_ssim(src_img_path, upscale_img_paths)
-    print("Method", "PSNR", "SSIM")
-    for i in range(len(upscale_img_paths)):
-        method = upscale_img_paths[i].split("/")[-1].split("_")[0]
-        print(method, psnr[i].numpy(), ssim[i].numpy())
+    method = "canny" if (int(sys.argv[4]) == 0) else "sobel"
+    nedi_img = EDI_predict(src_img, size, factor, method)
+    cv2.imwrite(sys.argv[2], nedi_img)

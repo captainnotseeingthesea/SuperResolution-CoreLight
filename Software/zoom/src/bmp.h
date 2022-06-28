@@ -1,45 +1,65 @@
+#ifndef __BMP_H__
+#define __BMP_H__
 
-/*
- *  bmp文件读写
- */
-#ifndef _BMP_H
-#define _BMP_H
+#include <stdint.h>
 
-/*
- *  功能: 读取bmp格式图片
- *  参数:
- *      filePath: 文件地址
- *      width: 用以返回图片横向的像素个数
- *      height: 用以返回图片纵向的像素个数
- *      pixelBytes: 用以返回图片每像素占用字节数
- *
- *  返回: NULL失败,否则为图片RGB排列的数据指针 !! 用完需释放 !!
- */
-unsigned char *bmp_get(char *filePath, int *width, int *height, int *pixelBytes);
+#pragma pack(push)
+#pragma pack(1)
 
-/*
- *  创建图片,返回文件大小
- *  参数:
- *      filePath: 文件地址
- *      rgb: 图片矩阵数据的指针,rgb格式
- *      width: 图片横向的像素个数
- *      height: 图片纵向的像素个数
- *      pixelBytes: 图片每像素占用字节数
- *
- *  返回: 成功返回0 其它失败
- */
-int bmp_create(char *filePath, unsigned char *rgb, int width, int height, int pixelBytes);
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} Pixel;
 
-/*
- *  连续输出帧图片
- *  参数:
- *      order: 帧序号,用来生成图片名称效果如: 0001.bmp
- *      folder: 帧图片保存路径,格式如: /tmp
- *      data: 传入, 图片矩阵数据的指针,rgb格式
- *      width: 传入, 图片横向的像素个数
- *      height: 传入, 图片纵向的像素个数
- *      per: 传入, 图片每像素占用字节数
- */
-void bmp_create2(int order, char *folder, unsigned char *data, int width, int height, int per);
+typedef struct {             // Total: 54 bytes
+  uint16_t  type;             // Magic identifier: 0x4d42
+  uint32_t  size;             // File size in bytes
+  uint16_t  reserved1;        // Not used
+  uint16_t  reserved2;        // Not used
+  uint32_t  offset;           // Offset to image data in bytes from beginning of file (54 bytes)
+  uint32_t  dib_header_size;  // DIB Header size in bytes (40 bytes)
+  int32_t   width_px;         // Width of the image
+  int32_t   height_px;        // Height of image
+  uint16_t  num_planes;       // Number of color planes
+  uint16_t  bits_per_pixel;   // Bits per pixel
+  uint32_t  compression;      // Compression type
+  uint32_t  image_size_bytes; // Image size in bytes
+  int32_t   x_resolution_ppm; // Pixels per meter
+  int32_t   y_resolution_ppm; // Pixels per meter
+  uint32_t  num_colors;       // Number of colors  
+  uint32_t  important_colors; // Important colors 
+} BMPHeader;
+#pragma pack(pop)
 
-#endif
+typedef struct {
+  BMPHeader header;
+  Pixel    *data;
+} BMPImage;
+
+typedef struct
+{
+    char * filename; // BMP文件路径
+    int rw; // 读写标志: 0/读 1/写
+    int rowCount; // 当前已处理行计数
+    int rowMax;   // rowCount计数目标
+    int rowSize; // 每行像素的字节数
+    BMPImage *img; // BMP图片信息
+} BMP_Private;
+
+
+BMPImage *bmp_read(const char *filename);
+BMPImage *bmp_create(uint32_t width, uint32_t height);
+int32_t   bmp_write(BMPImage *img, const char *filename);
+Pixel    *bmp_pixel_at(BMPImage *img, uint32_t x, uint32_t y);
+
+BMP_Private *bmp_createLine(char *outFile, int width, int height, int pixelBytes, int quality);
+BMP_Private *bmp_getline(char *inFile, int *width, int *height, int *pixelBytes);
+void bmp_closeLine(BMP_Private *bp);
+int bmp_line(BMP_Private *bp, unsigned char *rgbLine, int line);
+
+
+
+void bmp_print_header(BMPImage *img);
+
+#endif /* __BMP_H__ */
