@@ -66,11 +66,9 @@ module access_control # (
 			if(i == 0)
 				start_of_rd = 0;
 			else begin
-				pos = (SRC_BASE_BSIZE+3)*4 - 1;
-				pos = pos / data_size;
-				pos = (pos+1) * data_size;
-				for(j = 1; j < i; j=j+1) begin
-					pos = pos + SRC_BASE_BSIZE*4 - 1;
+				pos = 0;
+				for(j = 0; j < i; j=j+1) begin
+					pos = pos + (SRC_BASE_BSIZE+3)*4 - 1;
 					pos = pos / data_size;
 					pos = (pos+1) * data_size;
 				end
@@ -85,21 +83,22 @@ module access_control # (
 		integer data_size;
 		begin
 			data_size = N_UPSP_WRT*N_PARALLEL;
-			if(i == 0) begin
-				pos = (SRC_BASE_BSIZE+3)*4 - 1;
-				pos = pos / data_size;
+			pos = start_of_rd(i);
+
+			if(i < N_PARALLEL-1) begin
+				pos = pos + (SRC_BASE_BSIZE+3)*4 - 1;
 			end else begin
-				pos = start_of_rd(i);
 				pos = pos + SRC_BASE_BSIZE*4 - 1;
-				pos = pos / data_size;
 			end
+
+			pos = pos / data_size;
 			pos = pos * data_size;
 			end_of_rd = pos;
 		end
 	endfunction
 
 	localparam DST_GEN_WIDTH      = (N_PARALLEL==1)?DST_IMG_WIDTH
-									:(end_of_rd(N_PARALLEL-1)+8);
+									:(end_of_rd(N_PARALLEL-1)+N_UPSP_WRT*N_PARALLEL);
 
 	localparam IMG_CNT_WIDTH      = $clog2(DST_GEN_WIDTH*DST_IMG_HEIGHT);
 	localparam DST_IMG_WIDTH_LB2  = $clog2(DST_GEN_WIDTH);
@@ -282,7 +281,7 @@ module access_control # (
 	wire [N_PARALLEL-1:0] obuf_rdmask;
 	wire [N_PARALLEL-1:0] obuf_wready;
 	wire [N_PARALLEL-1:0] obuf_empty;
-	wire  [AXISOUT_DATA_WIDTH*N_PARALLEL-1:0] obuf_odata;
+	wire [AXISOUT_DATA_WIDTH*N_PARALLEL-1:0] obuf_odata;
 
 
 	// Read buf total count.
@@ -414,7 +413,7 @@ module access_control # (
 
 			for(j = 0; j < N_PARALLEL; j=j+1) begin:OBUF_PER_ELE
 				
-				localparam SRC_BSIZE = (j==0)?(SRC_BASE_BSIZE + 3):SRC_BASE_BSIZE;
+				localparam SRC_BSIZE = (j==N_PARALLEL-1)?SRC_BASE_BSIZE:SRC_BASE_BSIZE + 3;
 				localparam DST_BSIZE = SRC_BSIZE * 4;
 				// Start and End position of this block, when pixels are arranged as N_PARALLEL*N_UPSP_WRT
 				// aligned.

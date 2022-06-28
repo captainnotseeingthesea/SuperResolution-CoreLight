@@ -70,7 +70,7 @@ module buffer_sram #(
     wire axi_hsked = axi_ready & axi_valid;
     wire bf_req_hsked = bf_req_valid & bcci_req_ready;
 
-    localparam INIT_CNT_WIDTH = $clog2((WIDTH)*4);
+    localparam INIT_CNT_WIDTH = $clog2((WIDTH)*4+1);
     wire [INIT_CNT_WIDTH-1:0] cur_init_cnt, nxt_init_cnt;
     wire init_finished = (cur_init_cnt == WIDTH*4) ? 1'b1 : 1'b0;
     assign nxt_init_cnt = cur_init_cnt + 1;
@@ -209,15 +209,15 @@ module buffer_sram #(
     wire cur_row_cnt_is_last_2 = (cur_row_cnt == HEIGHT*4-2) ? 1'b1 : 1'b0;
     wire cur_row_cnt_is_last_1 = (cur_row_cnt == HEIGHT*4-1) ? 1'b1 : 1'b0;
 
-    assign nxt_row_cnt = cur_row_cnt + 1;
-    wire row_cnt_ena = cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked;
-    dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
-
-
 
     wire [$clog2(WIDTH)-1:0] cur_waddr, nxt_waddr;
     wire cur_wr_end = (~init_finished) ? (cur_waddr == WIDTH-1) : (cur_waddr == WIDTH);
     assign nxt_waddr = (~cur_wr_end) ? cur_waddr+1 : 0;
+
+    assign nxt_row_cnt = cur_row_cnt + 1;
+    wire row_cnt_ena_normal = cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked;
+    wire row_cnt_ena = cur_row_cnt_is_4x_plus_6 ? (cur_wr_end & row_cnt_ena_normal) : row_cnt_ena_normal;
+    dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
 
     wire waddr_ena = cur_is_s0 ? axi_hsked : cur_wr_end ? state_ena : axi_hsked;
     dfflr #(.DW($clog2(WIDTH))) u_waddr_reg(.lden(waddr_ena), .dnxt(nxt_waddr), .qout(cur_waddr), .clk(clk), .rst_n(rst_n));    

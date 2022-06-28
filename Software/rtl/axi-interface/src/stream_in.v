@@ -122,9 +122,10 @@ module stream_in # (
 
 	genvar j;
 	generate
-		for(j = 0; j < N_PARALLEL; j=j+1) begin
+		for(j = 0; j < N_PARALLEL; j=j+1) begin: MULTI_ELE
 			localparam START = (j == 0)?0:j*BLOCK_SIZE;
 			localparam END = (j == 0)?((N_PARALLEL==1)?(START + BLOCK_SIZE -1):(START + BLOCK_SIZE -1 + 3))
+								    :(j<N_PARALLEL-1)?START + BLOCK_SIZE -1 + 3
 									:START + BLOCK_SIZE -1;
 
 			assign in_range[j] = (cur_row_pos >= START) && (cur_row_pos <= END);
