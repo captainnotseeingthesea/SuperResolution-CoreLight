@@ -19,31 +19,31 @@ int main(int argc, char** argv, char** env) {
     #define PERIOD 4
     while (!contextp->gotFinish() && (clock < 20000000)) { 
         clock++;
-        top->ac_upsp_wready = 0x0;
-        top->ac_upsp_rvalid = 0x0;
-        top->ac_upsp_rdata = 0x0;
         if(clock%PERIOD == 1){
           top->clk = 0x1;
+          top->ac_upsp_wready = rand()%2;
+          // top->ac_upsp_wready = 0x1;
         }
         if(clock%PERIOD == 3){
           top->clk = 0x0;
         }
         if(clock < 11){
           top->rst_n = 0x0;
+          top->ac_upsp_wready = 0x0;
+          top->ac_upsp_rvalid = 0x0;
+          top->ac_upsp_rdata = 0x0;
         } 
         else {
           top->rst_n = 0x1;
-          // top->ac_upsp_wready = rand()%2;
-          top->ac_upsp_wready = 0x1;
         }
 
         top->eval(); 
 
         if (tfp){
-          // if(clock > 8340000 &&  clock < 8370000) {
+          // if(clock > 100000 &&  clock < 300000) {
           //   tfp->dump (clock);
           // }
-          if( clock < 100000) {
+          if( clock < 250000) {
             tfp->dump (clock);
           }
         }

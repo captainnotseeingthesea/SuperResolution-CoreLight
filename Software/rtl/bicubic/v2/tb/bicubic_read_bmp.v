@@ -77,6 +77,18 @@ module bicubic_read_bmp (
 
     end
 
+    reg [31:0] valid_bit;
+    always @(posedge clk or negedge rst_n) begin
+        if(~rst_n) begin
+            valid_bit <= #1 32'd0;
+        end
+        else begin
+            valid_bit <= #1 valid_bit + 1;
+        end
+    end
+
+    wire valid_ctrl = 1'b1;
+    // wire valid_ctrl = (valid_bit>2398) & (valid_bit<3222) ? 1'b0 : 1'b1;
     wire bmp_hsked = ready & valid;
     reg [31:0] ptr;
     reg [23:0] data_reg;
@@ -88,7 +100,7 @@ module bicubic_read_bmp (
             valid_reg <= 1'b0;
         end
         else begin
-            valid_reg <= #1 1'b1;
+            valid_reg <= #1 valid_ctrl;
             if(bmp_hsked) begin
                 ptr <= #1 ptr + 1;
                 data_reg <= #1 shaped_data[ptr+1];
@@ -103,6 +115,8 @@ module bicubic_read_bmp (
     wire cur_is_last_data = (ptr % (WIDTH)) ? 1'b0 : 1'b1;
 
     assign valid = valid_reg;
+    // assign valid = valid_ctrl;
     assign data = data_reg;
+
 
 endmodule

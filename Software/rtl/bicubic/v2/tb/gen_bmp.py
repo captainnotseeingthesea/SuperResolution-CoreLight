@@ -65,6 +65,7 @@ import struct
 test = open("1_4k.bmp","wb+")
 # test = open("49_4k.bmp","wb+")
 # test = open("4_4k.bmp","wb+")
+test = open("onepiece54_4k.bmp","wb")
 test.write(struct.pack('B', head[0]))
 test.write(struct.pack('B', head[1]))
 test.write(struct.pack('i', 54+4*4*width*height*3))

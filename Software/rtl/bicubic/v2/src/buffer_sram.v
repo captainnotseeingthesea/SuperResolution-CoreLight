@@ -161,7 +161,11 @@ module buffer_sram #(
     wire cur_col_cnt_below_5 = (cur_col_cnt < 5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_6 = (cur_col_cnt < 6) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_width = (cur_col_cnt < WIDTH) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_over_5 = (cur_col_cnt > 5) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_over_6 = (cur_col_cnt > 6) ? 1'b1 : 1'b0;
+
     wire cur_col_cnt_is_0 = (cur_col_cnt == 0) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_is_1 = (cur_col_cnt == 1) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_5 = (cur_col_cnt == 5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_6 = (cur_col_cnt == 6) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width = (cur_col_cnt == WIDTH) ? 1'b1 : 1'b0;
@@ -176,11 +180,20 @@ module buffer_sram #(
     wire cur_col_cnt_below_width_plus_5 = (cur_col_cnt < WIDTH+5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_width_plus_6 = (cur_col_cnt < WIDTH+6) ? 1'b1 : 1'b0;
 
-    assign nxt_col_cnt = cur_col_cnt_is_width_plus_5 ? 0 : cur_col_cnt + 1;
+    assign nxt_col_cnt = cur_col_cnt_is_width_plus_5 ? 0 : (cur_col_cnt_is_0 & state_ena & cur_row_cnt_over_9) ? 0 :cur_col_cnt + 1;
 
     wire col_cnt_ena;
 
     dfflr #(.DW(COL_CNT_WIDTH)) u_col_dff (.lden(col_cnt_ena), .dnxt(nxt_col_cnt), .qout(cur_col_cnt), .clk(clk), .rst_n(rst_n));
+
+
+
+    localparam HSKED_CNT_WIDTH = $clog2((WIDTH+1)*4);
+    wire [HSKED_CNT_WIDTH-1:0] cur_req_cnt, nxt_req_cnt;
+    wire cur_req_cnt_end = (cur_req_cnt == (WIDTH+1)*4-1) ? 1'b1 : 1'b0;
+    assign nxt_req_cnt = (cur_req_cnt_end | state_ena) ? {HSKED_CNT_WIDTH{1'b0}} : cur_req_cnt + 1;
+    wire req_cnt_ena = cur_row_cnt_over_9 ? (cur_req_cnt_end ? state_ena : bf_req_hsked) : 1'b0;
+    dfflr #(.DW(HSKED_CNT_WIDTH)) u_req_dff (.lden(req_cnt_ena), .dnxt(nxt_req_cnt), .qout(cur_req_cnt), .clk(clk), .rst_n(rst_n));
 
 
 
@@ -210,7 +223,10 @@ module buffer_sram #(
     wire cur_row_cnt_is_last_1 = (cur_row_cnt == HEIGHT*4-1) ? 1'b1 : 1'b0;
 
     assign nxt_row_cnt = cur_row_cnt + 1;
-    wire row_cnt_ena = cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked;
+    wire row_cnt_ena_normal = (~cur_row_cnt_over_9) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : (~cur_row_cnt_is_4x_plus_6) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked & cur_wr_end;
+    wire row_cnt_ena_abnormal = cur_row_cnt_over_9 & cur_row_cnt_is_4x_plus_6 & cur_req_cnt_end & cur_wr_end;
+    // wire row_cnt_ena = row_cnt_ena_normal | row_cnt_ena_abnormal;
+    wire row_cnt_ena = row_cnt_ena_normal;
     dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
 
 
@@ -234,22 +250,36 @@ module buffer_sram #(
     wire init_finished_delayed;
     dfflr #(.DW(1)) u_init_delayed_reg (.lden(1'b1), .dnxt(init_finished), .qout(init_finished_delayed), .clk(clk), .rst_n(rst_n));
 
+    wire state_ena_delayed;
+    dfflr #(.DW(1)) u_state_ena_delayed_reg (.lden(1'b1), .dnxt(state_ena), .qout(state_ena_delayed), .clk(clk), .rst_n(rst_n));
 
-    assign col_cnt_ena = init_finished & (    cur_col_cnt_is_0 & ((~init_finished_delayed) |  bcci_2_bf_hsked)
+    wire col_cnt_0_fetched, nxt_col_cnt0_fetched;
+    wire col_cnt_0_fetched_ena = (cur_col_cnt_is_0 & bcci_2_bf_hsked & cur_row_cnt_over_9 & cur_row_cnt_is_4x_plus_6) | cur_col_cnt_is_1;
+    assign nxt_col_cnt0_fetched = bcci_2_bf_hsked ? 1'b1 : 1'b0;
+    dfflr #(.DW(1)) u_col_cnt_0_fetched_reg (.lden(col_cnt_0_fetched_ena), .dnxt(nxt_col_cnt0_fetched), .qout(col_cnt_0_fetched), .clk(clk), .rst_n(rst_n));
+
+    wire col_cnt0_ena_normal = (cur_col_cnt_is_0 & cur_row_cnt_over_9) ? (~cur_row_cnt_is_4x_plus_6) & bcci_2_bf_hsked : bcci_2_bf_hsked; 
+    wire col_cnt0_ena_abnormal = cur_col_cnt_is_0 & cur_row_cnt_over_9 & cur_row_cnt_is_4x_plus_6 & cur_wr_end & col_cnt_0_fetched; 
+
+
+    assign col_cnt_ena = init_finished & (   (cur_col_cnt_is_0 & ((~init_finished_delayed) |  (col_cnt0_ena_abnormal | col_cnt0_ena_normal)))
                                            | ((~cur_col_cnt_is_0) & cur_col_cnt_below_6) 
-                                           | (cur_col_cnt_below_width_plus_6 & bcci_2_bf_hsked) 
-                                           | (cur_col_cnt_is_width_plus_6 & bcci_2_bf_hsked)
+                                           | (cur_col_cnt_below_width_plus_5 & cur_col_cnt_over_5 & bcci_2_bf_hsked) 
+                                           | (cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked)
                                         );
     wire end_of_data;
-    wire shift_ena = (init_finished & (~end_of_data)) ? ((cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) | cur_col_cnt_below_6) : 1'b0;
+    wire shift_ena = (init_finished & (~end_of_data) & (~bf_req_silence)) ? cur_col_cnt_is_0 ? (~state_ena) | (~init_finished_delayed) : ((cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) | cur_col_cnt_below_6) : 1'b0;
 
 
+    wire state_exit_normal = cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked;
+    // wire state_exit_abnormal = cur_row_cnt_is_4x_plus_6 & cur_req_cnt_end;
+    wire state_exit_abnormal = 1'b0;
     assign state_s0_exit_ena = (cur_is_s0 & init_finished) ? 1'b1 : 1'b0;
-    assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? ((~cur_row_cnt_is_last_3) & cur_row_cnt_over_9) | cur_row_cnt_is_9 : 1'b0;
-    assign state_s2_exit_ena = (cur_is_s2 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? (~cur_row_cnt_is_last_3) : 1'b0;
-    assign state_s3_exit_ena = (cur_is_s3 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? (~cur_row_cnt_is_last_3) : 1'b0;
-    assign state_s4_exit_ena = (cur_is_s4 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? (~cur_row_cnt_is_last_3) : 1'b0;
-    assign state_s5_exit_ena = (cur_is_s5 & cur_wr_end & cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & (state_exit_normal | state_exit_abnormal)) ? ((~cur_row_cnt_is_last_3) & cur_row_cnt_over_9) | cur_row_cnt_is_9 : 1'b0;
+    assign state_s2_exit_ena = (cur_is_s2 & cur_wr_end & (state_exit_normal | state_exit_abnormal)) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    assign state_s3_exit_ena = (cur_is_s3 & cur_wr_end & (state_exit_normal | state_exit_abnormal)) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    assign state_s4_exit_ena = (cur_is_s4 & cur_wr_end & (state_exit_normal | state_exit_abnormal)) ? (~cur_row_cnt_is_last_3) : 1'b0;
+    assign state_s5_exit_ena = (cur_is_s5 & cur_wr_end & (state_exit_normal | state_exit_abnormal)) ? (~cur_row_cnt_is_last_3) : 1'b0;
 
     assign state_ena = state_s0_exit_ena | state_s1_exit_ena 
                      | state_s2_exit_ena | state_s3_exit_ena
@@ -364,11 +394,12 @@ module buffer_sram #(
                       cur_is_s4 ? data_out2 :
                       cur_is_s5 ? data_out3 : {BUFFER_WIDTH{1'b0}}; 
 
+    wire bf_req_silence = ((~cur_wr_end) & cur_req_cnt_end) ? 1'b1 : 1'b0;
 
-    assign bf_req_valid = init_finished ? ((cur_col_cnt_below_width_plus_6) & (~cur_col_cnt_below_5) & (~end_of_data)) : 1'b0;
+    assign bf_req_valid = init_finished ? ((cur_col_cnt_below_width_plus_6) & (~cur_col_cnt_below_5) & (~end_of_data) & (~bf_req_silence)) : 1'b0;
 
     assign axi_ready = (~init_finished) 
-                     | ((cur_is_s1 | cur_is_s2 | cur_is_s3 | cur_is_s4 | cur_is_s5) & ( ~cur_wr_end) & cur_row_cnt_below_last_10);
+                     | ((cur_is_s1 | cur_is_s2 | cur_is_s3 | cur_is_s4 | cur_is_s5) & ( ~cur_wr_end));
 
 
     wire end_ena = (cur_row_cnt_is_last_1 & row_cnt_ena) ? 1'b1 : 1'b0;

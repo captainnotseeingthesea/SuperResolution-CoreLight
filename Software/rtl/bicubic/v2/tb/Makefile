@@ -31,10 +31,10 @@ bicubic_iverilog:
 		 ../src/dffs.v ../src/sram.v ./bicubic_read_bmp.v ../src/bicubic_upsample.v ../src/buffer_sram.v ../src/bicubic_processing_element.v ./bicubic_processing_element_tb.v
 
 	vvp -n vvp.exec > display.txt
-	gtkwave wave.vcd
+	# gtkwave wave.vcd
 
 gen_bmp:
-	rm -rf 49_4k.bmp tt.bmp 2_4k.bmp 4_4k.bmp 0_4k.bmp
+	rm -rf 49_4k.bmp tt.bmp 2_4k.bmp 4_4k.bmp 0_4k.bmp 1_4k.bmp
 	python3 gen_bmp.py
 
 bicubic_verilator:
