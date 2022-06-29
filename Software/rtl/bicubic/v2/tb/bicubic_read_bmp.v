@@ -38,7 +38,7 @@ module bicubic_read_bmp (
         `endif
 
         // bmp_file_id = $fopen("onepiece54.bmp", "rb");
-        bmp_file_id = $fopen("0.bmp", "rb");
+        bmp_file_id = $fopen("1.bmp", "rb");
         // bmp_file_id = $fopen("2.bmp", "rb");
         icode = $fread(bmp_data, bmp_file_id);
 
@@ -58,15 +58,7 @@ module bicubic_read_bmp (
 
         // The following code to revese the data
         
-        for (i = img_height - 1; i >= 0; i = i - 1) begin
-            for(j = 0; j < img_width; j = j + 1) begin
-                // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
-                index = i * (img_width) * 3 + j * 3 + img_start_index;
-                shaped_data[shaped_index] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
-                shaped_index = shaped_index + 1;
-            end
-        end
-        // for (i = 0; i < img_height; i = i + 1) begin
+        // for (i = img_height - 1; i >= 0; i = i - 1) begin
         //     for(j = 0; j < img_width; j = j + 1) begin
         //         // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
         //         index = i * (img_width) * 3 + j * 3 + img_start_index;
@@ -74,6 +66,14 @@ module bicubic_read_bmp (
         //         shaped_index = shaped_index + 1;
         //     end
         // end
+        for (i = 0; i < img_height; i = i + 1) begin
+            for(j = 0; j < img_width; j = j + 1) begin
+                // if it is odd of width, then use (width+1), the extra bits are set to 00 0000
+                index = i * (img_width) * 3 + j * 3 + img_start_index;
+                shaped_data[shaped_index] = {bmp_data[index+2], bmp_data[index+1], bmp_data[index+0]};
+                shaped_index = shaped_index + 1;
+            end
+        end
 
     end
 
