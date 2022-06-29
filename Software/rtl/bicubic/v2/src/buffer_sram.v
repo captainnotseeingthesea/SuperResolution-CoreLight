@@ -180,22 +180,8 @@ module buffer_sram #(
     wire cur_col_cnt_below_width_plus_5 = (cur_col_cnt < WIDTH+5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_width_plus_6 = (cur_col_cnt < WIDTH+6) ? 1'b1 : 1'b0;
 
-    assign nxt_col_cnt = cur_col_cnt_is_width_plus_5 ? 0 : (cur_col_cnt_is_0 & state_ena & cur_row_cnt_over_9) ? 0 :cur_col_cnt + 1;
-
     wire col_cnt_ena;
-
     dfflr #(.DW(COL_CNT_WIDTH)) u_col_dff (.lden(col_cnt_ena), .dnxt(nxt_col_cnt), .qout(cur_col_cnt), .clk(clk), .rst_n(rst_n));
-
-
-
-    localparam HSKED_CNT_WIDTH = $clog2((WIDTH+1)*4);
-    wire [HSKED_CNT_WIDTH-1:0] cur_req_cnt, nxt_req_cnt;
-    wire cur_req_cnt_end = (cur_req_cnt == (WIDTH+1)*4-1) ? 1'b1 : 1'b0;
-    assign nxt_req_cnt = (cur_req_cnt_end | state_ena) ? {HSKED_CNT_WIDTH{1'b0}} : cur_req_cnt + 1;
-    wire req_cnt_ena = cur_row_cnt_over_9 ? (cur_req_cnt_end ? state_ena : bf_req_hsked) : 1'b0;
-    dfflr #(.DW(HSKED_CNT_WIDTH)) u_req_dff (.lden(req_cnt_ena), .dnxt(nxt_req_cnt), .qout(cur_req_cnt), .clk(clk), .rst_n(rst_n));
-
-
 
 
     localparam ROW_CNT_WIDTH = $clog2(HEIGHT*4+1);
@@ -222,6 +208,15 @@ module buffer_sram #(
     wire cur_row_cnt_is_last_2 = (cur_row_cnt == HEIGHT*4-2) ? 1'b1 : 1'b0;
     wire cur_row_cnt_is_last_1 = (cur_row_cnt == HEIGHT*4-1) ? 1'b1 : 1'b0;
 
+
+    localparam HSKED_CNT_WIDTH = $clog2((WIDTH+1)*4);
+    wire [HSKED_CNT_WIDTH-1:0] cur_req_cnt, nxt_req_cnt;
+    wire cur_req_cnt_end = (cur_req_cnt == (WIDTH+1)*4-1) ? 1'b1 : 1'b0;
+    assign nxt_req_cnt = (cur_req_cnt_end | state_ena) ? {HSKED_CNT_WIDTH{1'b0}} : cur_req_cnt + 1;
+    wire req_cnt_ena = cur_row_cnt_over_9 ? (cur_req_cnt_end ? state_ena : bf_req_hsked) : 1'b0;
+    dfflr #(.DW(HSKED_CNT_WIDTH)) u_req_dff (.lden(req_cnt_ena), .dnxt(nxt_req_cnt), .qout(cur_req_cnt), .clk(clk), .rst_n(rst_n));
+
+
     assign nxt_row_cnt = cur_row_cnt + 1;
     wire row_cnt_ena_normal = (~cur_row_cnt_over_9) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : (~cur_row_cnt_is_4x_plus_6) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked & cur_wr_end;
     wire row_cnt_ena_abnormal = cur_row_cnt_over_9 & cur_row_cnt_is_4x_plus_6 & cur_req_cnt_end & cur_wr_end;
@@ -230,6 +225,7 @@ module buffer_sram #(
     dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
 
 
+    assign nxt_col_cnt = cur_col_cnt_is_width_plus_5 ? 0 : (cur_col_cnt_is_0 & state_ena & cur_row_cnt_over_9) ? 0 :cur_col_cnt + 1;
 
     wire [$clog2(WIDTH)-1:0] cur_waddr, nxt_waddr;
     wire cur_wr_end = (~init_finished) ? (cur_waddr == WIDTH-1) : (cur_waddr == WIDTH);
