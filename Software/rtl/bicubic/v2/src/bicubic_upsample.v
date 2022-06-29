@@ -44,7 +44,7 @@ module bicubic_upsample #
     wire bcci_rsp_hsked = bcci_rsp_valid & bf_rsp_ready;
 
     localparam WIDTH = BLOCK_SIZE;
-    localparam WIDTH_LEN = $clog2(WIDTH);
+    localparam WIDTH_LEN = $clog2(WIDTH)+1;
 
     wire [WIDTH_LEN-1:0] cur_col_cnt, nxt_col_cnt;
     wire col_meet_the_end = (cur_col_cnt == WIDTH) ? 1'b1 : 1'b0;
@@ -55,7 +55,7 @@ module bicubic_upsample #
 
 
     localparam HEIGHT = `SRC_IMG_HEIGHT;
-    localparam DES_HEIGHT_LEN = $clog2(HEIGHT*4);
+    localparam DES_HEIGHT_LEN = $clog2(HEIGHT*4)+1;
     
     wire [DES_HEIGHT_LEN-1:0] cur_row_cnt, nxt_row_cnt;
     wire cur_row_cnt_is_1 = (cur_row_cnt == 1) ? 1'b1 : 1'b0;
