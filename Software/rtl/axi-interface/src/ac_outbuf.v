@@ -46,12 +46,9 @@ module ac_outbuf # (
     output                                      buf_empty;
 
     /*AUTOWIRE*/
-
+    wire			buf_wready;
 
     /*AUTOREG*/
-    // Beginning of automatic regs (for this module's undeclared outputs)
-    reg			buf_wready;
-    // End of automatics
 
 
     // upsp_outbuf to transform the data

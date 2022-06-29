@@ -235,6 +235,11 @@ module buffer_sram #(
     wire cur_wr_end = (~init_finished) ? (cur_waddr == WIDTH-1) : (cur_waddr == WIDTH);
     assign nxt_waddr = (~cur_wr_end) ? cur_waddr+1 : 0;
 
+    assign nxt_row_cnt = cur_row_cnt + 1;
+    wire row_cnt_ena_normal = cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked;
+    wire row_cnt_ena = cur_row_cnt_is_4x_plus_6 ? (cur_wr_end & row_cnt_ena_normal) : row_cnt_ena_normal;
+    dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
+
     wire waddr_ena = cur_is_s0 ? axi_hsked : cur_wr_end ? state_ena : axi_hsked;
     dfflr #(.DW($clog2(WIDTH))) u_waddr_reg(.lden(waddr_ena), .dnxt(nxt_waddr), .qout(cur_waddr), .clk(clk), .rst_n(rst_n));    
 

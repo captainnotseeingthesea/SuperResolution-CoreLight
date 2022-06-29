@@ -46,7 +46,14 @@ BMPImage *bmp_read(const char *filename)
 
     rewind(fp);
     fread(pixel_data, 1, img->header.offset, fp);
+    // Process from the last line of the picture
     fread(pixel_data, 1,  img->header.image_size_bytes, fp);
+
+    // Process from the first line of the pixture
+    // for(int i = 0; i < img->header.height_px; i++)
+    // {
+    //     fread(pixel_data + ((img->header.height_px - i - 1) * img->header.width_px), 1, img->header.width_px * (img->header.bits_per_pixel / 8), fp);
+    // }
     img->data = pixel_data;
 
 
@@ -272,6 +279,14 @@ int32_t   bmp_write(BMPImage *img, const char *filename)
     }
 
     fwrite(&img->header, 1, sizeof(BMPHeader), fp);
+
+    // Proces from the first line of the pixture
+    // for(int i = 0; i < img->header.height_px; i++)
+    // {
+    //     fwrite((img->data + (img->header.height_px - i - 1) * img->header.width_px), 1, img->header.width_px * (img->header.bits_per_pixel / 8), fp);
+    // }
+
+    // Proces from the last line of the pixture
     fwrite(img->data, 1, img->header.image_size_bytes, fp);
     return 0;
 }
