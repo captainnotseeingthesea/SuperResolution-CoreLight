@@ -146,7 +146,7 @@ void Gaussian_blur(Gaussian_blur_info *blur_info)
     Zoom_Rgb *dst_img = blur_info->dst_img;
     float ** weight = blur_info->weight;
     int _size = blur_info->_size;
-    float r_sum, g_sum, b_sum;
+    int r_sum, g_sum, b_sum;
     int center = _size / 2;
     int pix_x, pix_y;
     int ii, jj;
@@ -182,14 +182,14 @@ void Gaussian_blur(Gaussian_blur_info *blur_info)
                 {
                     pix_x = (jj - center + v) < 0 ? (center - v - jj) : (jj - center + v) >= info->widthOut ? (2 * info->widthOut - jj + center - v - 2) : (jj - center + v);
                     // pix_x = clip(pix_x, left_side, right_side);
-                    r_sum += info->rgbOut[pix_y * info->widthOut + pix_x].r * weight[u][v];
-                    g_sum += info->rgbOut[pix_y * info->widthOut + pix_x].g * weight[u][v];
-                    b_sum += info->rgbOut[pix_y * info->widthOut + pix_x].b * weight[u][v];
+                    r_sum += info->rgbOut[pix_y * info->widthOut + pix_x].r * (int)(weight[u][v] * 8192);
+                    g_sum += info->rgbOut[pix_y * info->widthOut + pix_x].g * (int)(weight[u][v] * 8192);
+                    b_sum += info->rgbOut[pix_y * info->widthOut + pix_x].b * (int)(weight[u][v] * 8192);
                 }
             }
-            dst_img[ii * info->widthOut + jj].r = r_sum;
-            dst_img[ii * info->widthOut + jj].g = g_sum;
-            dst_img[ii * info->widthOut + jj].b = b_sum;
+            dst_img[ii * info->widthOut + jj].r = (r_sum >> 13);
+            dst_img[ii * info->widthOut + jj].g = (g_sum >> 13);
+            dst_img[ii * info->widthOut + jj].b = (b_sum >> 13);
         }
     }
     //多线程,处理完成行数
@@ -909,7 +909,7 @@ unsigned char *zoom(
         *retHeight = info.heightOut;
     
     // 使用高斯滤波进行锐化处理 (USM(Unshrpen Mask)算法)
-    // usm(&info, 3, 6, 2, -1, 0, processor);
+    usm(&info, 5, 6, 2, -1, 0, processor);
 
     return (unsigned char *)info.rgbOut;
 }

@@ -101,14 +101,14 @@ module stream_transformer # (
         for(j = 0; j < N_FIFO; j=j+1) begin: FORMER_VALID_CNT
             if(j == 0) begin
 
-                assign pos[j] = '0;
+                assign pos[j] = {$clog2(N_FIFO){1'b0}};
 
             end else begin
 
                 reg [$clog2(N_FIFO)-1:0] sum;
                 integer idx;
                 always@(*) begin
-                    sum = '0;
+                    sum = {$clog2(N_FIFO){1'b0}};
                     for(idx = 0; idx < j; idx=idx+1) begin
                         sum = sum + valid_pixel[idx];
                     end  
@@ -144,7 +144,7 @@ module stream_transformer # (
     reg [$clog2(N_FIFO+1)-1:0] write_num;
     always@(*) begin: WRT_NUM
         integer i;
-        write_num = '0;
+        write_num = {$clog2(N_FIFO+1){1'b0}};
         for(i = 0; i < N_FIFO; i=i+1) begin
             write_num = write_num + intermediate_valid_pixel[i];
         end
@@ -212,7 +212,7 @@ module stream_transformer # (
     end
 
     generate
-        for(j = 0; j < N_FIFO; j++) begin: TRANSFORMER_FIFO
+        for(j = 0; j < N_FIFO; j=j+1) begin: TRANSFORMER_FIFO
             fifo #(
 	           .FIFO_DEPTH			(FIFO_DEPTH),
 	           .FIFO_WIDTH			(24))

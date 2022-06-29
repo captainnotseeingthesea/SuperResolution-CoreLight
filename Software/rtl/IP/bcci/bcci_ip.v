@@ -262,7 +262,8 @@ module bcci_ip
 		for(j = 0; j < N_PARALLEL; j=j+1) begin: MULTI_PROC_ELE
 
 			localparam BLOCK_SIZE = (j==0)?(((N_PARALLEL==1)?SRC_IMG_WIDTH/N_PARALLEL:(SRC_IMG_WIDTH/N_PARALLEL) + 3))
-								    :SRC_IMG_WIDTH/N_PARALLEL;
+								    :(j<N_PARALLEL-1)?(SRC_IMG_WIDTH/N_PARALLEL) + 3
+									:SRC_IMG_WIDTH/N_PARALLEL;
 
     		bicubic_processing_element #(
 						 // Parameters
