@@ -335,11 +335,11 @@ module buffer_sram #(
         | ({5{cur_is_s0 & cur_init_ram2 & axi_hsked}} & 5'b01000)
         | ({5{cur_is_s0 & cur_init_ram3 & axi_hsked}} & 5'b00100)
         | ({5{cur_is_s0 & cur_init_ram4 & axi_hsked}} & 5'b00010)
-        | ({5{cur_is_s1 & axi_hsked}} & {4'b0000, cur_row_cnt_below_last_10})
-        | ({5{cur_is_s2 & axi_hsked}} & {cur_row_cnt_below_last_10, 4'b0000})
-        | ({5{cur_is_s3 & axi_hsked}} & {1'b0, cur_row_cnt_below_last_10, 3'b000})
-        | ({5{cur_is_s4 & axi_hsked}} & {2'b00, cur_row_cnt_below_last_10, 2'b00})
-        | ({5{cur_is_s5 & axi_hsked}} & {3'b000, cur_row_cnt_below_last_10, 1'b0});
+        | ({5{cur_is_s1 & axi_hsked}} & {4'b0000, 1'b1})
+        | ({5{cur_is_s2 & axi_hsked}} & {1'b1, 4'b0000})
+        | ({5{cur_is_s3 & axi_hsked}} & {1'b0, 1'b1, 3'b000})
+        | ({5{cur_is_s4 & axi_hsked}} & {2'b00, 1'b1, 2'b00})
+        | ({5{cur_is_s5 & axi_hsked}} & {3'b000, 1'b1, 1'b0});
 
 
 

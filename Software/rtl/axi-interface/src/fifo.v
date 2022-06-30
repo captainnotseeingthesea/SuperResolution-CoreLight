@@ -41,8 +41,8 @@ module fifo # (
 
     /*AUTOWIRE*/
 
-
     /*AUTOREG*/
+
 
 	// fifo read/write count
 	reg [FIFO_COUNT_WIDTH:0]  fifo_rd_count, fifo_wrt_count;
@@ -85,21 +85,21 @@ module fifo # (
         .re(fifo_rd),
         .we(fifo_wrt),
     )*/
+	wire [FIFO_WIDTH-1:0] fifo_odata;
     bram_subbank #(
 		   .DEPTH		(FIFO_DEPTH),
 		   .DATA_WIDTH		(FIFO_WIDTH),
 		   .ADDR_WIDTH		(FIFO_COUNT_WIDTH))
-    mem(/*AUTOINST*/
+    mem(
 	// Outputs
-	.dout				(fifo_odata),		 // Templated
+	.dout				(fifo_odata),
 	// Inputs
-	.clk				(clk),			 // Templated
-	.din				(fifo_idata),		 // Templated
-	.raddr				(fifo_rd_ptr),		 // Templated
-	.waddr				(fifo_wrt_ptr),		 // Templated
-	.cs				(fifo_rd|fifo_wrt),	 // Templated
-	.re				(fifo_rd),		 // Templated
-	.we				(fifo_wrt));		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated		 // Templated,
-
+	.clk				(clk),
+	.din				(fifo_idata),
+	.raddr				(fifo_rd_ptr),
+	.waddr				(fifo_wrt_ptr),
+	.cs				(fifo_rd|fifo_wrt),
+	.re				(fifo_rd),
+	.we				(fifo_wrt));
 
 endmodule

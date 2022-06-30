@@ -196,9 +196,10 @@ module stream_transformer # (
     reg [$clog2(DST_IMG_WIDTH)-1:0] fifo_rd_cnt;
 
 	always@(posedge clk or negedge rst_n) begin
-		if(~rst_n)
+		if(~rst_n) begin
 			fifo_rd_r <= 1'b0;
-		else if(~m_axis_tvalid | m_axis_tready) begin
+            m_axis_tlast <= 1'b0;
+        end else if(~m_axis_tvalid | m_axis_tready) begin
 			fifo_rd_r <= fifo_rd;
             m_axis_tlast <= (fifo_rd_cnt == DST_IMG_WIDTH - N_FIFO)?1'b1:1'b0;
 		end

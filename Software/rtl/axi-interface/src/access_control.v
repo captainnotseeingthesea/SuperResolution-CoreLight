@@ -398,6 +398,7 @@ module access_control # (
 			reg [AXISOUT_DATA_WIDTH-1:0] axis_tdata_tmp;
 			always@(*) begin: MULTIELE_TDATA
 				integer i;
+				axis_tdata_tmp = {AXISOUT_DATA_WIDTH{1'b0}};
 				for(i = 0; i < N_PARALLEL; i=i+1) begin
 					if(obuf_rd_r[i] == 1)
 						axis_tdata_tmp = obuf_odata[i*AXISOUT_DATA_WIDTH+:AXISOUT_DATA_WIDTH];
@@ -530,11 +531,11 @@ module access_control # (
 			always@(*) begin: MULTIELE_TKEEP
 				integer i;
 				ac_m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
-				ac_m_axis_tkeep_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
+				ac_m_axis_tstrb_tmp = {AXISOUT_STRB_WIDTH{1'b1}};
 				for(i = 0; i < N_PARALLEL; i=i+1) begin
 					if(obuf_rd_r[i] == 1'b1) begin
 						ac_m_axis_tkeep_tmp = keep[i];
-						ac_m_axis_tkeep_tmp = strb[i];
+						ac_m_axis_tstrb_tmp = strb[i];
 					end
 				end
 			end
