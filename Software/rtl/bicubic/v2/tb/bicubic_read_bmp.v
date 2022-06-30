@@ -77,18 +77,26 @@ module bicubic_read_bmp (
 
     end
 
+
+    // the following code used to simulate that the case when input data is not in time
     reg [31:0] valid_bit;
+    reg [4:0] valid_bit_reg;
     always @(posedge clk or negedge rst_n) begin
         if(~rst_n) begin
             valid_bit <= #1 32'd0;
+            valid_bit_reg <= #1 0;
         end
         else begin
             valid_bit <= #1 valid_bit + 1;
+            valid_bit_reg <= #1 {$random}%6;
         end
     end
-
-    wire valid_ctrl = 1'b1;
+    // wire valid_ctrl = 1'b1;
     // wire valid_ctrl = (valid_bit>2398) & (valid_bit<3222) ? 1'b0 : 1'b1;
+    // wire valid_ctrl = (valid_bit>387) & (valid_bit<2367) ? 1'b0 : 1'b1;
+    wire valid_ctrl = (valid_bit_reg > 4) ? 1'b1 : 1'b0;
+
+
     wire bmp_hsked = ready & valid;
     reg [31:0] ptr;
     reg [23:0] data_reg;
@@ -115,7 +123,6 @@ module bicubic_read_bmp (
     wire cur_is_last_data = (ptr % (WIDTH)) ? 1'b0 : 1'b1;
 
     assign valid = valid_reg;
-    // assign valid = valid_ctrl;
     assign data = data_reg;
 
 

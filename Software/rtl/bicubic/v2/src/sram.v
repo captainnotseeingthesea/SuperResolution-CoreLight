@@ -1,10 +1,11 @@
 
 module sram #(
     parameter DATA_WIDTH=24,
-    parameter DEPTH = 960
+    parameter DEPTH = 960,
+    parameter ADDR_WIDTH = $clog2(DEPTH)
 ) (
     input wire clk,
-    input wire [$clog2(DEPTH)-1:0] addr,
+    input wire [ADDR_WIDTH-1:0] addr,
     input wire cs_n,
     input wire wr_en,
     input wire [DATA_WIDTH-1:0] data_in,
