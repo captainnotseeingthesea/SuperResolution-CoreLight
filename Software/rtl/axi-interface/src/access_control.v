@@ -100,8 +100,8 @@ module access_control # (
 	localparam DST_GEN_WIDTH      = (N_PARALLEL==1)?DST_IMG_WIDTH
 									:(end_of_rd(N_PARALLEL-1)+N_UPSP_WRT*N_PARALLEL);
 
-	localparam IMG_CNT_WIDTH      = $clog2(DST_GEN_WIDTH*DST_IMG_HEIGHT);
-	localparam DST_IMG_WIDTH_LB2  = $clog2(DST_GEN_WIDTH);
+	localparam IMG_CNT_WIDTH      = $clog2(DST_GEN_WIDTH*DST_IMG_HEIGHT+1);
+	localparam DST_IMG_WIDTH_LB2  = $clog2(DST_GEN_WIDTH+1);
 
 
 	input clk;

@@ -84,7 +84,7 @@ module buffer_sram #(
     wire cur_init_ram3 = ((cur_init_cnt<WIDTH*3) & (cur_init_cnt>=WIDTH*2)) ? 1'b1 : 1'b0;
     wire cur_init_ram4 = ((cur_init_cnt<WIDTH*4) & (cur_init_cnt>=WIDTH*3)) ? 1'b1 : 1'b0;  
 
-    localparam ADDR_WIDTH = $clog2(WIDTH);
+    localparam ADDR_WIDTH = $clog2(WIDTH+1);
 
     wire cs_n1, cs_n2, cs_n3, cs_n4, cs_n5;
     wire wr_en1, wr_en2, wr_en3, wr_en4, wr_en5; 

@@ -27,7 +27,7 @@ module ac_outbuf # (
    clk, rst_n, buf_wvalid, buf_wdata, buf_rd
    );
 
-    localparam IMG_CNT_WIDTH = $clog2(DST_IMG_WIDTH*DST_IMG_HEIGHT);
+    localparam IMG_CNT_WIDTH = $clog2(DST_IMG_WIDTH*DST_IMG_HEIGHT+1);
     localparam N_FIFO        = N_PARALLEL;
     localparam N_PARALLEL_B2 = $clog2(N_PARALLEL);
     localparam N_UPSP_WRT    = UPSP_WRTDATA_WIDTH/24;

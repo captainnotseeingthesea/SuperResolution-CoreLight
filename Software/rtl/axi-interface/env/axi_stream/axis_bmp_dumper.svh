@@ -71,7 +71,7 @@ task axis_bmp_dumper::main_phase(uvm_phase phase);
         for(int k = t.tkeep.size()-1; k >= 0; k--) begin
             if(t.tkeep[k]) begin
                 if(t.tstrb[k]) 
-                    data[pos/3][2-pos%3] = t.tdata[k];
+                    data[pos/3][pos%3] = t.tdata[k];
                 pos++;
             end
         end
