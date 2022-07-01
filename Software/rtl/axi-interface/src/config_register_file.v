@@ -160,6 +160,26 @@ module config_register_file # (
 		end
 	end
 
+	// Count the time of whole processing
+	reg [CRF_DATA_WIDTH-1:0] UPPROCCNT;
+	always@(posedge clk or negedge rst_n) begin: CLK_DIV_10
+		if(~rst_n) begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			UPPROCCNT <= {CRF_DATA_WIDTH{1'b0}};
+			// End of automatics
+		end else if(ac_crf_processing) begin
+			UPPROCCNT <= UPPROCCNT + 1;
+		end else if(crf_ac_UPEND) begin
+			UPPROCCNT <= UPPROCCNT  ;
+		end else begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			UPPROCCNT <= {CRF_DATA_WIDTH{1'b0}};
+			// End of automatics
+		end
+	end
+
 
 /*************************** Performance monitoring registers end ***************************/
 
@@ -304,11 +324,12 @@ module config_register_file # (
 		end else if(axi_read) begin
 			s_axi_rvalid <= 1'b1;
 			case(axi_raddr)
-				0: s_axi_rdata  <= UPSTAT      ;
-				4: s_axi_rdata  <= UPINHSKCNT  ;
-				8: s_axi_rdata  <= UPINNRDYCNT ;
+				0:  s_axi_rdata <= UPSTAT      ;
+				4:  s_axi_rdata <= UPINHSKCNT  ;
+				8:  s_axi_rdata <= UPINNRDYCNT ;
 				12: s_axi_rdata <= UPOUTHSKCNT ;
-				16: s_axi_rdata <= UPOUTNRDYCNT ;
+				16: s_axi_rdata <= UPOUTNRDYCNT;
+				20: s_axi_rdata <= UPPROCCNT   ;
 				default: s_axi_rdata <= {AXI_DATA_WIDTH{1'b0}};
 			endcase
 		end else begin
