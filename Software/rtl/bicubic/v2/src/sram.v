@@ -21,23 +21,20 @@ module sram #(
         // ram not work while cs_n is high
         if(cs_n) begin
             data_t <= #1 {DATA_WIDTH{1'b0}};
-            // data_valid_t <= #1 1'b0;
         end
         else begin
+            // write data when wr_en is high
             if(wr_en) begin
                 ram[addr] <= data_in;
                 data_t <= #1 {DATA_WIDTH{1'b0}};
-                // data_valid_t <= #1 1'b0;
             end
             else begin
                 data_t <= #1 ram[addr];
-                // data_valid_t <= #1 1'b1;
             end
         end
     end
 
     assign data_out = data_t;
-    // assign data_valid = data_valid_t;
 
 endmodule
 

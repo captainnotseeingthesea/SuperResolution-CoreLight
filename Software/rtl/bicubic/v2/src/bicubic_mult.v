@@ -1,4 +1,5 @@
 
+
 module bicubic_mult #
 (
     parameter PRODUCT_WIDTH = 32
@@ -7,6 +8,8 @@ module bicubic_mult #
     input wire signed [PRODUCT_WIDTH -8 - 1:0] pixel,
     output wire signed [PRODUCT_WIDTH - 1:0] product
 );
+
+    // Determine the multiplication function based on the weight
     wire multi_by_21   = (weight == 3'd0) ? 1'b1 : 1'b0;
     wire multi_by_135  = (weight == 3'd1) ? 1'b1 : 1'b0;
     wire multi_by_147  = (weight == 3'd2) ? 1'b1 : 1'b0;
@@ -25,6 +28,7 @@ module bicubic_mult #
                              | ({12{multi_by_1535}} & 12'd1535)
                              | ({12{multi_by_1981}} & 12'd1981);
 
+    // Calculate the product
     wire signed [PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
     assign product = product_data;
 

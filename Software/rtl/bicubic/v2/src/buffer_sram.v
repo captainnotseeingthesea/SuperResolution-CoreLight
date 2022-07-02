@@ -6,6 +6,7 @@ module buffer_sram #(
     input wire clk,
     input wire rst_n,
 
+// for simulations
 `ifndef SIM_WITHOUT_AXI
     output wire axi_ready,
     input wire [23:0] axi_data,
@@ -33,7 +34,7 @@ module buffer_sram #(
     output wire [BUFFER_WIDTH-1:0] out_p16,
 
 
-
+// for simulations
 `ifdef SIM_WITHOUT_AXI
 
     input wire [BUFFER_WIDTH-1:0] bcci_rsp_data1,
@@ -49,11 +50,10 @@ module buffer_sram #(
 
 );
 
-    // localparam WIDTH = `SRC_IMG_WIDTH;
     localparam WIDTH = BLOCK_SIZE;
     localparam HEIGHT = `SRC_IMG_HEIGHT;
     
-// only valid when degree of parallelism is 1
+// only valid when degree of parallelism is 1 for simulation
 `ifdef SIM_WITHOUT_AXI
     wire axi_ready;
     wire [23:0] axi_data;
@@ -67,9 +67,12 @@ module buffer_sram #(
     );
 `endif
 
-    wire axi_hsked = axi_ready & axi_valid;
-    wire bf_req_hsked = bf_req_valid & bcci_req_ready;
+    wire axi_hsked = axi_ready & axi_valid;            // input pixel handshaked signal
+    wire bf_req_hsked = bf_req_valid & bcci_req_ready; // output pixel handahsked signal
 
+
+
+    // the counter used for initialization, the output valid when the initial four rows are completed
     localparam INIT_CNT_WIDTH = $clog2((WIDTH)*4+1);
     wire [INIT_CNT_WIDTH-1:0] cur_init_cnt, nxt_init_cnt;
     wire init_finished = (cur_init_cnt == WIDTH*4) ? 1'b1 : 1'b0;
@@ -78,19 +81,23 @@ module buffer_sram #(
     dfflr #(.DW(INIT_CNT_WIDTH)) u_init_dff (.lden(init_cnt_ena), .dnxt(nxt_init_cnt), .qout(cur_init_cnt), .clk(clk), .rst_n(rst_n));
 
 
-
+    // determine which ram block to initialize
     wire cur_init_ram1 = (cur_init_cnt<WIDTH) ? 1'b1 : 1'b0;
     wire cur_init_ram2 = ((cur_init_cnt<WIDTH*2) & (cur_init_cnt>=WIDTH*1)) ? 1'b1 : 1'b0;
     wire cur_init_ram3 = ((cur_init_cnt<WIDTH*3) & (cur_init_cnt>=WIDTH*2)) ? 1'b1 : 1'b0;
     wire cur_init_ram4 = ((cur_init_cnt<WIDTH*4) & (cur_init_cnt>=WIDTH*3)) ? 1'b1 : 1'b0;  
 
+
     localparam ADDR_WIDTH = $clog2(WIDTH+1);
 
+
+    // four of the five block rams are used for calculations and the extra one is used to receive inputs of the next row
     wire cs_n1, cs_n2, cs_n3, cs_n4, cs_n5;
     wire wr_en1, wr_en2, wr_en3, wr_en4, wr_en5; 
     wire [ADDR_WIDTH-1:0] addr1, addr2, addr3, addr4, addr5;
     wire [BUFFER_WIDTH-1:0] data_out1, data_out2, data_out3, data_out4, data_out5;
  
+
 
 
     sram #(.DATA_WIDTH(BUFFER_WIDTH), .DEPTH(WIDTH), .ADDR_WIDTH(ADDR_WIDTH)) u_sram1 
@@ -106,6 +113,9 @@ module buffer_sram #(
 
 
 
+
+    // FSM to control the output sequence
+    // S0 is for initialization, S1 -> S5 for calculation
     localparam FSM_WIDTH = 3;
     localparam STATE_S0 = 3'd0;
     localparam STATE_S1 = 3'd1;
@@ -148,6 +158,8 @@ module buffer_sram #(
     dfflr #(.DW(FSM_WIDTH)) u_cs_fsm(.lden(state_ena), .dnxt(nxt_state), .qout(cur_state), .clk(clk), .rst_n(rst_n));    
 
 
+
+    // configure the cs signal of rams
     assign {cs_n1, cs_n2, cs_n3, cs_n4, cs_n5} = ({5{cur_is_s0}} & 5'b00001)
                                                | ({5{cur_is_s1}} & 5'b00000)
                                                | ({5{cur_is_s2}} & 5'b00000)
@@ -155,6 +167,10 @@ module buffer_sram #(
                                                | ({5{cur_is_s4}} & 5'b00000)
                                                | ({5{cur_is_s5}} & 5'b00000);
 
+
+
+
+    // column counter to configure request signal
     localparam COL_CNT_WIDTH = $clog2(WIDTH+6)+1;
     wire [COL_CNT_WIDTH-1:0] cur_col_cnt, nxt_col_cnt;
     wire cur_col_cnt_below_2 = (cur_col_cnt < 2) ? 1'b1 : 1'b0;
@@ -187,6 +203,9 @@ module buffer_sram #(
     dfflr #(.DW(COL_CNT_WIDTH)) u_col_dff (.lden(col_cnt_ena), .dnxt(nxt_col_cnt), .qout(cur_col_cnt), .clk(clk), .rst_n(rst_n));
 
 
+
+
+    // row counters to determine the row sequence of output data
     localparam ROW_CNT_WIDTH = $clog2(HEIGHT*4+1)+1;
     wire [ROW_CNT_WIDTH-1:0] cur_row_cnt, nxt_row_cnt;
     wire cur_row_cnt_is_0 = (cur_row_cnt == 0) ? 1'b1 : 1'b0;
@@ -218,55 +237,75 @@ module buffer_sram #(
     wire cur_row_cnt_is_last_1 = (cur_row_cnt == HEIGHT*4-1) ? 1'b1 : 1'b0;
 
 
-
+    // the write address configure
     wire [ADDR_WIDTH-1:0] cur_waddr, nxt_waddr;
-    assign nxt_row_cnt = cur_row_cnt + 1;
-    wire cur_wr_end = (~init_finished) ? (cur_waddr == WIDTH-1) : (cur_waddr == WIDTH);
-    wire row_cnt_ena_normal = (~cur_row_cnt_over_8) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : (~cur_row_cnt_is_4x_plus_6) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked & (cur_wr_end | cur_row_cnt_over_last_10);
+    wire cur_wr_end = (~init_finished) ? (cur_waddr == WIDTH-1) : (cur_waddr == WIDTH);  // the input of next row is end
+    assign nxt_waddr = (~cur_wr_end) ? cur_waddr+1 : 0;
+    wire waddr_ena = cur_is_s0 ? axi_hsked : cur_wr_end ? state_ena : axi_hsked;
+    dfflr #(.DW(ADDR_WIDTH)) u_waddr_reg(.lden(waddr_ena), .dnxt(nxt_waddr), .qout(cur_waddr), .clk(clk), .rst_n(rst_n));  
 
+
+
+    // row counter configure
+    assign nxt_row_cnt = cur_row_cnt + 1;
+    wire row_cnt_ena_normal = (~cur_row_cnt_over_8) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : (~cur_row_cnt_is_4x_plus_6) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked & (cur_wr_end | cur_row_cnt_over_last_10);
     wire row_cnt_ena = row_cnt_ena_normal;
     dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
 
 
     assign nxt_col_cnt = cur_col_cnt_is_width_plus_5 ? 0 : (cur_col_cnt_is_0 & state_ena & cur_row_cnt_over_9) ? 0 :cur_col_cnt + 1;
 
-    assign nxt_waddr = (~cur_wr_end) ? cur_waddr+1 : 0;
+  
 
-
-    wire waddr_ena = cur_is_s0 ? axi_hsked : cur_wr_end ? state_ena : axi_hsked;
-    dfflr #(.DW(ADDR_WIDTH)) u_waddr_reg(.lden(waddr_ena), .dnxt(nxt_waddr), .qout(cur_waddr), .clk(clk), .rst_n(rst_n));    
-
-
+    // read ram addr, four block rams shared the same address
     wire [ADDR_WIDTH-1:0] cur_raddr, nxt_raddr;
-
     assign nxt_raddr = ((cur_raddr < WIDTH-1) & (~cur_col_cnt_below_3)) ? cur_raddr+1 
                      : ((cur_raddr == WIDTH-1) & (cur_col_cnt_below_width_plus_4)) ? cur_raddr : 0;
     wire cur_rd_end = (cur_raddr == WIDTH-1) ? 1'b1 : 1'b0;
     wire raddr_ena;
     dfflr #(.DW(ADDR_WIDTH)) u_raddr_reg(.lden(raddr_ena), .dnxt(nxt_raddr), .qout(cur_raddr), .clk(clk), .rst_n(rst_n));    
 
+
+    // delayed the init_finished signal to meet timing requirments 
     wire init_finished_delayed;
     dfflr #(.DW(1)) u_init_delayed_reg (.lden(1'b1), .dnxt(init_finished), .qout(init_finished_delayed), .clk(clk), .rst_n(rst_n));
 
 
+
+    // special handling when the column counter is 0
     wire col_cnt_0_fetched, nxt_col_cnt0_fetched;
     wire col_cnt_0_fetched_ena = (cur_col_cnt_is_0 & bcci_2_bf_hsked & cur_row_cnt_over_8 & cur_row_cnt_is_4x_plus_6) | cur_col_cnt_is_1;
     assign nxt_col_cnt0_fetched = bcci_2_bf_hsked ? 1'b1 : 1'b0;
     dfflr #(.DW(1)) u_col_cnt_0_fetched_reg (.lden(col_cnt_0_fetched_ena), .dnxt(nxt_col_cnt0_fetched), .qout(col_cnt_0_fetched), .clk(clk), .rst_n(rst_n));
 
-    wire col_cnt0_ena_normal = (cur_col_cnt_is_0 & cur_row_cnt_over_8) ? ((~cur_row_cnt_is_4x_plus_6) & bcci_2_bf_hsked) | (cur_row_cnt_is_4x_plus_6 & bcci_2_bf_hsked & (cur_row_cnt_over_last_10)) : bcci_2_bf_hsked; 
+
+
+    // special handling when column counter is 0
+    wire col_cnt0_ena_normal = (cur_col_cnt_is_0 & cur_row_cnt_over_8) ? 
+                                ((~cur_row_cnt_is_4x_plus_6) & bcci_2_bf_hsked) | (cur_row_cnt_is_4x_plus_6 & bcci_2_bf_hsked & (cur_row_cnt_over_last_10)) : bcci_2_bf_hsked; 
+
     wire col_cnt0_ena_abnormal = cur_col_cnt_is_0 & cur_row_cnt_over_8 & cur_row_cnt_is_4x_plus_6 & cur_wr_end & col_cnt_0_fetched; 
 
 
-    assign col_cnt_ena = init_finished & (   (cur_col_cnt_is_0 & ((~init_finished_delayed) |  (col_cnt0_ena_abnormal | col_cnt0_ena_normal)))
-                                           | ((~cur_col_cnt_is_0) & cur_col_cnt_below_6) 
-                                           | (cur_col_cnt_below_width_plus_5 & cur_col_cnt_over_5 & bcci_2_bf_hsked) 
-                                           | (cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked)
+    // column conter increase enable signal
+    assign col_cnt_ena = init_finished & (   (cur_col_cnt_is_0 & ((~init_finished_delayed) |  (col_cnt0_ena_abnormal | col_cnt0_ena_normal))) // when col_cnt is 0
+                                           | ((~cur_col_cnt_is_0) & cur_col_cnt_below_6)                                                      // when col_cnt is (0, 6)
+                                           | (cur_col_cnt_below_width_plus_5 & cur_col_cnt_over_5 & bcci_2_bf_hsked)                          // when col_cnt is (6, width+5)
+                                           | (cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked)                                                  // when col_cnt is width+5
                                         );
+
+
     wire end_of_data;
+
+    // shift signal 
     wire shift_ena = (init_finished & (~end_of_data)) ? cur_col_cnt_is_0 ? (~state_ena) | (~init_finished_delayed) : ((cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) | cur_col_cnt_below_6) : 1'b0;
 
 
+    // every time the register shifts the read address adds
+    assign raddr_ena = init_finished ? shift_ena : 1'b0;
+
+
+    // FSM exit signal
     wire state_exit_normal = cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked & (~cur_row_cnt_is_last_7);
     assign state_s0_exit_ena = (cur_is_s0 & init_finished) ? 1'b1 : 1'b0;
     assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & state_exit_normal) ? ((~cur_row_cnt_is_last_3) & cur_row_cnt_over_9) | cur_row_cnt_is_9 : 1'b0;
@@ -280,12 +319,11 @@ module buffer_sram #(
                      | state_s4_exit_ena | state_s5_exit_ena;
 
 
-    assign raddr_ena = init_finished ? shift_ena : 1'b0;
 
     wire [BUFFER_WIDTH-1:0] line_out1, line_out2, line_out3, line_out4;
     wire [BUFFER_WIDTH-1:0] ram_out1, ram_out2, ram_out3, ram_out4;
 
-
+    // reshape the ram out sequence for boundary fill in the row direction
     assign line_out1 = (cur_row_cnt_is_last_3 | cur_row_cnt_is_last_4 | cur_row_cnt_is_last_5 | cur_row_cnt_is_last_6) ? ram_out2 
                      : (cur_row_cnt_is_last_1 | cur_row_cnt_is_last_2) ? ram_out3
 
@@ -310,6 +348,8 @@ module buffer_sram #(
                      : (cur_row_cnt_is_2 | cur_row_cnt_is_3 | cur_row_cnt_is_4 | cur_row_cnt_is_5) ? ram_out3 : ram_out4;
 
 
+
+    // output pixels
     dffl #(.DW(BUFFER_WIDTH)) u_dffl1(.lden(shift_ena), .dnxt(out_p2), .qout(out_p1), .clk(clk));
     dffl #(.DW(BUFFER_WIDTH)) u_dffl2(.lden(shift_ena), .dnxt(out_p3), .qout(out_p2), .clk(clk));
     dffl #(.DW(BUFFER_WIDTH)) u_dffl3(.lden(shift_ena), .dnxt(out_p4), .qout(out_p3), .clk(clk));
@@ -330,6 +370,8 @@ module buffer_sram #(
     dffl #(.DW(BUFFER_WIDTH)) u_dffl15(.lden(shift_ena), .dnxt(out_p16), .qout(out_p15), .clk(clk));
     dffl #(.DW(BUFFER_WIDTH)) u_dffl16(.lden(shift_ena), .dnxt(line_out4), .qout(out_p16), .clk(clk));
 
+
+    // configure the wr_en signal of rams
     assign {wr_en1, wr_en2, wr_en3, wr_en4, wr_en5} =
           ({5{cur_is_s0 & cur_init_ram1 & axi_hsked}} & 5'b10000)
         | ({5{cur_is_s0 & cur_init_ram2 & axi_hsked}} & 5'b01000)
@@ -343,7 +385,7 @@ module buffer_sram #(
 
 
 
-
+    // configure the address of each block ram (write addr or read addr ?)
     assign addr1 = (cur_is_s0 | (cur_is_s2 & (~cur_wr_end))) ? cur_waddr :
                    (cur_is_s1 | cur_is_s3 | cur_is_s4 | cur_is_s5) ? (shift_ena ? nxt_raddr : cur_raddr) : {ADDR_WIDTH{1'b0}};
 
@@ -360,6 +402,8 @@ module buffer_sram #(
                    (cur_is_s2 | cur_is_s3 | cur_is_s4 | cur_is_s5) ? (shift_ena ? nxt_raddr : cur_raddr)  : {ADDR_WIDTH{1'b0}};
 
 
+
+    // reshape the block ram direct out sequence
     assign ram_out1 = cur_is_s0 ? {BUFFER_WIDTH{1'b0}} :
                       cur_is_s1 ? data_out1 :
                       cur_is_s2 ? data_out2 :
@@ -389,19 +433,24 @@ module buffer_sram #(
                       cur_is_s5 ? data_out3 : {BUFFER_WIDTH{1'b0}}; 
 
 
+
+    // valid signal to the output side
     assign bf_req_valid = init_finished ? ((cur_col_cnt_below_width_plus_6) & (~cur_col_cnt_below_5) & (~end_of_data)) : 1'b0;
 
+
+    // ready signal to the input side
     assign axi_ready = (~init_finished) 
                      | ((cur_is_s1 | cur_is_s2 | cur_is_s3 | cur_is_s4 | cur_is_s5) & ( ~cur_wr_end));
 
 
+    // signal indicates that the data of this figure is end 
     wire end_ena = (cur_row_cnt_is_last_1 & row_cnt_ena) ? 1'b1 : 1'b0;
     dfflr #(.DW(1)) u_data_end_reg (.lden(end_ena), .dnxt(1'b1), .qout(end_of_data), .clk(clk), .rst_n(rst_n));
 
 
 
 
-
+// simulatiuon codes
 `ifdef SIM_WITHOUT_AXI
     localparam OUT_BUFFER_WIDTH = BUFFER_WIDTH*4;
 
