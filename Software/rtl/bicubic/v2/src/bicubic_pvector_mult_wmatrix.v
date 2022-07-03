@@ -4,6 +4,16 @@ module bicubic_pvector_mult_wmatrix #
     parameter PRODUCT_WIDTH = 32
 )
 (
+`ifdef MULT_IN_ONE_CYCLE
+
+`elsif MULT_IN_TWO_CYCLE
+    input clk,
+    input ena,
+`elsif MULT_IN_THREE_CYCLE
+    input clk,
+    input ena,
+`endif
+
     input wire [2:0] w1_1,
     input wire [2:0] w1_2,
     input wire [2:0] w1_3,
@@ -34,7 +44,16 @@ module bicubic_pvector_mult_wmatrix #
     
 );
 
-    bicubic_vector_mult u_bicubic_vector_mult1(
+    bicubic_vector_mult_config u_bicubic_vector_mult1(
+    `ifdef MULT_IN_ONE_CYCLE
+
+    `elsif MULT_IN_TWO_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `elsif MULT_IN_THREE_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `endif
         .weight_1(w1_1),
         .weight_2(w1_2),
         .weight_3(w1_3),
@@ -48,7 +67,16 @@ module bicubic_pvector_mult_wmatrix #
         .inner_product(inner_product1)
     );
 
-    bicubic_vector_mult u_bicubic_vector_mult2(
+    bicubic_vector_mult_config u_bicubic_vector_mult2(
+    `ifdef MULT_IN_ONE_CYCLE
+
+    `elsif MULT_IN_TWO_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `elsif MULT_IN_THREE_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `endif
         .weight_1(w2_1),
         .weight_2(w2_2),
         .weight_3(w2_3),
@@ -62,7 +90,16 @@ module bicubic_pvector_mult_wmatrix #
         .inner_product(inner_product2)
     );
 
-    bicubic_vector_mult u_bicubic_vector_mult3(
+    bicubic_vector_mult_config u_bicubic_vector_mult3(
+    `ifdef MULT_IN_ONE_CYCLE
+
+    `elsif MULT_IN_TWO_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `elsif MULT_IN_THREE_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `endif
         .weight_1(w3_1),
         .weight_2(w3_2),
         .weight_3(w3_3),
@@ -76,7 +113,16 @@ module bicubic_pvector_mult_wmatrix #
         .inner_product(inner_product3)
     );
 
-    bicubic_vector_mult u_bicubic_vector_mult4(
+    bicubic_vector_mult_config u_bicubic_vector_mult4(
+    `ifdef MULT_IN_ONE_CYCLE
+
+    `elsif MULT_IN_TWO_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `elsif MULT_IN_THREE_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `endif
         .weight_1(w4_1),
         .weight_2(w4_2),
         .weight_3(w4_3),

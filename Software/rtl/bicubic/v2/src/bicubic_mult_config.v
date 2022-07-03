@@ -1,9 +1,12 @@
 
-
-module bicubic_mult #
+module bicubic_mult_config #
 (
     parameter PRODUCT_WIDTH = 32
 ) (
+    `ifndef MULT_IN_ONE_CYCLE
+        input wire clk,
+        input wire ena,
+    `endif
     input wire [2:0] weight,
     input wire signed [PRODUCT_WIDTH -8 - 1:0] pixel,
     output wire signed [PRODUCT_WIDTH - 1:0] product
@@ -30,7 +33,31 @@ module bicubic_mult #
 
     // Calculate the product
     wire signed [PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
+
+// simulate the behaviour of multi-cycle multiplier here.
+// when considering using Xilinx IPs, the cycles needs to be configured.
+`ifdef MULT_IN_ONE_CYCLE    
     assign product = product_data;
 
+`elsif MULT_IN_TWO_CYCLE
+    reg signed [PRODUCT_WIDTH -1:0] product_data_t1;
+    always @(posedge clk) begin
+        if(ena) begin
+            product_data_t1 <= #1 product_data;
+        end
+    end
+    assign product = product_data_t1;
+
+`elsif MULT_IN_THREE_CYCLE
+    reg signed [PRODUCT_WIDTH -1:0] product_data_t1, product_data_t2;
+    always @(posedge clk) begin
+        if(ena) begin
+            product_data_t1 <= #1 product_data;
+            product_data_t2 <= #1 product_data_t1;
+        end
+    end
+    assign product = product_data_t2;
+
+`endif
 
 endmodule

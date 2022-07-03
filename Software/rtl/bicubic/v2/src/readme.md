@@ -2,8 +2,12 @@
 ## Structure of the code
 - bicubic_mult.v
     - Basic multiplication operator, whose inputs are a weight data and an image pixel data.
+- bicubic_mult_config.v
+    - Basic multiplication operator (the cycles could be configured), whose inputs are a weight data and an image pixel data.
 - bicubic_vecoter_mult.v
     - Vector multiplication operator, which has an input length of 4 for a vector of weight data and a vector of image data.
+- bicubic_vecoter_mult.v
+    - Vector multiplication operator (the cycles could be configured), which has an input length of 4 for a vector of weight data and a vector of image data.
 - bicubic_pvector_mult_wmatrix.v
     - Pixel vector multiplication weight matrix operator.
 - bicubic_wvector_mult_pmatrix.v

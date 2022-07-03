@@ -5,3 +5,8 @@
 `define UPSP_DATA_WIDTH 24
 `define SRC_IMG_WIDTH 960
 `define SRC_IMG_HEIGHT 540
+
+
+// `define MULT_IN_ONE_CYCLE
+`define MULT_IN_TWO_CYCLE
+// `define MULT_IN_THREE_CYCLE

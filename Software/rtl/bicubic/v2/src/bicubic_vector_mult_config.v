@@ -1,9 +1,19 @@
 
-module bicubic_vector_mult#
+module bicubic_vector_mult_config #
 (
     parameter PRODUCT_WIDTH = 32
 )
 (
+
+`ifdef MULT_IN_ONE_CYCLE
+    
+`elsif MULT_IN_TWO_CYCLE
+    input wire clk,
+    input wire ena,
+`elsif MULT_IN_THREE_CYCLE
+    input wire clk,
+    input wire ena,
+`endif
     input wire [2:0] weight_1,
     input wire [PRODUCT_WIDTH - 1:0] pixel_1,
     input wire [2:0] weight_2,
@@ -18,22 +28,66 @@ module bicubic_vector_mult#
 
     // Instantiate each of the four multiplication units
     wire [PRODUCT_WIDTH - 1:0] product_t1, product_t2, product_t3, product_t4;
-    bicubic_mult #(.PRODUCT_WIDTH(PRODUCT_WIDTH)) u_bicubic_mult_1(
+
+    bicubic_mult_config #(.PRODUCT_WIDTH(PRODUCT_WIDTH)) u_bicubic_mult_1(
+    `ifdef MULT_IN_ONE_CYCLE
+    
+    `elsif MULT_IN_TWO_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `elsif MULT_IN_THREE_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `endif
+
         .weight       (weight_1),
         .pixel        (pixel_1[PRODUCT_WIDTH -8 - 1:0]),
         .product      (product_t1)
     );
-    bicubic_mult #(.PRODUCT_WIDTH(PRODUCT_WIDTH)) u_bicubic_mult_2(
+
+    bicubic_mult_config #(.PRODUCT_WIDTH(PRODUCT_WIDTH)) u_bicubic_mult_2(
+    `ifdef MULT_IN_ONE_CYCLE
+    
+    `elsif MULT_IN_TWO_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `elsif MULT_IN_THREE_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `endif
+
         .weight       (weight_2),
         .pixel        (pixel_2[PRODUCT_WIDTH -8 - 1:0]),
         .product      (product_t2)
     );
-    bicubic_mult #(.PRODUCT_WIDTH(PRODUCT_WIDTH)) u_bicubic_mult_3(
+
+    bicubic_mult_config #(.PRODUCT_WIDTH(PRODUCT_WIDTH)) u_bicubic_mult_3(
+    `ifdef MULT_IN_ONE_CYCLE
+    
+    `elsif MULT_IN_TWO_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `elsif MULT_IN_THREE_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `endif
+
         .weight       (weight_3 ),
         .pixel        (pixel_3[PRODUCT_WIDTH -8 - 1:0]),
         .product      (product_t3)
     );
-    bicubic_mult #(.PRODUCT_WIDTH(PRODUCT_WIDTH)) u_bicubic_mult_4(
+
+    bicubic_mult_config #(.PRODUCT_WIDTH(PRODUCT_WIDTH)) u_bicubic_mult_4(
+    `ifdef MULT_IN_ONE_CYCLE
+    
+    `elsif MULT_IN_TWO_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `elsif MULT_IN_THREE_CYCLE
+        .clk(clk),
+        .ena(ena),
+    `endif
+
         .weight       (weight_4),
         .pixel        (pixel_4[PRODUCT_WIDTH -8 - 1:0]),
         .product      (product_t4)

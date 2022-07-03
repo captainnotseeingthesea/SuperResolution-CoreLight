@@ -178,26 +178,33 @@ module buffer_sram #(
     wire cur_col_cnt_below_4 = (cur_col_cnt < 4) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_5 = (cur_col_cnt < 5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_6 = (cur_col_cnt < 6) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_below_7 = (cur_col_cnt < 7) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_below_8 = (cur_col_cnt < 8) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_width = (cur_col_cnt < WIDTH) ? 1'b1 : 1'b0;
     wire cur_col_cnt_over_5 = (cur_col_cnt > 5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_over_6 = (cur_col_cnt > 6) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_over_7 = (cur_col_cnt > 7) ? 1'b1 : 1'b0;
 
     wire cur_col_cnt_is_0 = (cur_col_cnt == 0) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_1 = (cur_col_cnt == 1) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_5 = (cur_col_cnt == 5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_6 = (cur_col_cnt == 6) ? 1'b1 : 1'b0;
-    wire cur_col_cnt_is_9 = (cur_col_cnt == 6) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_is_7 = (cur_col_cnt == 7) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_is_8 = (cur_col_cnt == 8) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_is_9 = (cur_col_cnt == 9) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width = (cur_col_cnt == WIDTH) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width_plus_2 = (cur_col_cnt == WIDTH+2) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width_plus_3 = (cur_col_cnt == WIDTH+3) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width_plus_4 = (cur_col_cnt == WIDTH+4) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width_plus_5 = (cur_col_cnt == WIDTH+5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_is_width_plus_6 = (cur_col_cnt == WIDTH+6) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_is_width_plus_7 = (cur_col_cnt == WIDTH+7) ? 1'b1 : 1'b0;    
 
     wire cur_col_cnt_below_width_plus_3 = (cur_col_cnt < WIDTH+3) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_width_plus_4 = (cur_col_cnt < WIDTH+4) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_width_plus_5 = (cur_col_cnt < WIDTH+5) ? 1'b1 : 1'b0;
     wire cur_col_cnt_below_width_plus_6 = (cur_col_cnt < WIDTH+6) ? 1'b1 : 1'b0;
+    wire cur_col_cnt_below_width_plus_7 = (cur_col_cnt < WIDTH+7) ? 1'b1 : 1'b0;
 
     wire col_cnt_ena;
     dfflr #(.DW(COL_CNT_WIDTH)) u_col_dff (.lden(col_cnt_ena), .dnxt(nxt_col_cnt), .qout(cur_col_cnt), .clk(clk), .rst_n(rst_n));
@@ -248,13 +255,25 @@ module buffer_sram #(
 
     // row counter configure
     assign nxt_row_cnt = cur_row_cnt + 1;
-    wire row_cnt_ena_normal = (~cur_row_cnt_over_8) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : (~cur_row_cnt_is_4x_plus_6) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked & (cur_wr_end | cur_row_cnt_over_last_10);
-    wire row_cnt_ena = row_cnt_ena_normal;
+`ifdef MULT_IN_ONE_CYCLE
+    wire row_cnt_ena = (~cur_row_cnt_over_8) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : (~cur_row_cnt_is_4x_plus_6) ? cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked : cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked & (cur_wr_end | cur_row_cnt_over_last_10);
+`elsif MULT_IN_TWO_CYCLE
+    wire row_cnt_ena = (~cur_row_cnt_over_8) ? cur_col_cnt_is_width_plus_6 & bcci_2_bf_hsked : (~cur_row_cnt_is_4x_plus_6) ? cur_col_cnt_is_width_plus_6 & bcci_2_bf_hsked : cur_col_cnt_is_width_plus_6 & bcci_2_bf_hsked & (cur_wr_end | cur_row_cnt_over_last_10);
+`elsif MULT_IN_THREE_CYCLE
+    wire row_cnt_ena = (~cur_row_cnt_over_8) ? cur_col_cnt_is_width_plus_7 & bcci_2_bf_hsked : (~cur_row_cnt_is_4x_plus_6) ? cur_col_cnt_is_width_plus_7 & bcci_2_bf_hsked : cur_col_cnt_is_width_plus_7 & bcci_2_bf_hsked & (cur_wr_end | cur_row_cnt_over_last_10);
+`endif
     dfflr #(.DW(ROW_CNT_WIDTH)) u_row_cnt (.lden(row_cnt_ena), .dnxt(nxt_row_cnt), .qout(cur_row_cnt), .clk(clk), .rst_n(rst_n));
 
 
-    assign nxt_col_cnt = cur_col_cnt_is_width_plus_5 ? 0 : (cur_col_cnt_is_0 & state_ena & cur_row_cnt_over_9) ? 0 :cur_col_cnt + 1;
 
+    // next column counter 
+`ifdef MULT_IN_ONE_CYCLE
+    assign nxt_col_cnt = cur_col_cnt_is_width_plus_5 ? 0 : (cur_col_cnt_is_0 & state_ena & cur_row_cnt_over_9) ? 0 :cur_col_cnt + 1;
+`elsif MULT_IN_TWO_CYCLE
+    assign nxt_col_cnt = cur_col_cnt_is_width_plus_6 ? 0 : (cur_col_cnt_is_0 & state_ena & cur_row_cnt_over_9) ? 0 :cur_col_cnt + 1;
+`elsif MULT_IN_THREE_CYCLE
+    assign nxt_col_cnt = cur_col_cnt_is_width_plus_7 ? 0 : (cur_col_cnt_is_0 & state_ena & cur_row_cnt_over_9) ? 0 :cur_col_cnt + 1;
+`endif
   
 
     // read ram addr, four block rams shared the same address
@@ -288,25 +307,53 @@ module buffer_sram #(
 
 
     // column conter increase enable signal
+`ifdef MULT_IN_ONE_CYCLE
     assign col_cnt_ena = init_finished & (   (cur_col_cnt_is_0 & ((~init_finished_delayed) |  (col_cnt0_ena_abnormal | col_cnt0_ena_normal))) // when col_cnt is 0
                                            | ((~cur_col_cnt_is_0) & cur_col_cnt_below_6)                                                      // when col_cnt is (0, 6)
                                            | (cur_col_cnt_below_width_plus_5 & cur_col_cnt_over_5 & bcci_2_bf_hsked)                          // when col_cnt is (6, width+5)
                                            | (cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked)                                                  // when col_cnt is width+5
                                         );
 
+`elsif MULT_IN_TWO_CYCLE
+    assign col_cnt_ena = init_finished & (   (cur_col_cnt_is_0 & ((~init_finished_delayed) |  (col_cnt0_ena_abnormal | col_cnt0_ena_normal))) // when col_cnt is 0
+                                           | ((~cur_col_cnt_is_0) & cur_col_cnt_below_7)                                                      // when col_cnt is (0, 7)
+                                           | (cur_col_cnt_below_width_plus_6 & cur_col_cnt_over_6 & bcci_2_bf_hsked)                          // when col_cnt is (7, width+6)
+                                           | (cur_col_cnt_is_width_plus_6 & bcci_2_bf_hsked)                                                  // when col_cnt is width+6
+                                        );
+`elsif MULT_IN_THREE_CYCLE
+    assign col_cnt_ena = init_finished & (   (cur_col_cnt_is_0 & ((~init_finished_delayed) |  (col_cnt0_ena_abnormal | col_cnt0_ena_normal))) // when col_cnt is 0
+                                           | ((~cur_col_cnt_is_0) & cur_col_cnt_below_8)                                                      // when col_cnt is (0, 8)
+                                           | (cur_col_cnt_below_width_plus_7 & cur_col_cnt_over_7 & bcci_2_bf_hsked)                          // when col_cnt is (8, width+7)
+                                           | (cur_col_cnt_is_width_plus_7 & bcci_2_bf_hsked)                                                  // when col_cnt is width+7
+                                        );           
+`endif
+
 
     wire end_of_data;
 
     // shift signal 
+`ifdef MULT_IN_ONE_CYCLE
     wire shift_ena = (init_finished & (~end_of_data)) ? cur_col_cnt_is_0 ? (~state_ena) | (~init_finished_delayed) : ((cur_col_cnt_below_width_plus_5 & bcci_2_bf_hsked) | cur_col_cnt_below_6) : 1'b0;
+`elsif MULT_IN_TWO_CYCLE
+    wire shift_ena = (init_finished & (~end_of_data)) ? cur_col_cnt_is_0 ? (~state_ena) | (~init_finished_delayed) : ((cur_col_cnt_below_width_plus_6 & bcci_2_bf_hsked) | cur_col_cnt_below_7) : 1'b0;
+`elsif MULT_IN_THREE_CYCLE
+    wire shift_ena = (init_finished & (~end_of_data)) ? cur_col_cnt_is_0 ? (~state_ena) | (~init_finished_delayed) : ((cur_col_cnt_below_width_plus_7 & bcci_2_bf_hsked) | cur_col_cnt_below_8) : 1'b0;
+`endif
 
 
-    // every time the register shifts the read address adds
+    // every time the register shifts then the read address adds
     assign raddr_ena = init_finished ? shift_ena : 1'b0;
 
 
     // FSM exit signal
+`ifdef MULT_IN_ONE_CYCLE
     wire state_exit_normal = cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_5 & bcci_2_bf_hsked & (~cur_row_cnt_is_last_7);
+`elsif MULT_IN_TWO_CYCLE
+    wire state_exit_normal = cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_6 & bcci_2_bf_hsked & (~cur_row_cnt_is_last_7);
+`elsif MULT_IN_THREE_CYCLE
+    wire state_exit_normal = cur_row_cnt_is_4x_plus_6 & cur_col_cnt_is_width_plus_7 & bcci_2_bf_hsked & (~cur_row_cnt_is_last_7);
+`endif
+
     assign state_s0_exit_ena = (cur_is_s0 & init_finished) ? 1'b1 : 1'b0;
     assign state_s1_exit_ena = (cur_is_s1 & cur_wr_end & state_exit_normal) ? ((~cur_row_cnt_is_last_3) & cur_row_cnt_over_9) | cur_row_cnt_is_9 : 1'b0;
     assign state_s2_exit_ena = (cur_is_s2 & cur_wr_end & state_exit_normal) ? (~cur_row_cnt_is_last_3) : 1'b0;
@@ -461,18 +508,49 @@ module buffer_sram #(
             result_cnt <= 0;
         end
         else begin
-            if(bcci_2_bf_hsked) begin
-                if(cur_col_cnt_is_6) begin
-                    $display("%x", out1[BUFFER_WIDTH*2-1:0]);
+            `ifdef MULT_IN_ONE_CYCLE
+                if(bcci_2_bf_hsked) begin
+                    if(cur_col_cnt_is_6) begin
+                        $display("%x", out1[BUFFER_WIDTH*2-1:0]);
+                    end
+                    else if(cur_col_cnt_is_0) begin
+                        $display("%x", out1[BUFFER_WIDTH*4-1:BUFFER_WIDTH*2]);
+                    end
+                    else begin
+                        $display("%x", out1);
+                    end
+                    result_cnt <= result_cnt + 1;
                 end
-                else if(cur_col_cnt_is_0) begin
-                    $display("%x", out1[BUFFER_WIDTH*4-1:BUFFER_WIDTH*2]);
+
+            `elsif MULT_IN_TWO_CYCLE
+                if(bcci_2_bf_hsked) begin
+                    if(cur_col_cnt_is_7) begin
+                        $display("%x", out1[BUFFER_WIDTH*2-1:0]);
+                    end
+                    else if(cur_col_cnt_is_0) begin
+                        $display("%x", out1[BUFFER_WIDTH*4-1:BUFFER_WIDTH*2]);
+                    end
+                    else begin
+                        $display("%x", out1);
+                    end
+                    result_cnt <= result_cnt + 1;
                 end
-                else begin
-                    $display("%x", out1);
+
+            `elsif MULT_IN_THREE_CYCLE
+                if(bcci_2_bf_hsked) begin
+                    if(cur_col_cnt_is_8) begin
+                        $display("%x", out1[BUFFER_WIDTH*2-1:0]);
+                    end
+                    else if(cur_col_cnt_is_0) begin
+                        $display("%x", out1[BUFFER_WIDTH*4-1:BUFFER_WIDTH*2]);
+                    end
+                    else begin
+                        $display("%x", out1);
+                    end
+                    result_cnt <= result_cnt + 1;
                 end
-                result_cnt <= result_cnt + 1;
-            end
+
+            `endif
         end
     end
 
