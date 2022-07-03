@@ -7,6 +7,7 @@
 `define SRC_IMG_HEIGHT 540
 
 
+// `define USE_IPs
 // `define MULT_IN_ONE_CYCLE
 `define MULT_IN_TWO_CYCLE
 // `define MULT_IN_THREE_CYCLE

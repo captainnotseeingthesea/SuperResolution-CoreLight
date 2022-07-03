@@ -2,6 +2,7 @@
 module bicubic_upsample #
 (
     parameter CHANNEL_WIDTH = 8,
+    parameter INTER_PRODUCT_WIDTH = 24,
     parameter PRODUCT_WIDTH = 32,
     parameter BLOCK_SIZE = 960
 )
@@ -147,13 +148,13 @@ module bicubic_upsample #
 
     wire [WEIGHT_WIDTH-1:0] w1, w2, w3, w4;
 
-    wire [PRODUCT_WIDTH - 1:0] p1_1, p1_2, p1_3, p1_4;
-    wire [PRODUCT_WIDTH - 1:0] p2_1, p2_2, p2_3, p2_4;
-    wire [PRODUCT_WIDTH - 1:0] p3_1, p3_2, p3_3, p3_4;
-    wire [PRODUCT_WIDTH - 1:0] p4_1, p4_2, p4_3, p4_4;  
+    wire [CHANNEL_WIDTH:0] p1_1, p1_2, p1_3, p1_4;
+    wire [CHANNEL_WIDTH:0] p2_1, p2_2, p2_3, p2_4;
+    wire [CHANNEL_WIDTH:0] p3_1, p3_2, p3_3, p3_4;
+    wire [CHANNEL_WIDTH:0] p4_1, p4_2, p4_3, p4_4;  
 
-    wire [PRODUCT_WIDTH - 1:0] cur_product1_t, cur_product2_t, cur_product3_t, cur_product4_t;
-    wire [PRODUCT_WIDTH - 1:0] nxt_product1_t, nxt_product2_t, nxt_product3_t, nxt_product4_t;
+    wire [INTER_PRODUCT_WIDTH - 1:0] cur_product1_t, cur_product2_t, cur_product3_t, cur_product4_t;
+    wire [INTER_PRODUCT_WIDTH - 1:0] nxt_product1_t, nxt_product2_t, nxt_product3_t, nxt_product4_t;
 
 
     bicubic_wvector_mult_pmatrix u_bicubic_wvector_mult_pmatrix(
@@ -205,37 +206,38 @@ module bicubic_upsample #
               | ({WEIGHT_WIDTH{cur_is_s3}} & S_U3_4)
               | ({WEIGHT_WIDTH{cur_is_s4}} & S_U4_4);    
 
-    assign p1_1 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p1};
-    assign p1_2 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p5};   
-    assign p1_3 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p9};
-    assign p1_4 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p13};    
+    assign p1_1 = {1'b0, p1};
+    assign p1_2 = {1'b0, p5};   
+    assign p1_3 = {1'b0, p9};
+    assign p1_4 = {1'b0, p13};    
 
-    assign p2_1 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p2};
-    assign p2_2 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p6};   
-    assign p2_3 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p10};
-    assign p2_4 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p14}; 
+    assign p2_1 = {1'b0, p2};
+    assign p2_2 = {1'b0, p6};   
+    assign p2_3 = {1'b0, p10};
+    assign p2_4 = {1'b0, p14}; 
 
-    assign p3_1 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p3};
-    assign p3_2 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p7};   
-    assign p3_3 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p11};
-    assign p3_4 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p15}; 
+    assign p3_1 = {1'b0, p3};
+    assign p3_2 = {1'b0, p7};   
+    assign p3_3 = {1'b0, p11};
+    assign p3_4 = {1'b0, p15}; 
 
-    assign p4_1 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p4};
-    assign p4_2 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p8};   
-    assign p4_3 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p12};
-    assign p4_4 = {{PRODUCT_WIDTH - CHANNEL_WIDTH{1'b0}}, p16}; 
+    assign p4_1 = {1'b0, p4};
+    assign p4_2 = {1'b0, p8};   
+    assign p4_3 = {1'b0, p12};
+    assign p4_4 = {1'b0, p16}; 
 
 
-    localparam PIPELINE_WIDTH = PRODUCT_WIDTH*4;
+    localparam PIPELINE_WIDTH = INTER_PRODUCT_WIDTH*4;
     wire [PIPELINE_WIDTH-1:0] cur_pipeline_data, nxt_pipeline_data;
     wire reg_ena = (~bcci_rsp_valid) ? 1'b1 : bcci_rsp_hsked;
 
-    // pipeline regs
     wire bcci_rsp_valid_t1, bcci_rsp_valid_t2, bcci_rsp_valid_t3;
     wire [2:0] cur_bcci_rsp_valid, nxt_bcci_rsp_valid;
-
     assign nxt_bcci_rsp_valid = {bcci_rsp_valid_t2, bcci_rsp_valid_t1, bf_req_valid};
     assign {bcci_rsp_valid_t3, bcci_rsp_valid_t2, bcci_rsp_valid_t1} = cur_bcci_rsp_valid;
+
+
+    // pipeline regs
     dfflr #(.DW(PIPELINE_WIDTH)) u_pipeline_reg (.lden(reg_ena), .dnxt(nxt_pipeline_data), .qout(cur_pipeline_data), .clk(clk), .rst_n(rst_n));
     dfflr #(.DW(3)) u_pipeline_valid_reg (.lden(reg_ena), .dnxt(nxt_bcci_rsp_valid), .qout(cur_bcci_rsp_valid), .clk(clk), .rst_n(rst_n));
 

@@ -1,7 +1,8 @@
 
 module bicubic_wvector_mult_pmatrix #
 (
-    parameter PRODUCT_WIDTH = 32
+    parameter CHANNEL_WIDTH 8,
+    parameter INTER_PRODUCT_WIDTH = 24
 )
 (
     input wire [2:0] w1,
@@ -9,27 +10,27 @@ module bicubic_wvector_mult_pmatrix #
     input wire [2:0] w3,
     input wire [2:0] w4,
 
-    input wire [PRODUCT_WIDTH - 1:0] p1_1,
-    input wire [PRODUCT_WIDTH - 1:0] p1_2,
-    input wire [PRODUCT_WIDTH - 1:0] p1_3,
-    input wire [PRODUCT_WIDTH - 1:0] p1_4,
-    input wire [PRODUCT_WIDTH - 1:0] p2_1,
-    input wire [PRODUCT_WIDTH - 1:0] p2_2,
-    input wire [PRODUCT_WIDTH - 1:0] p2_3,
-    input wire [PRODUCT_WIDTH - 1:0] p2_4,
-    input wire [PRODUCT_WIDTH - 1:0] p3_1,
-    input wire [PRODUCT_WIDTH - 1:0] p3_2,
-    input wire [PRODUCT_WIDTH - 1:0] p3_3,
-    input wire [PRODUCT_WIDTH - 1:0] p3_4,
-    input wire [PRODUCT_WIDTH - 1:0] p4_1,
-    input wire [PRODUCT_WIDTH - 1:0] p4_2,
-    input wire [PRODUCT_WIDTH - 1:0] p4_3,
-    input wire [PRODUCT_WIDTH - 1:0] p4_4,
+    input wire [CHANNEL_WIDTH:0] p1_1,
+    input wire [CHANNEL_WIDTH:0] p1_2,
+    input wire [CHANNEL_WIDTH:0] p1_3,
+    input wire [CHANNEL_WIDTH:0] p1_4,
+    input wire [CHANNEL_WIDTH:0] p2_1,
+    input wire [CHANNEL_WIDTH:0] p2_2,
+    input wire [CHANNEL_WIDTH:0] p2_3,
+    input wire [CHANNEL_WIDTH:0] p2_4,
+    input wire [CHANNEL_WIDTH:0] p3_1,
+    input wire [CHANNEL_WIDTH:0] p3_2,
+    input wire [CHANNEL_WIDTH:0] p3_3,
+    input wire [CHANNEL_WIDTH:0] p3_4,
+    input wire [CHANNEL_WIDTH:0] p4_1,
+    input wire [CHANNEL_WIDTH:0] p4_2,
+    input wire [CHANNEL_WIDTH:0] p4_3,
+    input wire [CHANNEL_WIDTH:0] p4_4,
 
-    output wire [PRODUCT_WIDTH - 1:0] inner_product1,
-    output wire [PRODUCT_WIDTH - 1:0] inner_product2,
-    output wire [PRODUCT_WIDTH - 1:0] inner_product3,
-    output wire [PRODUCT_WIDTH - 1:0] inner_product4
+    output wire [INTER_PRODUCT_WIDTH - 1:0] inner_product1,
+    output wire [INTER_PRODUCT_WIDTH - 1:0] inner_product2,
+    output wire [INTER_PRODUCT_WIDTH - 1:0] inner_product3,
+    output wire [INTER_PRODUCT_WIDTH - 1:0] inner_product4
     
 );
 

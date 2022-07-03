@@ -30,34 +30,63 @@ module bicubic_mult_config #
                              | ({12{multi_by_873}}  & 12'd873)
                              | ({12{multi_by_1535}} & 12'd1535)
                              | ({12{multi_by_1981}} & 12'd1981);
+                             
+                             
+                             
+`ifdef USE_IPs
 
-    // Calculate the product
-    wire signed [PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
+    `ifdef MULT_IN_ONE_CYCLE
+        wire signed [PRODUCT_WIDTH -1:0] product_data = pixel * multiplier_data;
+        assign product = product_data;
+    
+    `elsif MULT_IN_TWO_CYCLE
+        wire signed [PRODUCT_WIDTH -1:0] product_data;
+        mult_in_2_cycle u_two_cycle_multiplier (.CLK(clk), .A(pixel), .B(mulitplier_data), .CE(ena), .P(product_data));    
+        assign product = product_data;
+    
+    `elsif MULT_IN_THREE_CYCLE
+        wire signed [PRODUCT_WIDTH -1:0] product_data;
+        mult_in_3_cycle u_three_cycle_multiplier (.CLK(clk), .A(pixel), .B(mulitplier_data), .CE(ena), .P(product_data));    
+        assign product = product_data;
+    
+    `endif
+    
+`else
 
 // simulate the behaviour of multi-cycle multiplier here.
 // when considering using Xilinx IPs, the cycles needs to be configured.
-`ifdef MULT_IN_ONE_CYCLE    
-    assign product = product_data;
+    `ifdef MULT_IN_ONE_CYCLE
+        // Calculate the product
+        wire signed [PRODUCT_WIDTH -1:0] product_data = pixel * multiplier_data;
+        assign product = product_data;
 
-`elsif MULT_IN_TWO_CYCLE
-    reg signed [PRODUCT_WIDTH -1:0] product_data_t1;
-    always @(posedge clk) begin
-        if(ena) begin
-            product_data_t1 <= #1 product_data;
+    `elsif MULT_IN_TWO_CYCLE
+        // Calculate the product
+        wire signed [PRODUCT_WIDTH -1:0] product_data = pixel * multiplier_data;
+        reg signed [PRODUCT_WIDTH -1:0] product_data_t1;
+        always @(posedge clk) begin
+            if(ena) begin
+                product_data_t1 <= #1 product_data;
+            end
         end
-    end
-    assign product = product_data_t1;
+        assign product = product_data_t1;
 
-`elsif MULT_IN_THREE_CYCLE
-    reg signed [PRODUCT_WIDTH -1:0] product_data_t1, product_data_t2;
-    always @(posedge clk) begin
-        if(ena) begin
-            product_data_t1 <= #1 product_data;
-            product_data_t2 <= #1 product_data_t1;
+    `elsif MULT_IN_THREE_CYCLE
+        // Calculate the product
+        wire signed [PRODUCT_WIDTH -1:0] product_data = pixel * multiplier_data;
+        reg signed [PRODUCT_WIDTH -1:0] product_data_t1, product_data_t2;
+        always @(posedge clk) begin
+            if(ena) begin
+                product_data_t1 <= #1 product_data;
+                product_data_t2 <= #1 product_data_t1;
+            end
         end
-    end
-    assign product = product_data_t2;
+        assign product = product_data_t2;
+
+    `endif
+
 
 `endif
 
 endmodule
+
