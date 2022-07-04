@@ -4,10 +4,10 @@ module bicubic_mult_stage1 #
 (
     parameter INTER_PRODUCT_WIDTH = 24
 ) (
-    `ifndef STAGE1_MULT_IN_ONE_CYCLE
-        input wire clk,
-        input wire ena,
-    `endif
+`ifndef STAGE1_MULT_IN_ONE_CYCLE
+    input wire clk,
+    input wire ena,
+`endif
     input wire [2:0] weight,
     input wire signed [8:0] pixel,
     output wire signed [INTER_PRODUCT_WIDTH - 1:0] product
@@ -24,13 +24,13 @@ module bicubic_mult_stage1 #
     wire multi_by_1981 = (weight == 3'd7) ? 1'b1 : 1'b0;
 
     wire signed [12-1:0] multiplier_data = ({12{multi_by_21}}   & -12'd21)
-                             | ({12{multi_by_135}}  & -12'd135)
-                             | ({12{multi_by_147}}  & -12'd147)
-                             | ({12{multi_by_225}}  & -12'd225)
-                             | ({12{multi_by_235}}  & 12'd235)
-                             | ({12{multi_by_873}}  & 12'd873)
-                             | ({12{multi_by_1535}} & 12'd1535)
-                             | ({12{multi_by_1981}} & 12'd1981);
+                                         | ({12{multi_by_135}}  & -12'd135)
+                                         | ({12{multi_by_147}}  & -12'd147)
+                                         | ({12{multi_by_225}}  & -12'd225)
+                                         | ({12{multi_by_235}}  & 12'd235)
+                                         | ({12{multi_by_873}}  & 12'd873)
+                                         | ({12{multi_by_1535}} & 12'd1535)
+                                         | ({12{multi_by_1981}} & 12'd1981);
 
 `ifdef USE_IPs
 
@@ -56,7 +56,8 @@ module bicubic_mult_stage1 #
 // when considering using Xilinx IPs, the cycles needs to be configured.
     `ifdef STAGE1_MULT_IN_ONE_CYCLE
         // Calculate the product
-
+        wire signed [INTER_PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
+        assign product = product_data;
 
     `elsif STAGE1_MULT_IN_TWO_CYCLE
         // Calculate the product
@@ -72,7 +73,7 @@ module bicubic_mult_stage1 #
     `elsif STAGE1_MULT_IN_THREE_CYCLE
         // Calculate the product
         wire signed [INTER_PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
-        reg signed [INTER_PRODUCT_WIDTH -1:0] product_data_t1;, product_data_t2
+        reg signed [INTER_PRODUCT_WIDTH -1:0] product_data_t1, product_data_t2;
         always @(posedge clk) begin
             if(ena) begin
                 product_data_t1 <= #1 product_data;

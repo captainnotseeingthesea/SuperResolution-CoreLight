@@ -3,10 +3,10 @@ module bicubic_mult_stage2 #
 (
     parameter PRODUCT_WIDTH = 32
 ) (
-    `ifndef STAGE2_MULT_IN_ONE_CYCLE
-        input wire clk,
-        input wire ena,
-    `endif
+`ifndef STAGE2_MULT_IN_ONE_CYCLE
+    input wire clk,
+    input wire ena,
+`endif
     input wire [2:0] weight,
     input wire signed [PRODUCT_WIDTH -8 - 1:0] pixel,
     output wire signed [PRODUCT_WIDTH - 1:0] product
@@ -23,16 +23,15 @@ module bicubic_mult_stage2 #
     wire multi_by_1981 = (weight == 3'd7) ? 1'b1 : 1'b0;
 
     wire signed [12-1:0] multiplier_data = ({12{multi_by_21}}   & -12'd21)
-                             | ({12{multi_by_135}}  & -12'd135)
-                             | ({12{multi_by_147}}  & -12'd147)
-                             | ({12{multi_by_225}}  & -12'd225)
-                             | ({12{multi_by_235}}  & 12'd235)
-                             | ({12{multi_by_873}}  & 12'd873)
-                             | ({12{multi_by_1535}} & 12'd1535)
-                             | ({12{multi_by_1981}} & 12'd1981);
+                                         | ({12{multi_by_135}}  & -12'd135)
+                                         | ({12{multi_by_147}}  & -12'd147)
+                                         | ({12{multi_by_225}}  & -12'd225)
+                                         | ({12{multi_by_235}}  & 12'd235)
+                                         | ({12{multi_by_873}}  & 12'd873)
+                                         | ({12{multi_by_1535}} & 12'd1535)
+                                         | ({12{multi_by_1981}} & 12'd1981);
                              
-                             
-                             
+
 `ifdef USE_IPs
 
     `ifdef STAGE2_MULT_IN_ONE_CYCLE

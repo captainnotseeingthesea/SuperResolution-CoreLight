@@ -49,11 +49,11 @@ module bicubic_pvector_mult_wmatrix #
     `ifdef STAGE2_MULT_IN_ONE_CYCLE
 
     `elsif STAGE2_MULT_IN_TWO_CYCLE
-        input wire clk,
-        input wire ena,
+        .clk(clk),
+        .ena(ena),
     `elsif STAGE2_MULT_IN_THREE_CYCLE
-        input wire clk,
-        input wire ena,
+        .clk(clk),
+        .ena(ena),
     `endif
         .weight_1(w1_1),
         .weight_2(w1_2),
@@ -72,11 +72,11 @@ module bicubic_pvector_mult_wmatrix #
     `ifdef STAGE2_MULT_IN_ONE_CYCLE
 
     `elsif STAGE2_MULT_IN_TWO_CYCLE
-        input wire clk,
-        input wire ena,
+        .clk(clk),
+        .ena(ena),
     `elsif STAGE2_MULT_IN_THREE_CYCLE
-        input wire clk,
-        input wire ena,
+        .clk(clk),
+        .ena(ena),
     `endif
 
         .weight_1(w2_1),
@@ -96,11 +96,11 @@ module bicubic_pvector_mult_wmatrix #
     `ifdef STAGE2_MULT_IN_ONE_CYCLE
 
     `elsif STAGE2_MULT_IN_TWO_CYCLE
-        input wire clk,
-        input wire ena,
+        .clk(clk),
+        .ena(ena),
     `elsif STAGE2_MULT_IN_THREE_CYCLE
-        input wire clk,
-        input wire ena,
+        .clk(clk),
+        .ena(ena),
     `endif
         .weight_1(w3_1),
         .weight_2(w3_2),
@@ -119,11 +119,11 @@ module bicubic_pvector_mult_wmatrix #
     `ifdef STAGE2_MULT_IN_ONE_CYCLE
 
     `elsif STAGE2_MULT_IN_TWO_CYCLE
-        input wire clk,
-        input wire ena,
+        .clk(clk),
+        .ena(ena),
     `elsif STAGE2_MULT_IN_THREE_CYCLE
-        input wire clk,
-        input wire ena,
+        .clk(clk),
+        .ena(ena),
     `endif
 
         .weight_1(w4_1),

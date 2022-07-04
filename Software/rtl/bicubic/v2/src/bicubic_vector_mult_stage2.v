@@ -1,5 +1,5 @@
 
-module bicubic_vector_mult_config #
+module bicubic_vector_mult_stage2 #
 (
     parameter INTER_PRODUCT_WIDTH = 24,
     parameter PRODUCT_WIDTH = 32
@@ -30,7 +30,7 @@ module bicubic_vector_mult_config #
     // Instantiate each of the four multiplication units
     wire [PRODUCT_WIDTH - 1:0] product_t1, product_t2, product_t3, product_t4;
 
-    bicubic_mult_config u_bicubic_mult_1(
+    bicubic_mult_stage2 u_bicubic_mult_1(
     `ifdef STAGE2_MULT_IN_ONE_CYCLE
     
     `elsif STAGE2_MULT_IN_TWO_CYCLE
@@ -46,7 +46,7 @@ module bicubic_vector_mult_config #
         .product      (product_t1)
     );
 
-    bicubic_mult_config u_bicubic_mult_2(
+    bicubic_mult_stage2 u_bicubic_mult_2(
     `ifdef STAGE2_MULT_IN_ONE_CYCLE
     
     `elsif STAGE2_MULT_IN_TWO_CYCLE
@@ -62,7 +62,7 @@ module bicubic_vector_mult_config #
         .product      (product_t2)
     );
 
-    bicubic_mult_config u_bicubic_mult_3(
+    bicubic_mult_stage2 u_bicubic_mult_3(
     `ifdef STAGE2_MULT_IN_ONE_CYCLE
     
     `elsif STAGE2_MULT_IN_TWO_CYCLE
@@ -79,7 +79,7 @@ module bicubic_vector_mult_config #
         .product      (product_t3)
     );
 
-    bicubic_mult_config u_bicubic_mult_4(
+    bicubic_mult_stage2 u_bicubic_mult_4(
     `ifdef STAGE2_MULT_IN_ONE_CYCLE
     
     `elsif STAGE2_MULT_IN_TWO_CYCLE
