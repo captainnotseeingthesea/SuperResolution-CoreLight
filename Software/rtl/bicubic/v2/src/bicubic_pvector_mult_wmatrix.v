@@ -5,16 +5,9 @@ module bicubic_pvector_mult_wmatrix #
     parameter PRODUCT_WIDTH = 32
 )
 (
-`ifdef STAGE2_MULT_IN_ONE_CYCLE
 
-`elsif STAGE2_MULT_IN_TWO_CYCLE
     input wire clk,
     input wire ena,
-`elsif STAGE2_MULT_IN_THREE_CYCLE
-    input wire clk,
-    input wire ena,
-`endif
-
     input wire [2:0] w1_1,
     input wire [2:0] w1_2,
     input wire [2:0] w1_3,
@@ -46,15 +39,8 @@ module bicubic_pvector_mult_wmatrix #
 );
 
     bicubic_vector_mult_stage2 u_bicubic_vector_mult1(
-    `ifdef STAGE2_MULT_IN_ONE_CYCLE
-
-    `elsif STAGE2_MULT_IN_TWO_CYCLE
-        .clk(clk),
-        .ena(ena),
-    `elsif STAGE2_MULT_IN_THREE_CYCLE
-        .clk(clk),
-        .ena(ena),
-    `endif
+        .clk     (clk ),
+        .ena     (ena ),
         .weight_1(w1_1),
         .weight_2(w1_2),
         .weight_3(w1_3),
@@ -69,16 +55,8 @@ module bicubic_pvector_mult_wmatrix #
     );
 
     bicubic_vector_mult_stage2 u_bicubic_vector_mult2(
-    `ifdef STAGE2_MULT_IN_ONE_CYCLE
-
-    `elsif STAGE2_MULT_IN_TWO_CYCLE
-        .clk(clk),
-        .ena(ena),
-    `elsif STAGE2_MULT_IN_THREE_CYCLE
-        .clk(clk),
-        .ena(ena),
-    `endif
-
+        .clk     (clk ),
+        .ena     (ena ),
         .weight_1(w2_1),
         .weight_2(w2_2),
         .weight_3(w2_3),
@@ -93,15 +71,8 @@ module bicubic_pvector_mult_wmatrix #
     );
 
     bicubic_vector_mult_stage2 u_bicubic_vector_mult3(
-    `ifdef STAGE2_MULT_IN_ONE_CYCLE
-
-    `elsif STAGE2_MULT_IN_TWO_CYCLE
-        .clk(clk),
-        .ena(ena),
-    `elsif STAGE2_MULT_IN_THREE_CYCLE
-        .clk(clk),
-        .ena(ena),
-    `endif
+        .clk     (clk ),
+        .ena     (ena ),
         .weight_1(w3_1),
         .weight_2(w3_2),
         .weight_3(w3_3),
@@ -116,16 +87,8 @@ module bicubic_pvector_mult_wmatrix #
     );
 
     bicubic_vector_mult_stage2 u_bicubic_vector_mult4(
-    `ifdef STAGE2_MULT_IN_ONE_CYCLE
-
-    `elsif STAGE2_MULT_IN_TWO_CYCLE
-        .clk(clk),
-        .ena(ena),
-    `elsif STAGE2_MULT_IN_THREE_CYCLE
-        .clk(clk),
-        .ena(ena),
-    `endif
-
+        .clk     (clk ),
+        .ena     (ena ),
         .weight_1(w4_1),
         .weight_2(w4_2),
         .weight_3(w4_3),

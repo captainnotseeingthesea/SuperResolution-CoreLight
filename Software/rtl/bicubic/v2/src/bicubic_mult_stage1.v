@@ -4,10 +4,8 @@ module bicubic_mult_stage1 #
 (
     parameter INTER_PRODUCT_WIDTH = 24
 ) (
-`ifndef STAGE1_MULT_IN_ONE_CYCLE
     input wire clk,
     input wire ena,
-`endif
     input wire [2:0] weight,
     input wire signed [8:0] pixel,
     output wire signed [INTER_PRODUCT_WIDTH - 1:0] product
@@ -35,17 +33,18 @@ module bicubic_mult_stage1 #
 `ifdef USE_IPs
 
     `ifdef STAGE1_MULT_IN_ONE_CYCLE
-        wire signed [INTER_PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
+        wire signed [INTER_PRODUCT_WIDTH -1:0] product_data;
+        stage1_mult_in_1_cycle u_two_cycle_multiplier (.CLK(clk), .A(pixel), .B(multiplier_data), .CE(ena), .P(product_data)); 
         assign product = product_data;
 
     `elsif STAGE1_MULT_IN_TWO_CYCLE
         wire signed [INTER_PRODUCT_WIDTH -1:0] product_data;
-        stage1_mult_in_2_cycle u_two_cycle_multiplier (.CLK(clk), .A(pixel), .B(mulitplier_data), .CE(ena), .P(product_data));    
+        stage1_mult_in_2_cycle u_two_cycle_multiplier (.CLK(clk), .A(pixel), .B(multiplier_data), .CE(ena), .P(product_data));    
         assign product = product_data;
     
     `elsif STAGE1_MULT_IN_THREE_CYCLE
         wire signed [PRODUCT_WIDTH -1:0] product_data;
-        stage1_mult_in_3_cycle u_three_cycle_multiplier (.CLK(clk), .A(pixel), .B(mulitplier_data), .CE(ena), .P(product_data));    
+        stage1_mult_in_3_cycle u_three_cycle_multiplier (.CLK(clk), .A(pixel), .B(multiplier_data), .CE(ena), .P(product_data));    
         assign product = product_data;
     
     `endif
@@ -54,12 +53,8 @@ module bicubic_mult_stage1 #
 
 // simulate the behaviour of multi-cycle multiplier here.
 // when considering using Xilinx IPs, the cycles needs to be configured.
-    `ifdef STAGE1_MULT_IN_ONE_CYCLE
-        // Calculate the product
-        wire signed [INTER_PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
-        assign product = product_data;
 
-    `elsif STAGE1_MULT_IN_TWO_CYCLE
+    `ifdef STAGE1_MULT_IN_ONE_CYCLE
         // Calculate the product
         wire signed [INTER_PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
         reg signed [INTER_PRODUCT_WIDTH -1:0] product_data_t1;
@@ -70,7 +65,7 @@ module bicubic_mult_stage1 #
         end
         assign product = product_data_t1;
 
-    `elsif STAGE1_MULT_IN_THREE_CYCLE
+    `elsif STAGE1_MULT_IN_TWO_CYCLE
         // Calculate the product
         wire signed [INTER_PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
         reg signed [INTER_PRODUCT_WIDTH -1:0] product_data_t1, product_data_t2;
@@ -81,6 +76,20 @@ module bicubic_mult_stage1 #
             end
         end
         assign product = product_data_t2;
+
+    `elsif STAGE1_MULT_IN_THREE_CYCLE
+        // Calculate the product
+        wire signed [INTER_PRODUCT_WIDTH -1:0] product_data = multiplier_data * pixel;
+        reg signed [INTER_PRODUCT_WIDTH -1:0] product_data_t1, product_data_t2, product_data_t3;
+        always @(posedge clk) begin
+            if(ena) begin
+                product_data_t1 <= #1 product_data;
+                product_data_t2 <= #1 product_data_t1;
+                product_data_t3 <= #1 product_data_t2;
+            end
+        end
+        assign product = product_data_t3;
+
 
     `endif
 

@@ -153,20 +153,13 @@ module bicubic_upsample #
     wire [CHANNEL_WIDTH:0] p3_1, p3_2, p3_3, p3_4;
     wire [CHANNEL_WIDTH:0] p4_1, p4_2, p4_3, p4_4;  
 
-    wire [INTER_PRODUCT_WIDTH - 1:0] cur_product1_t, cur_product2_t, cur_product3_t, cur_product4_t;
-    wire [INTER_PRODUCT_WIDTH - 1:0] nxt_product1_t, nxt_product2_t, nxt_product3_t, nxt_product4_t;
+    wire [INTER_PRODUCT_WIDTH - 1:0] cur_product1, cur_product2, cur_product3, cur_product4;
 
+    wire reg_ena;
 
     bicubic_wvector_mult_pmatrix u_bicubic_wvector_mult_pmatrix(
-    `ifdef STAGE1_MULT_IN_ONE_CYCLE
-
-    `elsif STAGE1_MULT_IN_TWO_CYCLE
         .clk(clk),
         .ena(reg_ena),
-    `elsif STAGE1_MULT_IN_THREE_CYCLE
-        .clk(clk),
-        .ena(reg_ena),
-    `endif
         .w1(w1),
         .w2(w2),
         .w3(w3),
@@ -189,10 +182,10 @@ module bicubic_upsample #
         .p4_3(p4_3),
         .p4_4(p4_4),
 
-        .inner_product1(nxt_product1_t),
-        .inner_product2(nxt_product2_t),
-        .inner_product3(nxt_product3_t),
-        .inner_product4(nxt_product4_t)
+        .inner_product1(cur_product1),
+        .inner_product2(cur_product2),
+        .inner_product3(cur_product3),
+        .inner_product4(cur_product4)
     );
 
     assign w1 = ({WEIGHT_WIDTH{cur_is_s1}} & S_U1_1)
@@ -238,11 +231,12 @@ module bicubic_upsample #
 
     localparam PIPELINE_WIDTH = INTER_PRODUCT_WIDTH*4;
     wire [PIPELINE_WIDTH-1:0] cur_pipeline_data, nxt_pipeline_data;
-    wire reg_ena = (~bcci_rsp_valid) ? 1'b1 : bcci_rsp_hsked;
+    assign reg_ena = (~bcci_rsp_valid) ? 1'b1 : bcci_rsp_hsked;
 
-    wire bcci_rsp_valid_t1, bcci_rsp_valid_t2, bcci_rsp_valid_t3, bcci_rsp_valid_t4, bcci_rsp_valid_t5;
-    wire [4:0] cur_bcci_rsp_valid, nxt_bcci_rsp_valid;
+    wire bcci_rsp_valid_t1, bcci_rsp_valid_t2, bcci_rsp_valid_t3, bcci_rsp_valid_t4, bcci_rsp_valid_t5, bcci_rsp_data6;
+    wire [5:0] cur_bcci_rsp_valid, nxt_bcci_rsp_valid;
     assign nxt_bcci_rsp_valid = {
+        bcci_rsp_valid_t5, 
         bcci_rsp_valid_t4, 
         bcci_rsp_valid_t3,       
         bcci_rsp_valid_t2, 
@@ -250,6 +244,7 @@ module bicubic_upsample #
         bf_req_valid
     };
     assign {
+        bcci_rsp_valid_t6,
         bcci_rsp_valid_t5,
         bcci_rsp_valid_t4,
         bcci_rsp_valid_t3,
@@ -259,34 +254,19 @@ module bicubic_upsample #
 
 
     // pipeline regs
-    dfflr #(.DW(PIPELINE_WIDTH)) u_pipeline_reg (.lden(reg_ena), .dnxt(nxt_pipeline_data), .qout(cur_pipeline_data), .clk(clk), .rst_n(rst_n));
-    dfflr #(.DW(5)) u_pipeline_valid_reg (.lden(reg_ena), .dnxt(nxt_bcci_rsp_valid), .qout(cur_bcci_rsp_valid), .clk(clk), .rst_n(rst_n));
+    dfflr #(.DW(6)) u_pipeline_valid_reg (.lden(reg_ena), .dnxt(nxt_bcci_rsp_valid), .qout(cur_bcci_rsp_valid), .clk(clk), .rst_n(rst_n));
 
     `ifdef MULT_IN_TWO_CYCLE
-        assign bcci_rsp_valid = bcci_rsp_valid_t1;
-    `elsif MULT_IN_THREE_CYCLE
         assign bcci_rsp_valid = bcci_rsp_valid_t2;
-    `elsif MULT_IN_FOUR_CYCLE
+    `elsif MULT_IN_THREE_CYCLE
         assign bcci_rsp_valid = bcci_rsp_valid_t3;
-    `elsif MULT_IN_FIVE_CYCLE
+    `elsif MULT_IN_FOUR_CYCLE
         assign bcci_rsp_valid = bcci_rsp_valid_t4;
-    `elsif MULT_IN_SIX_CYCLE
+    `elsif MULT_IN_FIVE_CYCLE
         assign bcci_rsp_valid = bcci_rsp_valid_t5;
+    `elsif MULT_IN_SIX_CYCLE
+        assign bcci_rsp_valid = bcci_rsp_valid_t6;
     `endif
-
-    assign nxt_pipeline_data = {
-        nxt_product1_t,
-        nxt_product2_t,
-        nxt_product3_t,
-        nxt_product4_t
-    };
-    assign {
-        cur_product1_t, 
-        cur_product2_t, 
-        cur_product3_t, 
-        cur_product4_t
-    } = cur_pipeline_data;
-
 
     wire [WEIGHT_WIDTH-1:0] w1_1, w1_2, w1_3, w1_4;
     wire [WEIGHT_WIDTH-1:0] w2_1, w2_2, w2_3, w2_4;
@@ -296,17 +276,8 @@ module bicubic_upsample #
     wire [PRODUCT_WIDTH - 1:0] product1, product2, product3, product4;
 
     bicubic_pvector_mult_wmatrix u_bicubic_pverctor_mult_wmatrix (
-
-    `ifdef STAGE2_MULT_IN_ONE_CYCLE
-
-    `elsif STAGE2_MULT_IN_TWO_CYCLE
         .clk(clk),
         .ena(reg_ena),
-    `elsif STAGE2_MULT_IN_THREE_CYCLE
-        .clk(clk),
-        .ena(reg_ena),
-    `endif
-
         .w1_1(w1_1),
         .w1_2(w1_2),
         .w1_3(w1_3),
@@ -324,10 +295,10 @@ module bicubic_upsample #
         .w4_3(w4_3),
         .w4_4(w4_4),
 
-        .p1(cur_product1_t),
-        .p2(cur_product2_t),
-        .p3(cur_product3_t),
-        .p4(cur_product4_t),
+        .p1(cur_product1),
+        .p2(cur_product2),
+        .p3(cur_product3),
+        .p4(cur_product4),
 
         .inner_product1(product1),
         .inner_product2(product2),
