@@ -7,11 +7,11 @@ module bicubic_pvector_mult_wmatrix #
 `ifdef MULT_IN_ONE_CYCLE
 
 `elsif MULT_IN_TWO_CYCLE
-    input clk,
-    input ena,
+    input wire clk,
+    input wire ena,
 `elsif MULT_IN_THREE_CYCLE
-    input clk,
-    input ena,
+    input wire clk,
+    input wire ena,
 `endif
 
     input wire [2:0] w1_1,
