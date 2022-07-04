@@ -158,6 +158,15 @@ module bicubic_upsample #
 
 
     bicubic_wvector_mult_pmatrix u_bicubic_wvector_mult_pmatrix(
+    `ifdef STAGE1_MULT_IN_ONE_CYCLE
+
+    `elsif STAGE1_MULT_IN_TWO_CYCLE
+        .clk(clk),
+        .ena(reg_ena),
+    `elsif STAGE1_MULT_IN_THREE_CYCLE
+        .clk(clk),
+        .ena(reg_ena),
+    `endif
         .w1(w1),
         .w2(w2),
         .w3(w3),
@@ -231,24 +240,38 @@ module bicubic_upsample #
     wire [PIPELINE_WIDTH-1:0] cur_pipeline_data, nxt_pipeline_data;
     wire reg_ena = (~bcci_rsp_valid) ? 1'b1 : bcci_rsp_hsked;
 
-    wire bcci_rsp_valid_t1, bcci_rsp_valid_t2, bcci_rsp_valid_t3;
-    wire [2:0] cur_bcci_rsp_valid, nxt_bcci_rsp_valid;
-    assign nxt_bcci_rsp_valid = {bcci_rsp_valid_t2, bcci_rsp_valid_t1, bf_req_valid};
-    assign {bcci_rsp_valid_t3, bcci_rsp_valid_t2, bcci_rsp_valid_t1} = cur_bcci_rsp_valid;
+    wire bcci_rsp_valid_t1, bcci_rsp_valid_t2, bcci_rsp_valid_t3, bcci_rsp_valid_t4, bcci_rsp_valid_t5;
+    wire [4:0] cur_bcci_rsp_valid, nxt_bcci_rsp_valid;
+    assign nxt_bcci_rsp_valid = {
+        bcci_rsp_valid_t4, 
+        bcci_rsp_valid_t3,       
+        bcci_rsp_valid_t2, 
+        bcci_rsp_valid_t1,
+        bf_req_valid
+    };
+    assign {
+        bcci_rsp_valid_t5,
+        bcci_rsp_valid_t4,
+        bcci_rsp_valid_t3,
+        bcci_rsp_valid_t2,
+        bcci_rsp_valid_t1
+    } = cur_bcci_rsp_valid;
 
 
     // pipeline regs
     dfflr #(.DW(PIPELINE_WIDTH)) u_pipeline_reg (.lden(reg_ena), .dnxt(nxt_pipeline_data), .qout(cur_pipeline_data), .clk(clk), .rst_n(rst_n));
-    dfflr #(.DW(3)) u_pipeline_valid_reg (.lden(reg_ena), .dnxt(nxt_bcci_rsp_valid), .qout(cur_bcci_rsp_valid), .clk(clk), .rst_n(rst_n));
+    dfflr #(.DW(5)) u_pipeline_valid_reg (.lden(reg_ena), .dnxt(nxt_bcci_rsp_valid), .qout(cur_bcci_rsp_valid), .clk(clk), .rst_n(rst_n));
 
-    `ifdef MULT_IN_ONE_CYCLE
+    `ifdef MULT_IN_TWO_CYCLE
         assign bcci_rsp_valid = bcci_rsp_valid_t1;
-    `elsif MULT_IN_TWO_CYCLE
-        assign bcci_rsp_valid = bcci_rsp_valid_t2;
     `elsif MULT_IN_THREE_CYCLE
+        assign bcci_rsp_valid = bcci_rsp_valid_t2;
+    `elsif MULT_IN_FOUR_CYCLE
         assign bcci_rsp_valid = bcci_rsp_valid_t3;
-    `else
-
+    `elsif MULT_IN_FIVE_CYCLE
+        assign bcci_rsp_valid = bcci_rsp_valid_t4;
+    `elsif MULT_IN_SIX_CYCLE
+        assign bcci_rsp_valid = bcci_rsp_valid_t5;
     `endif
 
     assign nxt_pipeline_data = {
@@ -274,12 +297,12 @@ module bicubic_upsample #
 
     bicubic_pvector_mult_wmatrix u_bicubic_pverctor_mult_wmatrix (
 
-    `ifdef MULT_IN_ONE_CYCLE
+    `ifdef STAGE2_MULT_IN_ONE_CYCLE
 
-    `elsif MULT_IN_TWO_CYCLE
+    `elsif STAGE2_MULT_IN_TWO_CYCLE
         .clk(clk),
         .ena(reg_ena),
-    `elsif MULT_IN_THREE_CYCLE
+    `elsif STAGE2_MULT_IN_THREE_CYCLE
         .clk(clk),
         .ena(reg_ena),
     `endif

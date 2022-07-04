@@ -5,6 +5,15 @@ module bicubic_wvector_mult_pmatrix #
     parameter INTER_PRODUCT_WIDTH = 24
 )
 (
+`ifdef STAGE1_MULT_IN_ONE_CYCLE
+
+`elsif STAGE1_MULT_IN_TWO_CYCLE
+    input wire clk,
+    input wire ena,
+`elsif STAGE1_MULT_IN_THREE_CYCLE
+    input wire clk,
+    input wire ena,
+`endif
     input wire [2:0] w1,
     input wire [2:0] w2,
     input wire [2:0] w3,
@@ -35,7 +44,16 @@ module bicubic_wvector_mult_pmatrix #
 );
 
 
-    bicubic_vector_mult u_bicubic_vector_mult1(
+    bicubic_vector_mult_stage1 u_bicubic_vector_mult1(
+    `ifdef STAGE1_MULT_IN_ONE_CYCLE
+
+    `elsif STAGE1_MULT_IN_TWO_CYCLE
+        input wire clk,
+        input wire ena,
+    `elsif STAGE1_MULT_IN_THREE_CYCLE
+        input wire clk,
+        input wire ena,
+    `endif
         .weight_1(w1),
         .weight_2(w2),
         .weight_3(w3),
@@ -49,7 +67,16 @@ module bicubic_wvector_mult_pmatrix #
         .inner_product(inner_product1)
     );
 
-    bicubic_vector_mult u_bicubic_vector_mult2(
+    bicubic_vector_mult_stage1 u_bicubic_vector_mult2(
+    `ifdef STAGE1_MULT_IN_ONE_CYCLE
+
+    `elsif STAGE1_MULT_IN_TWO_CYCLE
+        input wire clk,
+        input wire ena,
+    `elsif STAGE1_MULT_IN_THREE_CYCLE
+        input wire clk,
+        input wire ena,
+    `endif
         .weight_1(w1),
         .weight_2(w2),
         .weight_3(w3),
@@ -62,7 +89,16 @@ module bicubic_wvector_mult_pmatrix #
 
         .inner_product(inner_product2)
     );
-    bicubic_vector_mult u_bicubic_vector_mult3(
+    bicubic_vector_mult_stage1 u_bicubic_vector_mult3(
+    `ifdef STAGE1_MULT_IN_ONE_CYCLE
+
+    `elsif STAGE1_MULT_IN_TWO_CYCLE
+        input wire clk,
+        input wire ena,
+    `elsif STAGE1_MULT_IN_THREE_CYCLE
+        input wire clk,
+        input wire ena,
+    `endif
         .weight_1(w1),
         .weight_2(w2),
         .weight_3(w3),
@@ -75,7 +111,16 @@ module bicubic_wvector_mult_pmatrix #
 
         .inner_product(inner_product3)
     );
-    bicubic_vector_mult u_bicubic_vector_mult4(
+    bicubic_vector_mult_stage1 u_bicubic_vector_mult4(
+    `ifdef STAGE1_MULT_IN_ONE_CYCLE
+
+    `elsif STAGE1_MULT_IN_TWO_CYCLE
+        input wire clk,
+        input wire ena,
+    `elsif STAGE1_MULT_IN_THREE_CYCLE
+        input wire clk,
+        input wire ena,
+    `endif
         .weight_1(w1),
         .weight_2(w2),
         .weight_3(w3),
