@@ -1,6 +1,6 @@
 from PIL import Image
 
-f = open("o.txt", "w")
+f = open("pixel.txt", "w")
 img = Image.open('../upscaled/0.bmp')
 rgb_img = img.convert("RGB")
 
@@ -21,10 +21,21 @@ rgb_img = img.convert("RGB")
 #         str += ch
 #     print(str + ',', file=f)
 
+""" Print each pixel value of bmp """
+# str = ""
+# for i in range(img.height):
+#     for j in range(img.width):
+#         str = ""
+#         r, g, b = rgb_img.getpixel((j, img.height - i - 1))
+#         str += '{:02X}'.format(r) + '{:02X}'.format(g) + '{:02X}'.format(b)
+#         print(str, file=f)
+
+""" print each 4 pixels of bmp """
 str = ""
 for i in range(img.height):
-    for j in range(img.width):
+    for j in range(img.width // 4):
         str = ""
-        r, g, b = rgb_img.getpixel((j, i))
-        str += '{:02X}'.format(r) + '{:02X}'.format(g) + '{:02X}'.format(b)
+        for k in range(4):
+            r, g, b = rgb_img.getpixel(((j + 1) * 4 - k - 1, img.height - i - 1))
+            str += '{:02X}'.format(r) + '{:02X}'.format(g) + '{:02X}'.format(b)
         print(str, file=f)

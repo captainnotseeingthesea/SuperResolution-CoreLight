@@ -159,37 +159,27 @@ void Gaussian_blur(Gaussian_blur_info *blur_info)
     if (endLine > info->heightOut)
         endLine = info->heightOut;
 
-    int row_region_cnt, col_region_cnt;
-    int left_side, right_side, top_side, down_side;
     for(ii = startLine; ii < endLine; ii++)
     {
-        row_region_cnt = ii / 4;
-        top_side = row_region_cnt * 4;
-        down_side = top_side + 4;
         for(jj = 0; jj < info->widthOut; jj++)
         {
-            col_region_cnt = jj / 4;
-            left_side = col_region_cnt * 4;
-            right_side = left_side + 4;
             // 计算每个像素对应的值
             r_sum = 0, g_sum = 0, b_sum = 0;
             for(int u = 0; u < _size; u++)
             {
                 // 采用BORDER_REFLECT_101的边缘填充方式，opencv的默认填充方式
                 pix_y = (ii - center + u) < 0 ? (center - u - ii) : (ii - center + u) >= info->heightOut ? (2 * info->heightOut - ii + center - u - 2) : (ii - center + u);
-                pix_y = clip(pix_y, top_side, down_side);
                 for(int v = 0; v < _size; v++)
                 {
                     pix_x = (jj - center + v) < 0 ? (center - v - jj) : (jj - center + v) >= info->widthOut ? (2 * info->widthOut - jj + center - v - 2) : (jj - center + v);
-                    // pix_x = clip(pix_x, left_side, right_side);
-                    r_sum += info->rgbOut[pix_y * info->widthOut + pix_x].r * (int)(weight[u][v] * 8192);
-                    g_sum += info->rgbOut[pix_y * info->widthOut + pix_x].g * (int)(weight[u][v] * 8192);
-                    b_sum += info->rgbOut[pix_y * info->widthOut + pix_x].b * (int)(weight[u][v] * 8192);
+                    r_sum += info->rgbOut[pix_y * info->widthOut + pix_x].r * (int)(weight[u][v] * 2048);
+                    g_sum += info->rgbOut[pix_y * info->widthOut + pix_x].g * (int)(weight[u][v] * 2048);
+                    b_sum += info->rgbOut[pix_y * info->widthOut + pix_x].b * (int)(weight[u][v] * 2048);
                 }
             }
-            dst_img[ii * info->widthOut + jj].r = (r_sum >> 13);
-            dst_img[ii * info->widthOut + jj].g = (g_sum >> 13);
-            dst_img[ii * info->widthOut + jj].b = (b_sum >> 13);
+            dst_img[ii * info->widthOut + jj].r = (r_sum >> 11);
+            dst_img[ii * info->widthOut + jj].g = (g_sum >> 11);
+            dst_img[ii * info->widthOut + jj].b = (b_sum >> 11);
         }
     }
     //多线程,处理完成行数
@@ -909,7 +899,7 @@ unsigned char *zoom(
         *retHeight = info.heightOut;
     
     // 使用高斯滤波进行锐化处理 (USM(Unshrpen Mask)算法)
-    usm(&info, 5, 6, 2, -1, 0, processor);
+    usm(&info, 3, 6, 2, -1, 0, processor);
 
     return (unsigned char *)info.rgbOut;
 }
