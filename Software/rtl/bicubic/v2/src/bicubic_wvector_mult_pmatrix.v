@@ -1,40 +1,45 @@
 
 module bicubic_wvector_mult_pmatrix #
 (
-    parameter PRODUCT_WIDTH = 32
+    parameter CHANNEL_WIDTH = 8,
+    parameter INTER_PRODUCT_WIDTH = 24
 )
 (
+    input wire clk,
+    input wire ena,
     input wire [2:0] w1,
     input wire [2:0] w2,
     input wire [2:0] w3,
     input wire [2:0] w4,
 
-    input wire [PRODUCT_WIDTH - 1:0] p1_1,
-    input wire [PRODUCT_WIDTH - 1:0] p1_2,
-    input wire [PRODUCT_WIDTH - 1:0] p1_3,
-    input wire [PRODUCT_WIDTH - 1:0] p1_4,
-    input wire [PRODUCT_WIDTH - 1:0] p2_1,
-    input wire [PRODUCT_WIDTH - 1:0] p2_2,
-    input wire [PRODUCT_WIDTH - 1:0] p2_3,
-    input wire [PRODUCT_WIDTH - 1:0] p2_4,
-    input wire [PRODUCT_WIDTH - 1:0] p3_1,
-    input wire [PRODUCT_WIDTH - 1:0] p3_2,
-    input wire [PRODUCT_WIDTH - 1:0] p3_3,
-    input wire [PRODUCT_WIDTH - 1:0] p3_4,
-    input wire [PRODUCT_WIDTH - 1:0] p4_1,
-    input wire [PRODUCT_WIDTH - 1:0] p4_2,
-    input wire [PRODUCT_WIDTH - 1:0] p4_3,
-    input wire [PRODUCT_WIDTH - 1:0] p4_4,
+    input wire [CHANNEL_WIDTH:0] p1_1,
+    input wire [CHANNEL_WIDTH:0] p1_2,
+    input wire [CHANNEL_WIDTH:0] p1_3,
+    input wire [CHANNEL_WIDTH:0] p1_4,
+    input wire [CHANNEL_WIDTH:0] p2_1,
+    input wire [CHANNEL_WIDTH:0] p2_2,
+    input wire [CHANNEL_WIDTH:0] p2_3,
+    input wire [CHANNEL_WIDTH:0] p2_4,
+    input wire [CHANNEL_WIDTH:0] p3_1,
+    input wire [CHANNEL_WIDTH:0] p3_2,
+    input wire [CHANNEL_WIDTH:0] p3_3,
+    input wire [CHANNEL_WIDTH:0] p3_4,
+    input wire [CHANNEL_WIDTH:0] p4_1,
+    input wire [CHANNEL_WIDTH:0] p4_2,
+    input wire [CHANNEL_WIDTH:0] p4_3,
+    input wire [CHANNEL_WIDTH:0] p4_4,
 
-    output wire [PRODUCT_WIDTH - 1:0] inner_product1,
-    output wire [PRODUCT_WIDTH - 1:0] inner_product2,
-    output wire [PRODUCT_WIDTH - 1:0] inner_product3,
-    output wire [PRODUCT_WIDTH - 1:0] inner_product4
+    output wire [INTER_PRODUCT_WIDTH - 1:0] inner_product1,
+    output wire [INTER_PRODUCT_WIDTH - 1:0] inner_product2,
+    output wire [INTER_PRODUCT_WIDTH - 1:0] inner_product3,
+    output wire [INTER_PRODUCT_WIDTH - 1:0] inner_product4
     
 );
 
 
-    bicubic_vector_mult u_bicubic_vector_mult1(
+    bicubic_vector_mult_stage1 u_bicubic_vector_mult1(
+        .clk     (clk),
+        .ena     (ena),
         .weight_1(w1),
         .weight_2(w2),
         .weight_3(w3),
@@ -48,7 +53,9 @@ module bicubic_wvector_mult_pmatrix #
         .inner_product(inner_product1)
     );
 
-    bicubic_vector_mult u_bicubic_vector_mult2(
+    bicubic_vector_mult_stage1 u_bicubic_vector_mult2(
+        .clk     (clk),
+        .ena     (ena),
         .weight_1(w1),
         .weight_2(w2),
         .weight_3(w3),
@@ -61,7 +68,9 @@ module bicubic_wvector_mult_pmatrix #
 
         .inner_product(inner_product2)
     );
-    bicubic_vector_mult u_bicubic_vector_mult3(
+    bicubic_vector_mult_stage1 u_bicubic_vector_mult3(
+        .clk     (clk),
+        .ena     (ena),
         .weight_1(w1),
         .weight_2(w2),
         .weight_3(w3),
@@ -74,7 +83,9 @@ module bicubic_wvector_mult_pmatrix #
 
         .inner_product(inner_product3)
     );
-    bicubic_vector_mult u_bicubic_vector_mult4(
+    bicubic_vector_mult_stage1 u_bicubic_vector_mult4(
+        .clk     (clk),
+        .ena     (ena),
         .weight_1(w1),
         .weight_2(w2),
         .weight_3(w3),
