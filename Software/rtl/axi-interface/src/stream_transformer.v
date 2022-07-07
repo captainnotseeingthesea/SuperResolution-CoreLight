@@ -245,4 +245,23 @@ module stream_transformer # (
         end
     end
 
+// SVA for the design features
+`ifndef DISABLE_SV_ASSERTION
+    
+    // There should not be two or more consecutive tlasts.
+    wire last_of_line_hsked = m_axis_tvalid & m_axis_tready & m_axis_tlast;
+
+    sequence consecutive_tlast;
+        last_of_line_hsked ##1 last_of_line_hsked;
+    endsequence
+
+    property no_consecutive_tlast;
+        @(posedge clk) disable iff(~rst_n) not consecutive_tlast;
+    endproperty
+
+    
+    assert property(no_consecutive_tlast) else $display("\nno_consecutive_tlast does not hold\n");
+
+`endif
+
 endmodule

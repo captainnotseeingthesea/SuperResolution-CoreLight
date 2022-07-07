@@ -1,5 +1,5 @@
 // Number of parallel processing blocks
--define N_PARALLEL=1
+-define N_PARALLEL=4
 
 // AXI-Lite
 -define AXI_DATA_WIDTH=32
@@ -18,14 +18,18 @@
 -define UPSP_WRTDATA_WIDTH=24*4
 -define OUT_FIFO_DEPTH=128
 
--define SRC_IMG_WIDTH=96
--define SRC_IMG_HEIGHT=54
+-define SRC_IMG_WIDTH=960
+-define SRC_IMG_HEIGHT=540
 -define DST_IMG_WIDTH=(4*`SRC_IMG_WIDTH)
 -define DST_IMG_HEIGHT=(4*`SRC_IMG_HEIGHT)
 
 
 // For bcci ip
 -define BUFFER_WIDTH=24
+-define MULT_IN_SIX_CYCLE
+-define STAGE1_MULT_IN_THREE_CYCLE
+-define STAGE2_MULT_IN_THREE_CYCLE
 
 // For verification
 //-define DISABLE_SV_ASSERTION
+//-define SIM_ONEPIECE54

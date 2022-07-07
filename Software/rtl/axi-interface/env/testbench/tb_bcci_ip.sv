@@ -26,18 +26,35 @@ import utils_pkg::*;
 	localparam DST_IMG_WIDTH   = `DST_IMG_WIDTH  ;
 	localparam DST_IMG_HEIGHT  = `DST_IMG_HEIGHT ;
 
+
+`ifndef SIM_ONEPIECE54
     localparam string FILE_PREFIX     = "0";
     localparam string SRC_BMP_BASE    = {"src_img/", FILE_PREFIX};
     localparam string DST_BMP_BASE    = {"dst_img/", FILE_PREFIX};
-
-    // localparam string FILE_PREFIX     = "onepiece54";
-    // localparam string SRC_BMP_BASE    = {"./", FILE_PREFIX};
-    // localparam string DST_BMP_BASE    = {"./", FILE_PREFIX};
+`else
+    localparam string FILE_PREFIX     = "onepiece54";
+    localparam string SRC_BMP_BASE    = {"./", FILE_PREFIX};
+    localparam string DST_BMP_BASE    = {"./", FILE_PREFIX};
+`endif
 
     localparam string SRC_BMP_FILE    = {SRC_BMP_BASE, ".bmp"};
     localparam string SRC_BIN_FILE    = {SRC_BMP_BASE, "_tmp_bin"};
     localparam string DST_BMP_FILE    = {DST_BMP_BASE, "_4.bmp"};
     localparam string DST_BIN_FILE    = {DST_BMP_BASE, "_4_tmp_bin"};
+
+	initial
+	begin
+		$dumpfile("../sim/waveform.vcd");
+`ifdef SIM_ONEPIECE54
+        $dumpvars(0, tb_bcci_ip);
+`else
+        $dumpvars(3, tb_bcci_ip.dut.AAA_bcci.AAA_access_control.ac_rdbuf_cnt, 
+        tb_bcci_ip.dut.AAA_bcci.AAA_config_register_file.UPPROCCNT,
+        tb_bcci_ip.dut.acif.stream_slave.axis_tvalid,
+        tb_bcci_ip.dut.acif.stream_slave.axis_tready,
+        tb_bcci_ip.dut.acif.stream_slave.axis_tlast);
+`endif
+	end
 
     ac_if acif();
 
@@ -154,16 +171,5 @@ import utils_pkg::*;
         DST_IMG_WIDTH);
 
     end
-
-	initial
-	begin
-		$dumpfile("../sim/waveform.vcd");
-        // $dumpvars(0, tb_bcci_ip);
-        $dumpvars(3, tb_bcci_ip.dut.AAA_bcci.AAA_access_control.ac_rdbuf_cnt, 
-        tb_bcci_ip.dut.AAA_bcci.AAA_config_register_file.UPPROCCNT,
-        tb_bcci_ip.dut.acif.stream_slave.axis_tvalid,
-        tb_bcci_ip.dut.acif.stream_slave.axis_tready,
-        tb_bcci_ip.dut.acif.stream_slave.axis_tlast);
-	end
  
 endmodule
