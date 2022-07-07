@@ -152,7 +152,7 @@ module ac_outbuf # (
     generate
         for(j = 0; j < N_FIFO; j=j+1) begin: WIDE_FIFO
             fifo #(
-	           .FIFO_DEPTH			(DST_IMG_HEIGHT*2/N_PARALLEL),
+	           .FIFO_DEPTH			(DST_IMG_WIDTH*2/(N_PARALLEL*N_UPSP_WRT)),
 	           .FIFO_WIDTH			(UPSP_WRTDATA_WIDTH))
             ofifo(
 		        // Outputs
