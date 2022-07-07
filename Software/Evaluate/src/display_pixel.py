@@ -33,9 +33,9 @@ rgb_img = img.convert("RGB")
 """ print each 4 pixels of bmp """
 str = ""
 for i in range(img.height):
-    for j in range(img.width // 4):
+    for j in range(img.width // 8):
         str = ""
-        for k in range(4):
-            r, g, b = rgb_img.getpixel(((j + 1) * 4 - k - 1, img.height - i - 1))
+        for k in range(8):
+            r, g, b = rgb_img.getpixel(((j + 1) * 8 - k - 1, img.height - i - 1))
             str += '{:02X}'.format(r) + '{:02X}'.format(g) + '{:02X}'.format(b)
         print(str, file=f)
