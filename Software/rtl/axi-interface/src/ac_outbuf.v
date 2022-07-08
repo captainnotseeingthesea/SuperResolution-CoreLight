@@ -78,10 +78,10 @@ module ac_outbuf # (
 
 
     // Use multiple fifos to hold the transformed data in a wider form.
-    reg [IMG_CNT_WIDTH-1:0]  write_count;
-    wire [IMG_CNT_WIDTH-1:0] write_count_inrow;
-    reg [N_PARALLEL_B2-1:0]  write_count_inrow_nfifo;
-    assign write_count_inrow = (write_count % DST_IMG_WIDTH);
+    reg [IMG_CNT_WIDTH-1:0] write_count;
+    reg [IMG_CNT_WIDTH-1:0] write_count_inrow;
+    reg [N_PARALLEL_B2-1:0] write_count_inrow_nfifo;
+    // assign write_count_inrow = (write_count % DST_IMG_WIDTH);
     // assign write_count_inrow_nfifo = (write_count_inrow/4) % N_PARALLEL;
 
     localparam N_ROW_PACKAGE = DST_IMG_WIDTH/N_UPSP_WRT;
@@ -136,10 +136,16 @@ module ac_outbuf # (
             /*AUTORESET*/
 	    // Beginning of autoreset for uninitialized flops
 	    write_count <= {IMG_CNT_WIDTH{1'b0}};
+	    write_count_inrow <= {IMG_CNT_WIDTH{1'b0}};
 	    write_count_inrow_nfifo <= {N_PARALLEL_B2{1'b0}};
 	    // End of automatics
         end else if((|fifo_wrt) & fifo_wready) begin
 			write_count <= write_count + N_UPSP_WRT;
+
+            if(write_count_inrow + N_UPSP_WRT >= DST_IMG_WIDTH)
+                write_count_inrow <= write_count_inrow + N_UPSP_WRT - DST_IMG_WIDTH;
+            else
+                write_count_inrow <= write_count_inrow + N_UPSP_WRT;
 
             if(write_count_inrow_nfifo == N_FIFO - 1 || write_count_inrow == DST_IMG_WIDTH - N_UPSP_WRT)
                 write_count_inrow_nfifo <= 0;

@@ -15,28 +15,23 @@
 
 module bcci_ip
 #(
+	parameter N_PARALLEL         = `N_PARALLEL        ,
     parameter AXI_DATA_WIDTH     = `AXI_DATA_WIDTH    ,
     parameter AXI_ADDR_WIDTH     = `AXI_ADDR_WIDTH    ,
     parameter AXISIN_DATA_WIDTH  = `AXISIN_DATA_WIDTH ,
-    parameter AXISOUT_DATA_WIDTH = `AXISOUT_DATA_WIDTH,
     parameter CRF_DATA_WIDTH     = `CRF_DATA_WIDTH    ,
     parameter CRF_ADDR_WIDTH     = `CRF_ADDR_WIDTH    ,
-	parameter UPSP_RDDATA_WIDTH  = `UPSP_RDDATA_WIDTH ,
-	parameter UPSP_WRTDATA_WIDTH = `UPSP_WRTDATA_WIDTH,
     parameter SRC_IMG_WIDTH      = `SRC_IMG_WIDTH     ,
     parameter SRC_IMG_HEIGHT     = `SRC_IMG_HEIGHT    ,
-    parameter DST_IMG_WIDTH      = `DST_IMG_WIDTH     ,
-    parameter DST_IMG_HEIGHT     = `DST_IMG_HEIGHT    ,
 	parameter BUFFER_WIDTH       = `BUFFER_WIDTH      ,
 	parameter OUT_FIFO_DEPTH     = `OUT_FIFO_DEPTH    ,
 	parameter CHANNEL_WIDTH      = 8,
 
+	parameter AXISOUT_DATA_WIDTH = 24*4*N_PARALLEL     ,
 	parameter AXI_STRB_WIDTH     = AXI_DATA_WIDTH/8    ,
 	parameter AXIS_STRB_WIDTH    = AXI_DATA_WIDTH/8    ,
 	parameter AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8 ,
-	parameter AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8,
-
-	parameter N_PARALLEL         = `N_PARALLEL
+	parameter AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8
 )
 (/*AUTOARG*/
    // Outputs
@@ -53,6 +48,11 @@ module bcci_ip
    s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_tuser,
    m_axis_tready
    );
+
+	localparam UPSP_RDDATA_WIDTH  = 24;
+	localparam UPSP_WRTDATA_WIDTH = 24*4;
+    localparam DST_IMG_WIDTH      = SRC_IMG_WIDTH*4;
+    localparam DST_IMG_HEIGHT     = SRC_IMG_HEIGHT*4;
 
 	input clk;
 	input rst_n;
@@ -123,7 +123,6 @@ module bcci_ip
     wire		ac_m_axis_tuser;	// From AAA_access_control of access_control.v
     wire		ac_m_axis_tvalid;	// From AAA_access_control of access_control.v
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPINHSKCNT;// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
     wire		trans_m_axis_tlast;	// From AAA_stream_transformer of stream_transformer.v
@@ -159,7 +158,6 @@ module bcci_ip
 			     .crf_ac_UPSTART	(crf_ac_UPSTART),
 			     .crf_ac_UPEND	(crf_ac_UPEND),
 			     .crf_ac_wbusy	(crf_ac_wbusy),
-			     .crf_ac_UPINHSKCNT	(crf_ac_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 			     // Inputs
 			     .clk		(clk),
 			     .rst_n		(rst_n),
@@ -239,7 +237,6 @@ module bcci_ip
 		       .crf_ac_UPSTART	(crf_ac_UPSTART),
 		       .crf_ac_UPEND	(crf_ac_UPEND),
 		       .crf_ac_wbusy	(crf_ac_wbusy),
-		       .crf_ac_UPINHSKCNT(crf_ac_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 		       .upsp_ac_rready	(upsp_ac_rready[N_PARALLEL-1:0]),
 		       .upsp_ac_wvalid	(upsp_ac_wvalid[N_PARALLEL-1:0]),
 		       .upsp_ac_wdata	(upsp_ac_wdata[N_PARALLEL*UPSP_WRTDATA_WIDTH-1:0]),

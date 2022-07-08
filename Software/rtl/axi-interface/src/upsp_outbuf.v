@@ -51,9 +51,9 @@ module upsp_outbuf # (
     /* This buffer contains many fifos, each fifo is 1-pixel width.
       First and last writes of a line contain only two pixels.
     */
-    reg [IMG_CNT_WIDTH-1:0]  write_count;
-    wire [IMG_CNT_WIDTH-1:0] write_count_inrow;
-    assign write_count_inrow = (write_count % DST_IMG_WIDTH);
+    reg [IMG_CNT_WIDTH-1:0] write_count;
+    reg [IMG_CNT_WIDTH-1:0] write_count_inrow;
+    // assign write_count_inrow = (write_count % DST_IMG_WIDTH);
 
     reg [N_BUF_FIFO-1:0] write_mask;
     always@(*) begin: WRT_MASK
@@ -83,9 +83,15 @@ module upsp_outbuf # (
             /*AUTORESET*/
 	    // Beginning of autoreset for uninitialized flops
 	    write_count <= {IMG_CNT_WIDTH{1'b0}};
+	    write_count_inrow <= {IMG_CNT_WIDTH{1'b0}};
 	    // End of automatics
         end else if(buf_wvalid & buf_wready) begin
 			write_count <= write_count + write_num;
+
+            if(write_count_inrow + write_num >= DST_IMG_WIDTH)
+                write_count_inrow <= write_count_inrow + write_num - DST_IMG_WIDTH;
+            else
+                write_count_inrow <= write_count_inrow + write_num;
         end
     end
 

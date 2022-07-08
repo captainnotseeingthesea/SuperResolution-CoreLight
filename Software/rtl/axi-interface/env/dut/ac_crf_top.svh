@@ -55,7 +55,6 @@ module ac_crf_top(ac_if acif);
     wire		ac_m_axis_tuser;	// From AAA_access_control of access_control.v
     wire		ac_m_axis_tvalid;	// From AAA_access_control of access_control.v
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
-    wire [CRF_DATA_WIDTH-1:0] crf_ac_UPINHSKCNT;// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
     // End of automatics
@@ -111,7 +110,6 @@ module ac_crf_top(ac_if acif);
 			     .crf_ac_UPSTART	(crf_ac_UPSTART),
 			     .crf_ac_UPEND	(crf_ac_UPEND),
 			     .crf_ac_wbusy	(crf_ac_wbusy),
-			     .crf_ac_UPINHSKCNT	(crf_ac_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 			     // Inputs
 			     .clk		(acif.clk),	 // Templated
 			     .rst_n		(acif.rst_n),	 // Templated
@@ -208,7 +206,6 @@ module ac_crf_top(ac_if acif);
 		       .crf_ac_UPSTART	(crf_ac_UPSTART),
 		       .crf_ac_UPEND	(crf_ac_UPEND),
 		       .crf_ac_wbusy	(crf_ac_wbusy),
-		       .crf_ac_UPINHSKCNT(crf_ac_UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 		       .upsp_ac_rready	(upsp_ac_rready[N_PARALLEL-1:0]),
 		       .upsp_ac_wvalid	(upsp_ac_wvalid[N_PARALLEL-1:0]),
 		       .upsp_ac_wdata	(acif.usif.upsp_ac_wdata[UPSP_WRTDATA_WIDTH-1:0]), // Templated

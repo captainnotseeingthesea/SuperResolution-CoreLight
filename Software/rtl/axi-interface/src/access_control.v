@@ -44,11 +44,10 @@ module access_control # (
    ac_m_axis_tuser,
    // Inputs
    clk, rst_n, crf_ac_UPSTART, crf_ac_UPEND, crf_ac_wbusy,
-   crf_ac_UPINHSKCNT, upsp_ac_rready, upsp_ac_wvalid, upsp_ac_wdata,
-   s_axis_tvalid, s_axis_tid, s_axis_tdata, s_axis_tstrb,
-   s_axis_tkeep, s_axis_tlast, s_axis_tdest, s_axis_tuser,
-   ac_m_axis_tready, trans_m_axis_tvalid, trans_m_axis_tready,
-   trans_m_axis_tlast
+   upsp_ac_rready, upsp_ac_wvalid, upsp_ac_wdata, s_axis_tvalid,
+   s_axis_tid, s_axis_tdata, s_axis_tstrb, s_axis_tkeep, s_axis_tlast,
+   s_axis_tdest, s_axis_tuser, ac_m_axis_tready, trans_m_axis_tvalid,
+   trans_m_axis_tready, trans_m_axis_tlast
    );
 
 	localparam AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8;
@@ -114,7 +113,6 @@ module access_control # (
 	input                       crf_ac_UPSTART;
 	input                       crf_ac_UPEND  ;
 	input                       crf_ac_wbusy;
-	input [CRF_DATA_WIDTH-1:0]  crf_ac_UPINHSKCNT;
 	output                      ac_crf_processing;
 	output                      ac_crf_axisi_tvalid;
 	output                      ac_crf_axisi_tready;
@@ -185,7 +183,6 @@ module access_control # (
 	// Rename config registers and output UPSTART and UPEND
 	wire UPSTART = crf_ac_UPSTART;
 	wire UPEND   = crf_ac_UPEND;
-	wire [CRF_DATA_WIDTH-1:0] UPINHSKCNT = crf_ac_UPINHSKCNT;
 
 
 	// Whether IP is under processing or not. This signal will be asserted 
@@ -263,7 +260,6 @@ module access_control # (
 		      .upsp_ac_rready	(upsp_ac_rready[N_PARALLEL-1:0]),
 		      .UPSTART		(UPSTART),
 		      .UPEND		(UPEND),
-		      .UPINHSKCNT	(UPINHSKCNT[CRF_DATA_WIDTH-1:0]),
 		      .s_axis_tvalid	(s_axis_tvalid),
 		      .s_axis_tid	(s_axis_tid),
 		      .s_axis_tdata	(s_axis_tdata[AXISIN_DATA_WIDTH-1:0]),
@@ -285,9 +281,9 @@ module access_control # (
 
 
 	// Read buf total count.
-	reg [IMG_CNT_WIDTH-1:0]      ac_rdbuf_cnt;
-	wire [DST_IMG_WIDTH_LB2-1:0] ac_rdbuf_cnt_inrow;
-	assign ac_rdbuf_cnt_inrow = (ac_rdbuf_cnt % DST_GEN_WIDTH);
+	reg [IMG_CNT_WIDTH-1:0]   ac_rdbuf_cnt;
+	reg [DST_IMG_WIDTH_LB2:0] ac_rdbuf_cnt_inrow;
+	// assign ac_rdbuf_cnt_inrow = (ac_rdbuf_cnt % DST_GEN_WIDTH);
 	assign last_one_remain = (ac_rdbuf_cnt  == DST_IMG_HEIGHT*DST_GEN_WIDTH)?1'b1:1'b0;
 
 	always @(posedge clk or negedge rst_n) begin: BUFRD_COUNT
@@ -295,11 +291,18 @@ module access_control # (
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			ac_rdbuf_cnt <= {IMG_CNT_WIDTH{1'b0}};
+			ac_rdbuf_cnt_inrow <= {(1+(DST_IMG_WIDTH_LB2)){1'b0}};
 			// End of automatics
 		end else if(write_done) begin
 			ac_rdbuf_cnt <= {IMG_CNT_WIDTH{1'b0}};
+			ac_rdbuf_cnt_inrow <= {DST_IMG_WIDTH_LB2{1'b0}};
 		end else if(|obuf_rd) begin
 			ac_rdbuf_cnt <= ac_rdbuf_cnt + N_UPSP_WRT*N_PARALLEL;
+			
+			if(ac_rdbuf_cnt_inrow + N_UPSP_WRT*N_PARALLEL >= DST_GEN_WIDTH)
+				ac_rdbuf_cnt_inrow <= ac_rdbuf_cnt_inrow + N_UPSP_WRT*N_PARALLEL - DST_GEN_WIDTH;
+			else
+				ac_rdbuf_cnt_inrow <= ac_rdbuf_cnt_inrow + N_UPSP_WRT*N_PARALLEL;
 		end
 	end
 
