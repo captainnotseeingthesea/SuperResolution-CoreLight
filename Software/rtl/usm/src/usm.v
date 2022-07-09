@@ -126,9 +126,9 @@ module usm #(
     wire [BRAM_DATA_WIDTH - 1 : 0] bram_ina [COV_SIZE : 0]; // data input to port a of bram banks
     reg  [BRAM_DATA_WIDTH - 1 : 0] bram_inb [COV_SIZE : 0]; // data input to port b of the bram banks
     wire [BRAM_DATA_WIDTH - 1 : 0] bram_outa [COV_SIZE : 0]; // data output of the bram banks
-    reg  [BRAM_DATA_WIDTH - 1 : 0] bram_data_a [COV_SIZE : 0]; // data of port a of bram banks
+    wire  [BRAM_DATA_WIDTH - 1 : 0] bram_data_a [COV_SIZE : 0]; // data of port a of bram banks
     wire [BRAM_DATA_WIDTH - 1 : 0] bram_outb [COV_SIZE : 0]; // data output of the bram banks
-    reg  [BRAM_DATA_WIDTH - 1 : 0] bram_data_b [COV_SIZE : 0]; // data of port b of bram banks
+    wire  [BRAM_DATA_WIDTH - 1 : 0] bram_data_b [COV_SIZE : 0]; // data of port b of bram banks
 
     reg  [BRAM_DATA_WIDTH - 1 : 0] partial_sum_in_0 [COV_SIZE - 1 : 0]; // negative partial sum 0 input to port b of the bram banks
     reg  [BRAM_DATA_WIDTH - 1 : 0] partial_sum_in_1 [COV_SIZE - 1: 0]; // negative partial sum 1 input to port b of the bram banks
@@ -253,43 +253,63 @@ module usm #(
         .rst_n(rst_n)
     );
 
-    always @(posedge clk or negedge rst_n) begin : init_input_buffer
-        integer i;
-        if(~rst_n) begin
-            for(i = 0; i < INPUT_BUFFER_SIZE; i = i + 1) begin
-                input_buffer[i] <= {DATA_WIDTH{1'b0}};
-            end
-            for(i = 0; i < EDGE_WIDTH; i = i + 1) begin
-                last_edge[i] <= {DATA_WIDTH{1'b0}};
-            end
-        end
-        else begin
-            if(input_valid) begin
-                if(line_is_idle | line_is_last_edge) begin
-                    for(i = 0; i < EDGE_WIDTH; i = i + 1) begin
-                        input_buffer[input_buffer_idle_index[i]] <= s_axis_tdata[(i + 1) * DATA_WIDTH +: DATA_WIDTH];
-                    end
-                    for(i = 0; i < INPUT_PIXEL_NUM; i = i + 1) begin
-                        input_buffer[input_buffer_idle_index[i + EDGE_WIDTH]] <= s_axis_tdata[i * DATA_WIDTH +: DATA_WIDTH];
-                    end
+    genvar i, j, k;
+    generate
+        for(i = 0; i < EDGE_WIDTH; i = i + 1) begin : init_last_edge
+            always @(posedge clk or negedge rst_n) begin
+                if(~rst_n) begin
+                    last_edge[i] <= {DATA_WIDTH{1'b0}};
                 end
-                else begin
-                    for(i = 0; i < INPUT_PIXEL_NUM; i = i + 1) begin
-                        input_buffer[input_buffer_idle_index[i]] <= s_axis_tdata[i * DATA_WIDTH +: DATA_WIDTH];
-                    end
-                end
-                for(i = 0; i < EDGE_WIDTH; i = i + 1) begin
+                else if(input_valid) begin
                     last_edge[i] <= s_axis_tdata[(INPUT_PIXEL_NUM - i - 2) * DATA_WIDTH +: DATA_WIDTH];
                 end
             end
-            if(line_is_last_late) begin
-                for(i = 0; i < EDGE_WIDTH; i = i + 1) begin
-                    input_buffer[input_buffer_idle_index[i]] <= last_edge[i];
+        end
+
+        for(i = 0; i < INPUT_BUFFER_SIZE; i = i + 1) begin : init_input_buffer
+            wire [COUNT_WIDTH - 1 : 0] edge_idle_pos = idle_pos + EDGE_WIDTH - 1 < INPUT_BUFFER_SIZE ? idle_pos + EDGE_WIDTH - 1 : idle_pos + EDGE_WIDTH - INPUT_BUFFER_SIZE - 1;
+            wire [COUNT_WIDTH - 1 : 0] edge_data_idle_pos = idle_pos + EDGE_WIDTH + INPUT_PIXEL_NUM - 1 < INPUT_BUFFER_SIZE ? idle_pos + INPUT_PIXEL_NUM + EDGE_WIDTH - 1 : idle_pos + INPUT_PIXEL_NUM + EDGE_WIDTH - INPUT_BUFFER_SIZE - 1;
+            wire [COUNT_WIDTH - 1 : 0] data_idle_pos = idle_pos + INPUT_PIXEL_NUM - 1 < INPUT_BUFFER_SIZE ? idle_pos + INPUT_PIXEL_NUM - 1 : idle_pos + INPUT_PIXEL_NUM - INPUT_BUFFER_SIZE - 1;
+            wire input_edge_ena = (edge_idle_pos >= idle_pos & i >= idle_pos & i <= edge_idle_pos) | ((edge_idle_pos < idle_pos) & (i >= idle_pos | i <= edge_idle_pos));
+            wire input_data_edge_ena = (edge_data_idle_pos >= idle_pos & i >= idle_pos & i <= edge_data_idle_pos) | ((edge_data_idle_pos < idle_pos) & (i >= idle_pos | i <= edge_data_idle_pos));
+            wire input_data_ena = (data_idle_pos >= idle_pos & i >= idle_pos & i <= data_idle_pos) | ((data_idle_pos < idle_pos) & (i >= idle_pos | i <= data_idle_pos));
+
+            wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] axis_data_index_0 = i >= idle_pos ? (i - idle_pos + 1) : (i + INPUT_BUFFER_SIZE - idle_pos + 1);
+            wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] correct_axis_data_index_0 = (axis_data_index_0 < INPUT_PIXEL_NUM ? axis_data_index_0 : INPUT_PIXEL_NUM - 1);
+            wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] axis_data_index_1 = i >= idle_pos + EDGE_WIDTH ? i - idle_pos - EDGE_WIDTH : i + INPUT_BUFFER_SIZE - idle_pos - EDGE_WIDTH;
+            wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] correct_axis_data_index_1 = (axis_data_index_1 < INPUT_PIXEL_NUM ? axis_data_index_1 : INPUT_PIXEL_NUM - 1);
+            wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] axis_data_index_2 = i >= idle_pos ? i - idle_pos : i + INPUT_BUFFER_SIZE - idle_pos;
+            wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] correct_axis_data_index_2 = (axis_data_index_2 < INPUT_PIXEL_NUM ? axis_data_index_2 : INPUT_PIXEL_NUM - 1);
+            wire [$clog2(EDGE_WIDTH) - 1 : 0] correct_edge_data_index = (axis_data_index_2 < EDGE_WIDTH ? axis_data_index_2 : EDGE_WIDTH - 1);
+            
+            always @(posedge clk or negedge rst_n) begin
+                if(~rst_n) begin
+                    input_buffer[i] <= {DATA_WIDTH{1'b0}};
+                end
+                else begin
+                    if(input_valid) begin
+                        if(line_is_idle | line_is_last_edge) begin
+                            if(input_edge_ena) begin
+                                input_buffer[i] <= s_axis_tdata[correct_axis_data_index_0 * DATA_WIDTH +: DATA_WIDTH];                                                                                                           
+                            end
+                            else if(input_data_edge_ena) begin
+                                input_buffer[i] <= s_axis_tdata[correct_axis_data_index_1 * DATA_WIDTH +: DATA_WIDTH];
+                            end
+                        end
+                        else if(input_data_ena) begin
+                            input_buffer[i] <= s_axis_tdata[correct_axis_data_index_2 * DATA_WIDTH +: DATA_WIDTH];                                                                    
+                        end
+                    end
+                    else if(line_is_last_late) begin
+                        if(input_edge_ena) begin
+                            input_buffer[i] <= last_edge[correct_edge_data_index];
+                        end
+                    end
                 end
             end
         end
-    end
-    genvar i, j, k;
+    endgenerate
+
     generate
         for(i = 0; i < INPUT_PIXEL_NUM + EDGE_WIDTH; i = i + 1) begin : gen_input_idle_index
             assign input_buffer_idle_index[i] = (idle_pos + i) >= INPUT_BUFFER_SIZE ? idle_pos + i - INPUT_BUFFER_SIZE : idle_pos + i;
@@ -408,7 +428,7 @@ module usm #(
     wire [LINE_COUNT_WIDTH - 1 : 0] busy_line = last_output_line + 1 - output_line_num;
     wire [LINE_COUNT_WIDTH - 1 : 0] next_output_line_num = output_line_num + 1;
     wire output_line_num_ena = m_axis_tlast;
-    reg  [COV_SIZE : 0] addra_ena;
+    wire  [COV_SIZE : 0] addra_ena;
     wire addrb_ena = cov_done_late;
     wire [$clog2(EDGE_WIDTH + 1) - 1 : 0] edge_distance; // distance to the edge
     wire usm_end = output_line_num == DST_IMAGE_HEIGHT;
@@ -423,6 +443,7 @@ module usm #(
     wire [FSM_USM_WIDTH - 1 : 0] usm_state_last_nxt = USM_IDLE;
 
     wire [$clog2(COV_SIZE + 1) - 1 : 0] start_outline_index = start_output_line % (COV_SIZE + 1);
+    wire [$clog2(COV_SIZE + 1) - 1 : 0] last_outline_index = last_output_line % (COV_SIZE + 1);
     wire [$clog2(COV_SIZE + 1) - 1 : 0] outline_index_vector [COV_SIZE: 0];
     wire ready_outline_index_ena = m_axis_tlast;
     wire usm_rstn = ~usm_is_idle & rst_n;
@@ -517,115 +538,151 @@ module usm #(
         end
     endgenerate
 
+    generate
+        for(i = 0; i < COV_SIZE + 1; i = i + 1) begin
+            assign bram_data_a[i] = dirty_flag[i][addra[i]] == 1'b0 ? {BRAM_DATA_WIDTH{1'b0}} : bram_outa[i];
+            assign bram_data_b[i] = dirty_flag[i][addrb] == 1'b0 ? {BRAM_DATA_WIDTH{1'b0}} : bram_outb[i];
+            assign addra_ena[i] = (line_count % (COV_SIZE + 1)) == i ? input_valid_late : (i == ready_outline_index & outline_ready[i]) ?  m_axis_tready & (output_count < DST_IMAGE_WIDTH / INPUT_PIXEL_NUM) : 1'b0;
+        end
+    endgenerate
+
+    generate
+        for(i = 0; i < COV_SIZE + 1; i = i + 1) begin : init_dirty_clear
+            wire dirty_enable_flag = ((last_outline_index >= start_outline_index) & (i >= start_outline_index & i <= last_outline_index)) | ((last_outline_index < start_outline_index) & (i <= last_outline_index | i >= start_outline_index));
+            always @(*) begin
+                next_outline_ready[i] = outline_ready[i];
+                dirty_clear[i] = 1'b0;
+                if(m_axis_tlast & ready_outline_index == i) begin
+                    next_outline_ready[i] = 1'b0;
+                end
+                if(line_count_ena) begin
+                    if (usm_is_start & edge_distance == EDGE_WIDTH) begin
+                        if(i == start_outline_index) begin
+                            next_outline_ready[i] = 1'b1;
+                            dirty_clear[i] = 1'b1;
+                        end
+                    end
+                    else if(usm_is_normal | (usm_is_last & edge_distance != 0)) begin
+                        if(i == start_outline_index) begin
+                            next_outline_ready[i] = 1'b1;
+                            dirty_clear[i] = 1'b1;
+                        end
+                    end
+                    else if(usm_is_last & (dirty_enable_flag)) begin
+                        next_outline_ready[i] = 1'b1;
+                        dirty_clear[i] = 1'b1;
+                    end
+                end
+            end
+        end
+    endgenerate
+
     always @(*) begin : outline_control
-        integer i;
         outline_ready_set = 1'b0;
         outline_ready_clear = 1'b0;
-        for(i = 0; i < COV_SIZE + 1; i = i + 1)begin
-            bram_data_a[i] = dirty_flag[i][addra[i]] == 1'b0 ? {BRAM_DATA_WIDTH{1'b0}} : bram_outa[i];
-            bram_data_b[i] = dirty_flag[i][addrb] == 1'b0 ? {BRAM_DATA_WIDTH{1'b0}} : bram_outb[i];
-            dirty_clear[i] = 1'b0;
-            next_outline_ready[i] = outline_ready[i];
-            addra_ena[i] = (line_count % (COV_SIZE + 1)) == i ? input_valid_late : (i == ready_outline_index & outline_ready[i]) ?  m_axis_tready & (output_count < DST_IMAGE_WIDTH / INPUT_PIXEL_NUM) : 1'b0;
-        end
-
         if(m_axis_tlast) begin
-            next_outline_ready[ready_outline_index] = 1'b0;
             outline_ready_clear = 1'b1;
         end
-
         if(line_count_ena) begin
             if (usm_is_start & edge_distance == EDGE_WIDTH) begin
-                next_outline_ready[start_outline_index] = 1'b1;
                 outline_ready_set = 1'b1;
-                dirty_clear[start_outline_index] = 1'b1;
             end
             else if(usm_is_normal | (usm_is_last & edge_distance != 0)) begin
-                next_outline_ready[start_outline_index] = 1'b1;
                 outline_ready_set = 1'b1;
-                dirty_clear[start_outline_index] = 1'b1;
             end
             else if(usm_is_last) begin
-                for(i = 0; i < EDGE_WIDTH + 1; i = i + 1) begin
-                    next_outline_ready[outline_index_vector[i]] = 1'b1;
-                    dirty_clear[outline_index_vector[i]] = 1'b1;
-                    outline_ready_set = 1'b1;
-                end
+                outline_ready_set = 1'b1;
             end
         end
     end
-
-    always @(*) begin : usm_control
-        integer i, j, k;
-        for(i = 0; i < COV_SIZE + 1; i = i + 1) begin
-            bram_inb[i] = {(BRAM_DATA_WIDTH - 1){1'b0}};
-            partial_sum_in_0[i] = {(BRAM_DATA_WIDTH - 1){1'b0}};
-            partial_sum_in_1[i] = {(BRAM_DATA_WIDTH - 1){1'b0}};
-            web[i] = 1'b0;
-            reb[i] = 1'b0;
-        end
-        
-        for(i = 0; i < COV_SIZE; i = i + 1) begin
+    
+    generate
+        for(i = 0 ; i < COV_SIZE + 1; i = i + 1) begin : bram_access_control
+            wire enable_flag = ((last_outline_index >= start_outline_index) & (i >= start_outline_index & i <= last_outline_index)) | ((last_outline_index < start_outline_index) & (i <= last_outline_index | i >= start_outline_index));
+            wire [$clog2(COV_SIZE + 1) - 1 : 0] partial_sum_index = (i < start_outline_index) ? (i + COV_SIZE + 1 - start_outline_index) : i - start_outline_index;
+            wire [$clog2(COV_SIZE + 1) - 1 : 0] correct_partial_sum_index = (partial_sum_index < COV_SIZE) ? partial_sum_index : COV_SIZE - 1;
+            always @(*) begin
+                if(usm_is_start & edge_distance == 0 & enable_flag) begin
+                    web[i] = cov_done_late;
+                    reb[i] = cov_done;
+                end
+                else if(usm_is_start & enable_flag) begin
+                    web[i] = cov_done_late;
+                    reb[i] = cov_done;
+                end
+                else if(usm_is_normal & enable_flag) begin
+                    web[i] = cov_done_late;
+                    reb[i] = cov_done;
+                end
+                else if(usm_is_last & (edge_distance == 0) & enable_flag) begin
+                    web[i] = cov_done_late;
+                    reb[i] = cov_done;
+                end
+                else if(usm_is_last & enable_flag) begin
+                    web[i] = cov_done_late;
+                    reb[i] = cov_done;
+                end
+                else begin
+                    web[i] = 1'b0;
+                    reb[i] = 1'b0;
+                end
+            end
             for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
                 for(k = 0; k < 3; k = k + 1) begin
-                    if(usm_is_start & edge_distance == 0 & i < EDGE_WIDTH + 1) begin
-                        partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[EDGE_WIDTH - i][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
-                    end
-                    else if(usm_is_start & i < (EDGE_WIDTH - edge_distance + 1)) begin
-                        partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[EDGE_WIDTH - edge_distance - i][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
-                        partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[EDGE_WIDTH + edge_distance - i][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
-
-                    end
-                    else if(usm_is_start & i < (EDGE_WIDTH + edge_distance + 1)) begin
-                        partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[EDGE_WIDTH + edge_distance - i][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
-                    end
-                    else if(usm_is_normal) begin
-                        partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
-                    end
-                    else if(usm_is_last & (edge_distance == 0)) begin
-                        partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
-                    end
-                    else if(usm_is_last & i < (edge_distance << 1)) begin
-                        partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
-                    end
-                    else if(usm_is_last & i < (EDGE_WIDTH + edge_distance + 1)) begin
-                        partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
-                        partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i + (edge_distance << 1) - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                    always @(*) begin
+                        if(enable_flag) begin
+                            bram_inb[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = partial_sum_in_0[correct_partial_sum_index][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] + partial_sum_in_1[correct_partial_sum_index][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] + bram_data_b[i][j * BRAM_ELE_WIDTH + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];   
+                        end
+                        else begin
+                            bram_inb[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = {(BRAM_ELE_WIDTH / 3){1'b0}};
+                        end
                     end
                 end
             end
         end
 
-        for(i = 0; i < COV_SIZE; i = i + 1) begin
+        for(i = 0; i < COV_SIZE; i = i + 1) begin : partial_sum_control
             for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
                 for(k = 0; k < 3; k = k + 1) begin
-                    bram_inb[outline_index_vector[i]][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] + partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] + bram_data_b[outline_index_vector[i]][j * BRAM_ELE_WIDTH + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                    always @(*) begin
+                        if(usm_is_start & edge_distance == 0 & i < EDGE_WIDTH + 1) begin
+                            partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[EDGE_WIDTH - i][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                            partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = {(BRAM_ELE_WIDTH/3){1'b0}};
+                        end
+                        else if(usm_is_start & i < (EDGE_WIDTH - edge_distance + 1)) begin
+                            partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[EDGE_WIDTH - edge_distance - i][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                            partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[EDGE_WIDTH + edge_distance - i][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                        end
+                        else if(usm_is_start & i < (EDGE_WIDTH + edge_distance + 1)) begin
+                            partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[EDGE_WIDTH + edge_distance - i][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                            partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = {(BRAM_ELE_WIDTH/3){1'b0}};
+                        end
+                        else if(usm_is_normal) begin
+                            partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                            partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = {(BRAM_ELE_WIDTH/3){1'b0}};
+                        end
+                        else if(usm_is_last & (edge_distance == 0)) begin
+                            partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                            partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = {(BRAM_ELE_WIDTH/3){1'b0}};
+                        end
+                        else if(usm_is_last & i < (edge_distance << 1)) begin
+                            partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                            partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = {(BRAM_ELE_WIDTH/3){1'b0}};
+                        end
+                        else if(usm_is_last & i < (EDGE_WIDTH + edge_distance + 1)) begin
+                            partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                            partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[COV_SIZE - i + (edge_distance << 1) - 1][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                        end
+                        else begin
+                            partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = {(BRAM_ELE_WIDTH/3){1'b0}};
+                            partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = {(BRAM_ELE_WIDTH/3){1'b0}};
+                        end
+                    end 
                 end
             end
         end
 
-        for(i = 0; i < COV_SIZE; i = i + 1) begin
-            if(usm_is_start & edge_distance == 0 & i < (EDGE_WIDTH + 1)) begin
-                web[i] = cov_done_late;
-                reb[i] = cov_done;
-            end
-            else if(usm_is_start & i < (EDGE_WIDTH + edge_distance + 1)) begin
-                web[outline_index_vector[i]] = cov_done_late;
-                reb[outline_index_vector[i]] = cov_done;
-            end
-            else if(usm_is_normal) begin
-                web[outline_index_vector[i]] = cov_done_late;
-                reb[outline_index_vector[i]] = cov_done;
-            end
-            else if(usm_is_last & (edge_distance == 0) & i < (EDGE_WIDTH + 1)) begin
-                web[outline_index_vector[i]] = cov_done_late;
-                reb[outline_index_vector[i]] = cov_done;
-            end
-            else if(usm_is_last & i < (EDGE_WIDTH + edge_distance + 1)) begin
-                web[outline_index_vector[i]] = cov_done_late;
-                reb[outline_index_vector[i]] = cov_done;
-            end
-        end
+    endgenerate
         
         // if(usm_is_start & edge_distance == 0) begin
         //     for(i = 0; i < EDGE_WIDTH + 1; i = i + 1) begin
@@ -705,7 +762,6 @@ module usm #(
         //         end
         //     end
         // end
-    end
 
     // Axis output logic
     assign output_data_valid = rea[ready_outline_index] & outline_ready[ready_outline_index] & (output_count < DST_IMAGE_WIDTH / INPUT_PIXEL_NUM);

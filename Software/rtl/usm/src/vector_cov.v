@@ -19,7 +19,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-(*use_dsp = "no"*)module vector_cov #(
+module vector_cov #(
     parameter LENGTH = 10, // length of the input pixel vector
     parameter COV_SIZE = 3, // size of the convolution kernel
     parameter CH_WIDTH = 8, // channel width
