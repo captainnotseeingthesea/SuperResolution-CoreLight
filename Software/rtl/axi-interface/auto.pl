@@ -19,9 +19,9 @@ mkdir $tmp, 0755 or die "cannot mkdir $tmp:$!";
 "env/dut/*.svh ".
 "env/testbench/*.sv ".
 "../bicubic/v2/src/bicubic_processing_element.v ".
-"../IP/bcci/*.v"
+"../IP/bcci/*.v".
+"../usm/src/*.v"
 ;
-
 
 foreach $src (@srcfiles) {
     $dst = File::Spec->catfile($tmp, basename $src);

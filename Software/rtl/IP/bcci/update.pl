@@ -16,7 +16,9 @@ mkdir $tmp, 0755 or die "cannot mkdir $tmp:$!";
 $axidir = "../../axi-interface";
 $bicubdir = "../../bicubic/v2";
 $bcciip = "bcci_ip.v";
-@srcfiles = glob "$axidir/src/*.v $bicubdir/src/*.v $bcciip";
+$usmdir = "../../usm";
+$common = "../../common";
+@srcfiles = glob "$axidir/src/*.v $bicubdir/src/*.v $bcciip $usmdir/src/*.v $common/*.v";
 
 # Move files to tmp dir
 foreach $src (@srcfiles) {

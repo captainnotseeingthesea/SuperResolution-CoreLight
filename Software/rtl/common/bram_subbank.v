@@ -47,7 +47,7 @@ module bram_subbank # (
 
 
     // memory array
-    (*ram_style = "block"*)reg [DATA_WIDTH-1:0] mem [0:DEPTH-1];
+    reg [DATA_WIDTH-1:0] mem [0:DEPTH-1];
     wire ren = cs & re;
     wire wen = cs & we;
 
@@ -59,6 +59,7 @@ module bram_subbank # (
     end
 
 endmodule
+
 
 module bram_subbank_dual_port # (
 		parameter DEPTH      = 32,

@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+// `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
 // Engineer: 
@@ -166,7 +166,9 @@ module usm #(
 
     wire state_idle_exit_ena = line_is_idle & input_valid;
     wire state_normal_exit_ena = line_is_normal & end_line;
+    wire line_is_last_late;
     wire state_last_exit_ena = line_is_last_late;
+    wire line_is_last_edge_late;
     wire state_last_edge_exit_ena = line_is_last_edge_late;
 
     wire line_state_ena = state_idle_exit_ena
@@ -368,6 +370,7 @@ module usm #(
         end
     endgenerate
 
+    wire  [COV_SIZE : 0] addra_ena;
     generate
         // Init #(COV_SIZE + 1) output line buffer
         for(i = 0; i < COV_SIZE + 1; i = i + 1) begin:init_outline
@@ -428,7 +431,6 @@ module usm #(
     wire [LINE_COUNT_WIDTH - 1 : 0] busy_line = last_output_line + 1 - output_line_num;
     wire [LINE_COUNT_WIDTH - 1 : 0] next_output_line_num = output_line_num + 1;
     wire output_line_num_ena = m_axis_tlast;
-    wire  [COV_SIZE : 0] addra_ena;
     wire addrb_ena = cov_done_late;
     wire [$clog2(EDGE_WIDTH + 1) - 1 : 0] edge_distance; // distance to the edge
     wire usm_end = output_line_num == DST_IMAGE_HEIGHT;

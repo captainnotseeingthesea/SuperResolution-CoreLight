@@ -53,6 +53,9 @@ module bcci_ip
 	localparam UPSP_WRTDATA_WIDTH = 24*4;
     localparam DST_IMG_WIDTH      = SRC_IMG_WIDTH*4;
     localparam DST_IMG_HEIGHT     = SRC_IMG_HEIGHT*4;
+	localparam COV_SIZE           = 3;
+	localparam CH_WIDTH           = 8;
+	localparam WEIGHT_WIDTH       = 8;
 
 	input clk;
 	input rst_n;
@@ -125,6 +128,16 @@ module bcci_ip
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
+    wire		m_axis_user;		// From AAA_usm of usm.v
+    wire [AXISOUT_DATA_WIDTH-1:0] st_usm_axis_tdata;// From AAA_stream_transformer of stream_transformer.v
+    wire		st_usm_axis_tdest;	// From AAA_stream_transformer of stream_transformer.v
+    wire		st_usm_axis_tid;	// From AAA_stream_transformer of stream_transformer.v
+    wire [AXISOUT_STRB_WIDTH-1:0] st_usm_axis_tkeep;// From AAA_stream_transformer of stream_transformer.v
+    wire		st_usm_axis_tlast;	// From AAA_stream_transformer of stream_transformer.v
+    wire		st_usm_axis_tready;	// From AAA_usm of usm.v
+    wire [AXISOUT_STRB_WIDTH-1:0] st_usm_axis_tstrb;// From AAA_stream_transformer of stream_transformer.v
+    wire		st_usm_axis_tuser;	// From AAA_stream_transformer of stream_transformer.v
+    wire		st_usm_axis_tvalid;	// From AAA_stream_transformer of stream_transformer.v
     wire		trans_m_axis_tlast;	// From AAA_stream_transformer of stream_transformer.v
     wire		trans_m_axis_tready;	// From AAA_stream_transformer of stream_transformer.v
     wire		trans_m_axis_tvalid;	// From AAA_stream_transformer of stream_transformer.v
@@ -132,6 +145,9 @@ module bcci_ip
 
 
     /*AUTOREG*/
+    // Beginning of automatic regs (for this module's undeclared outputs)
+    reg			m_axis_tuser;
+    // End of automatics
 
 
 
@@ -282,6 +298,19 @@ module bcci_ip
 		end
 	endgenerate
 
+
+	/* stream_transformer AUTO_TEMPLATE(
+		.m_axis_tvalid	(st_usm_axis_tvalid),
+		.m_axis_tid	    (st_usm_axis_tid),
+		.m_axis_tdata	(st_usm_axis_tdata[AXISOUT_DATA_WIDTH-1:0]),
+		.m_axis_tkeep	(st_usm_axis_tkeep[AXISOUT_STRB_WIDTH-1:0]),
+		.m_axis_tstrb	(st_usm_axis_tstrb[AXISOUT_STRB_WIDTH-1:0]),
+		.m_axis_tlast	(st_usm_axis_tlast),
+		.m_axis_tdest	(st_usm_axis_tdest),
+		.m_axis_tuser	(st_usm_axis_tuser),
+		.m_axis_tready	(st_usm_axis_tready),
+	)
+	*/
 	stream_transformer # (/*AUTOINSTPARAM*/
 			      // Parameters
 			      .AXISOUT_DATA_WIDTH(AXISOUT_DATA_WIDTH),
@@ -289,14 +318,14 @@ module bcci_ip
 	AAA_stream_transformer(/*AUTOINST*/
 			       // Outputs
 			       .ac_m_axis_tready(ac_m_axis_tready),
-			       .m_axis_tvalid	(m_axis_tvalid),
-			       .m_axis_tid	(m_axis_tid),
-			       .m_axis_tdata	(m_axis_tdata[AXISOUT_DATA_WIDTH-1:0]),
-			       .m_axis_tkeep	(m_axis_tkeep[AXISOUT_STRB_WIDTH-1:0]),
-			       .m_axis_tstrb	(m_axis_tstrb[AXISOUT_STRB_WIDTH-1:0]),
-			       .m_axis_tlast	(m_axis_tlast),
-			       .m_axis_tdest	(m_axis_tdest),
-			       .m_axis_tuser	(m_axis_tuser),
+			       .m_axis_tvalid	(st_usm_axis_tvalid), // Templated
+			       .m_axis_tid	(st_usm_axis_tid), // Templated
+			       .m_axis_tdata	(st_usm_axis_tdata[AXISOUT_DATA_WIDTH-1:0]), // Templated
+			       .m_axis_tkeep	(st_usm_axis_tkeep[AXISOUT_STRB_WIDTH-1:0]), // Templated
+			       .m_axis_tstrb	(st_usm_axis_tstrb[AXISOUT_STRB_WIDTH-1:0]), // Templated
+			       .m_axis_tlast	(st_usm_axis_tlast), // Templated
+			       .m_axis_tdest	(st_usm_axis_tdest), // Templated
+			       .m_axis_tuser	(st_usm_axis_tuser), // Templated
 			       .trans_m_axis_tvalid(trans_m_axis_tvalid),
 			       .trans_m_axis_tready(trans_m_axis_tready),
 			       .trans_m_axis_tlast(trans_m_axis_tlast),
@@ -311,6 +340,55 @@ module bcci_ip
 			       .ac_m_axis_tlast	(ac_m_axis_tlast),
 			       .ac_m_axis_tdest	(ac_m_axis_tdest),
 			       .ac_m_axis_tuser	(ac_m_axis_tuser),
-			       .m_axis_tready	(m_axis_tready));
+			       .m_axis_tready	(st_usm_axis_tready)); // Templated
+
+
+
+	/* usm AUTO_TEMPLATE(
+		.s_axis_tvalid		(st_usm_axis_tvalid),
+		.s_axis_tid		    (st_usm_axis_tid),
+		.s_axis_tdata		(st_usm_axis_tdata),
+		.s_axis_tkeep		(st_usm_axis_tkeep),
+		.s_axis_tstrb		(st_usm_axis_tstrb),
+		.s_axis_tlast		(st_usm_axis_tlast),
+		.s_axis_tdest		(st_usm_axis_tdest),
+		.s_axis_user		(st_usm_axis_user),
+		.s_axis_tready		(st_usm_axis_tready),
+		.m_axis_tdata		(m_axis_tdata),
+		.m_axis_tkeep		(m_axis_tkeep),
+		.m_axis_tstrb		(m_axis_tstrb),
+	)
+	*/
+	usm # (
+	       .AXIS_DATA_WIDTH		(AXISOUT_DATA_WIDTH),
+	       .AXIS_STRB_WIDTH		(AXISOUT_STRB_WIDTH),
+	       .COV_SIZE		(COV_SIZE),
+	       .CH_WIDTH		(CH_WIDTH),
+	       .WEIGHT_WIDTH		(WEIGHT_WIDTH),
+	       .DST_IMAGE_WIDTH		(DST_IMG_WIDTH),
+	       .DST_IMAGE_HEIGHT	(DST_IMG_HEIGHT))
+	AAA_usm(/*AUTOINST*/
+		// Outputs
+		.s_axis_tready		(st_usm_axis_tready),	 // Templated
+		.m_axis_tvalid		(m_axis_tvalid),
+		.m_axis_tid		(m_axis_tid),
+		.m_axis_tdata		(m_axis_tdata),		 // Templated
+		.m_axis_tkeep		(m_axis_tkeep),		 // Templated
+		.m_axis_tstrb		(m_axis_tstrb),		 // Templated
+		.m_axis_tlast		(m_axis_tlast),
+		.m_axis_tdest		(m_axis_tdest),
+		.m_axis_user		(m_axis_user),
+		// Inputs
+		.s_axis_tvalid		(st_usm_axis_tvalid),	 // Templated
+		.s_axis_tid		(st_usm_axis_tid),	 // Templated
+		.s_axis_tdata		(st_usm_axis_tdata),	 // Templated
+		.s_axis_tkeep		(st_usm_axis_tkeep),	 // Templated
+		.s_axis_tstrb		(st_usm_axis_tstrb),	 // Templated
+		.s_axis_tlast		(st_usm_axis_tlast),	 // Templated
+		.s_axis_tdest		(st_usm_axis_tdest),	 // Templated
+		.s_axis_user		(st_usm_axis_user),	 // Templated
+		.m_axis_tready		(m_axis_tready),
+		.clk			(clk),
+		.rst_n			(rst_n));
 
 endmodule

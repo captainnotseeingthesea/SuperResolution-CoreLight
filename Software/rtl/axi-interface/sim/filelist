@@ -2,15 +2,16 @@
 "../env/utils/utils_pkg.sv"
 
 // Src
+"../../common/bram_subbank.v"
+"../../common/fifo.v"
+"../../common/dffs.v"
+
 "../src/access_control.v"
 "../src/config_register_file.v"
 "../src/stream_in.v"
-"../src/bram_subbank.v"
-"../src/fifo.v"
 "../src/upsp_outbuf.v"
 "../src/ac_outbuf.v"
 "../src/stream_transformer.v"
-
 
 "../../bicubic/v2/src/bicubic_mult_stage1.v"
 "../../bicubic/v2/src/bicubic_mult_stage2.v"
@@ -21,9 +22,11 @@
 "../../bicubic/v2/src/bicubic_vector_mult_stage2.v"
 "../../bicubic/v2/src/bicubic_wvector_mult_pmatrix.v"
 "../../bicubic/v2/src/buffer_sram.v"
-"../../bicubic/v2/src/dffs.v"
 "../../bicubic/v2/src/sram.v"
 
+"../../usm/src/UnsignedAdderTree.v"
+"../../usm/src/usm.v"
+"../../usm/src/vector_cov.v"
 
 // DUT
 "../env/interface_lib/ifs.sv"
