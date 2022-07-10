@@ -46,8 +46,9 @@ module access_control # (
    clk, rst_n, crf_ac_UPSTART, crf_ac_UPEND, crf_ac_wbusy,
    upsp_ac_rready, upsp_ac_wvalid, upsp_ac_wdata, s_axis_tvalid,
    s_axis_tid, s_axis_tdata, s_axis_tstrb, s_axis_tkeep, s_axis_tlast,
-   s_axis_tdest, s_axis_tuser, ac_m_axis_tready, trans_m_axis_tvalid,
-   trans_m_axis_tready, trans_m_axis_tlast
+   s_axis_tdest, s_axis_tuser, ac_m_axis_tready,
+   finnalout_m_axis_tvalid, finnalout_m_axis_tready,
+   finnalout_m_axis_tlast
    );
 
 	localparam AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8;
@@ -101,7 +102,7 @@ module access_control # (
 
 	localparam IMG_CNT_WIDTH      = $clog2(DST_GEN_WIDTH*DST_IMG_HEIGHT+1);
 	localparam DST_IMG_WIDTH_LB2  = $clog2(DST_GEN_WIDTH+1);
-
+	localparam DST_IMG_HEIGHT_LB2  = $clog2(DST_IMG_HEIGHT+1);
 
 	input clk;
 	input rst_n;
@@ -160,9 +161,9 @@ module access_control # (
 
 
 	// Interface with out stream transformer
-    input trans_m_axis_tvalid;
-	input trans_m_axis_tready;
-	input trans_m_axis_tlast ;
+    input finnalout_m_axis_tvalid;
+	input finnalout_m_axis_tready;
+	input finnalout_m_axis_tlast ;
 
 
 	/*AUTOWIRE*/
@@ -198,8 +199,17 @@ module access_control # (
 	end
 
 	// After finish upsampling, clear UPSTART and write UPEND.
-	wire last_one_remain;
-	wire write_done = trans_m_axis_tvalid & trans_m_axis_tready & trans_m_axis_tlast & last_one_remain;
+	reg [DST_IMG_HEIGHT_LB2-1:0] out_line_count;
+	wire last_one_remain = (out_line_count  == DST_IMG_HEIGHT - 1)?1'b1:1'b0;
+	wire write_done = finnalout_m_axis_tvalid & finnalout_m_axis_tready & finnalout_m_axis_tlast & last_one_remain;
+
+	always@(posedge clk or negedge rst_n) begin: OLINE_COUNT
+		if(~rst_n | write_done)
+			out_line_count <= 1'b0;
+		else if(finnalout_m_axis_tvalid & finnalout_m_axis_tready & finnalout_m_axis_tlast)
+			out_line_count <= out_line_count + 1;
+	end
+
 	always@(posedge clk or negedge rst_n) begin
 		if(~rst_n) begin
 			/*AUTORESET*/
@@ -234,8 +244,8 @@ module access_control # (
 	// axi-s handshake signals to crf
 	wire ac_crf_axisi_tvalid = s_axis_tvalid;
 	wire ac_crf_axisi_tready = s_axis_tready;
-	wire ac_crf_axiso_tvalid = ac_m_axis_tvalid;
-	wire ac_crf_axiso_tready = ac_m_axis_tready;
+	wire ac_crf_axiso_tvalid = finnalout_m_axis_tvalid;
+	wire ac_crf_axiso_tready = finnalout_m_axis_tready;
 	wire ac_crf_processing   = processing;
 
 
@@ -284,7 +294,6 @@ module access_control # (
 	reg [IMG_CNT_WIDTH-1:0]   ac_rdbuf_cnt;
 	reg [DST_IMG_WIDTH_LB2:0] ac_rdbuf_cnt_inrow;
 	// assign ac_rdbuf_cnt_inrow = (ac_rdbuf_cnt % DST_GEN_WIDTH);
-	assign last_one_remain = (ac_rdbuf_cnt  == DST_IMG_HEIGHT*DST_GEN_WIDTH)?1'b1:1'b0;
 
 	always @(posedge clk or negedge rst_n) begin: BUFRD_COUNT
 		if(~rst_n) begin
@@ -558,14 +567,6 @@ module access_control # (
 			startup <= 1'b1;
 		else
 			startup <= 1'b0;
-	end
-
-	integer out_line_count;
-	always@(posedge clk or negedge rst_n) begin: LINE_COUNT
-		if(~rst_n | write_done)
-			out_line_count <= 1'b0;
-		else if(trans_m_axis_tvalid & trans_m_axis_tready & trans_m_axis_tlast)
-			out_line_count <= out_line_count + 1;
 	end
 
 `endif
