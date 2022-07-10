@@ -3,6 +3,9 @@
         "bmp.h": "c",
         "stdlib.h": "c",
         "random": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "zoom.h": "c",
+        "bcci.h": "c",
+        "scale.h": "c"
     }
 }

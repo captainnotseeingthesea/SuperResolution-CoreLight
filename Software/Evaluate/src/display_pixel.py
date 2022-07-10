@@ -1,7 +1,7 @@
 from PIL import Image
 
-f = open("output.txt", "w")
-img = Image.open('../upscaled/0.bmp')
+f = open("../../rtl/usm/tb/usm.txt", "w")
+img = Image.open('../../rtl/usm/tb/correct.bmp')
 rgb_img = img.convert("RGB")
 
 """ Generate the memory map for bmp """
@@ -33,9 +33,9 @@ rgb_img = img.convert("RGB")
 """ print each 4 pixels of bmp """
 str = ""
 for i in range(img.height):
-    for j in range(img.width // 8):
+    for j in range(img.width // 16):
         str = ""
-        for k in range(8):
-            r, g, b = rgb_img.getpixel(((j + 1) * 8 - k - 1, i))
+        for k in range(16):
+            r, g, b = rgb_img.getpixel(((j + 1) * 16 - k - 1, img.height - i - 1))
             str += '{:02X}'.format(r) + '{:02X}'.format(g) + '{:02X}'.format(b)
         print(str, file=f)
