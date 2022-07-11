@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/Software/zoom/app",
-            "args": ["${workspaceFolder}/Software/Evaluate/upscaled/0.bmp", "${workspaceFolder}/Software/Evaluate/src/image_usm.bmp", "1", "2"],
+            "args": ["${workspaceFolder}/Software/rtl/usm/tb/onepiece54.bmp", "${workspaceFolder}/Software/rtl/usm/tb/usm.bmp", "4", "2"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/Software/zoom",
             "environment": [],

@@ -29,7 +29,6 @@ module bcci_ip
 
 	parameter AXISOUT_DATA_WIDTH = 24*4*N_PARALLEL     ,
 	parameter AXI_STRB_WIDTH     = AXI_DATA_WIDTH/8    ,
-	parameter AXIS_STRB_WIDTH    = AXI_DATA_WIDTH/8    ,
 	parameter AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8 ,
 	parameter AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8
 )

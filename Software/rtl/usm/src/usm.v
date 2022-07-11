@@ -76,7 +76,7 @@ module usm #(
     function [BRAM_ELE_WIDTH / 3 - 1 : 0] negative_data;
         input [PARTIAL_SUM_ELE_WIDTH - 1 : 0] data;
         begin
-            negative_data = {{(BRAM_ELE_WIDTH / 3 - PARTIAL_SUM_ELE_WIDTH){1'b1}}, ~data + 1'b1};
+            negative_data = data == {PARTIAL_SUM_ELE_WIDTH{1'b0}} ? {(BRAM_ELE_WIDTH / 3){1'b0}} : {{(BRAM_ELE_WIDTH / 3 - PARTIAL_SUM_ELE_WIDTH){1'b1}}, ~data + 1'b1};
         end
     endfunction
 
@@ -781,35 +781,35 @@ module usm #(
     end
 
     /* signal used to debug */
-    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_ina   [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_outa  [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_data_a[COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_inb   [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_outb  [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_data_b[COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    // wire [PARTIAL_SUM_ELE_WIDTH - 1 : 0] debug_partial_sum_late [COV_SIZE - 1 : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_ina   [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_outa  [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_data_a[COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_inb   [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_outb  [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_data_b[COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    wire [PARTIAL_SUM_ELE_WIDTH - 1 : 0] debug_partial_sum_late [COV_SIZE - 1 : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
 
 
-    // generate
-    //     for(i = 0; i < COV_SIZE + 1; i = i + 1) begin
-    //         for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
-    //             for(k = 0; k < 3; k = k + 1) begin
-    //                 assign debug_bram_ina   [i][j][k] = bram_ina   [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-    //                 assign debug_bram_outa  [i][j][k] = bram_outa  [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-    //                 assign debug_bram_data_a[i][j][k] = bram_data_a[i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-    //                 assign debug_bram_inb   [i][j][k] = bram_inb   [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-    //                 assign debug_bram_outb  [i][j][k] = bram_outb  [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-    //                 assign debug_bram_data_b[i][j][k] = bram_data_b[i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-    //             end
-    //         end
-    //     end
-    //     for(i = 0; i < COV_SIZE; i = i + 1) begin
-    //         for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
-    //             for(k = 0; k < 3; k = k + 1) begin
-    //                 assign debug_partial_sum_late[i][j][k] = partial_sum_late[i][k][j * PARTIAL_SUM_ELE_WIDTH +: PARTIAL_SUM_ELE_WIDTH];
-    //             end
-    //         end
-    //     end
-    // endgenerate
+    generate
+        for(i = 0; i < COV_SIZE + 1; i = i + 1) begin
+            for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
+                for(k = 0; k < 3; k = k + 1) begin
+                    assign debug_bram_ina   [i][j][k] = bram_ina   [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+                    assign debug_bram_outa  [i][j][k] = bram_outa  [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+                    assign debug_bram_data_a[i][j][k] = bram_data_a[i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+                    assign debug_bram_inb   [i][j][k] = bram_inb   [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+                    assign debug_bram_outb  [i][j][k] = bram_outb  [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+                    assign debug_bram_data_b[i][j][k] = bram_data_b[i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+                end
+            end
+        end
+        for(i = 0; i < COV_SIZE; i = i + 1) begin
+            for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
+                for(k = 0; k < 3; k = k + 1) begin
+                    assign debug_partial_sum_late[i][j][k] = partial_sum_late[i][k][j * PARTIAL_SUM_ELE_WIDTH +: PARTIAL_SUM_ELE_WIDTH];
+                end
+            end
+        end
+    endgenerate
 
 endmodule
