@@ -208,6 +208,9 @@ module bcci_ip
 	wire [N_PARALLEL*UPSP_WRTDATA_WIDTH-1:0] upsp_ac_wdata;
 
     /* access_control AUTO_TEMPLATE (
+		.finnalout_m_axis_tvalid(m_axis_tvalid),
+		.finnalout_m_axis_tready(m_axis_tready),
+		.finnalout_m_axis_tlast(m_axis_tlast),
     );
     */
     access_control #(/*AUTOINSTPARAM*/
@@ -264,9 +267,9 @@ module bcci_ip
 		       .s_axis_tdest	(s_axis_tdest),
 		       .s_axis_tuser	(s_axis_tuser),
 		       .ac_m_axis_tready(ac_m_axis_tready),
-		       .trans_m_axis_tvalid(trans_m_axis_tvalid),
-		       .trans_m_axis_tready(trans_m_axis_tready),
-		       .trans_m_axis_tlast(trans_m_axis_tlast));	
+		       .finnalout_m_axis_tvalid(m_axis_tvalid),	 // Templated
+		       .finnalout_m_axis_tready(m_axis_tready),	 // Templated
+		       .finnalout_m_axis_tlast(m_axis_tlast));	 // Templated
 
 	// N processing elements
 	genvar j;
