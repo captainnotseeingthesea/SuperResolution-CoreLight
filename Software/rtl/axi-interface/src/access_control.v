@@ -39,9 +39,9 @@ module access_control # (
    ac_crf_wrt, ac_crf_wdata, ac_crf_waddr, ac_crf_processing,
    ac_crf_axisi_tvalid, ac_crf_axisi_tready, ac_crf_axiso_tvalid,
    ac_crf_axiso_tready, ac_upsp_rvalid, ac_upsp_rdata, ac_upsp_wready,
-   s_axis_tready, ac_m_axis_tvalid, ac_m_axis_tid, ac_m_axis_tdata,
-   ac_m_axis_tkeep, ac_m_axis_tstrb, ac_m_axis_tlast, ac_m_axis_tdest,
-   ac_m_axis_tuser,
+   ac_upsp_reset, s_axis_tready, ac_m_axis_tvalid, ac_m_axis_tid,
+   ac_m_axis_tdata, ac_m_axis_tkeep, ac_m_axis_tstrb, ac_m_axis_tlast,
+   ac_m_axis_tdest, ac_m_axis_tuser,
    // Inputs
    clk, rst_n, crf_ac_UPSTART, crf_ac_UPEND, crf_ac_wbusy,
    upsp_ac_rready, upsp_ac_wvalid, upsp_ac_wdata, s_axis_tvalid,
@@ -122,12 +122,13 @@ module access_control # (
 
 
 	// Interface with N upsp modules
-	input  [N_PARALLEL-1:0]					  upsp_ac_rready;
-	output [N_PARALLEL-1:0]         		  ac_upsp_rvalid;
-	output [UPSP_RDDATA_WIDTH-1:0]            ac_upsp_rdata;
-	output [N_PARALLEL-1:0]                   ac_upsp_wready;
-	input  [N_PARALLEL-1:0]                   upsp_ac_wvalid;
+	input  [N_PARALLEL-1:0]					   upsp_ac_rready;
+	output [N_PARALLEL-1:0]         		   ac_upsp_rvalid;
+	output [UPSP_RDDATA_WIDTH-1:0]             ac_upsp_rdata;
+	output [N_PARALLEL-1:0]                    ac_upsp_wready;
+	input  [N_PARALLEL-1:0]                    upsp_ac_wvalid;
 	input  [N_PARALLEL*UPSP_WRTDATA_WIDTH-1:0] upsp_ac_wdata;
+	output                                     ac_upsp_reset;
 
 
 
@@ -202,6 +203,7 @@ module access_control # (
 	reg [DST_IMG_HEIGHT_LB2-1:0] out_line_count;
 	wire last_one_remain = (out_line_count  == DST_IMG_HEIGHT - 1)?1'b1:1'b0;
 	wire write_done = finnalout_m_axis_tvalid & finnalout_m_axis_tready & finnalout_m_axis_tlast & last_one_remain;
+	assign ac_upsp_reset = write_done;
 
 	always@(posedge clk or negedge rst_n) begin: OLINE_COUNT
 		if(~rst_n | write_done)

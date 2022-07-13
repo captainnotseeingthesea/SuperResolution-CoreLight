@@ -54,6 +54,7 @@ module ac_crf_top(ac_if acif);
     wire [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tstrb;// From AAA_access_control of access_control.v
     wire		ac_m_axis_tuser;	// From AAA_access_control of access_control.v
     wire		ac_m_axis_tvalid;	// From AAA_access_control of access_control.v
+    wire		ac_upsp_reset;		// From AAA_access_control of access_control.v
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
@@ -191,6 +192,7 @@ module ac_crf_top(ac_if acif);
 		       .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid), // Templated
 		       .ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]), // Templated
 		       .ac_upsp_wready	(acif.usif.ac_upsp_wready), // Templated
+		       .ac_upsp_reset	(ac_upsp_reset),
 		       .s_axis_tready	(acif.stream_master.axis_tready), // Templated
 		       .ac_m_axis_tvalid(ac_m_axis_tvalid),
 		       .ac_m_axis_tid	(ac_m_axis_tid),
