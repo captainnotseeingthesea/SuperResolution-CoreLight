@@ -47,7 +47,7 @@ module bram_subbank # (
 
 
     // memory array
-    reg [DATA_WIDTH-1:0] mem [0:DEPTH-1];
+    (*ram_style = "block"*)reg [DATA_WIDTH-1:0] mem [0:DEPTH-1];
     wire ren = cs & re;
     wire wen = cs & we;
 
@@ -57,9 +57,40 @@ module bram_subbank # (
         if(wen)
             mem[waddr] <= din;
     end
-
 endmodule
 
+module bram_subbank_single_port #(
+    parameter DEPTH = 32,
+    parameter DATA_WIDTH = 24,
+    parameter ADDR_WIDTH = 32
+) (
+    // Outputs
+   dout,
+   // Inputs
+   clk, din, addr, en, we
+);
+
+    input                       clk;
+    input                       en;
+    input                       we;
+    input  [DATA_WIDTH - 1 : 0] din;
+    input  [ADDR_WIDTH - 1 : 0] addr;
+    output [DATA_WIDTH - 1 : 0] dout;
+
+    reg [DATA_WIDTH - 1 : 0] dout;
+
+    // memory array
+    (*ram_style = "block"*)reg [DATA_WIDTH-1:0] mem [0:DEPTH-1];
+
+    always@(posedge clk) begin
+        if(en) begin
+            if(we)
+                mem[addr] <= din;
+            dout <= mem[addr];
+        end
+    end
+    
+endmodule
 
 module bram_subbank_dual_port # (
 		parameter DEPTH      = 32,
@@ -113,13 +144,6 @@ module bram_subbank_dual_port # (
             if(web)
                 mem[addrb] <= dinb;
             doutb <= mem[addrb];
-        end
-    end
-
-    initial begin : init_ram
-        integer i;
-        for(i = 0; i < DEPTH; i = i + 1) begin
-            mem[i] = {DATA_WIDTH{1'b0}};
         end
     end
 
