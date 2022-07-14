@@ -176,6 +176,7 @@ module access_control # (
 	reg		ac_crf_wrt;
 	reg		ac_m_axis_tlast;
 	reg		ac_m_axis_tvalid;
+	reg		ac_upsp_reset;
 	// End of automatics
 	reg [AXISOUT_DATA_WIDTH-1:0] ac_m_axis_tdata;
 
@@ -203,7 +204,13 @@ module access_control # (
 	reg [DST_IMG_HEIGHT_LB2-1:0] out_line_count;
 	wire last_one_remain = (out_line_count  == DST_IMG_HEIGHT - 1)?1'b1:1'b0;
 	wire write_done = finnalout_m_axis_tvalid & finnalout_m_axis_tready & finnalout_m_axis_tlast & last_one_remain;
-	assign ac_upsp_reset = write_done;
+	
+	always@(posedge clk or negedge rst_n) begin: UPSP_RESET
+		if(~rst_n) 
+			ac_upsp_reset <= 1'b0;
+		else
+			ac_upsp_reset <= write_done;
+	end
 
 	always@(posedge clk or negedge rst_n) begin: OLINE_COUNT
 		if(~rst_n | write_done)
