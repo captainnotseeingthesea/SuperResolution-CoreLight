@@ -97,7 +97,11 @@ module usm #(
 
     wire input_valid = s_axis_tready & s_axis_tvalid; // signal to indicate the valid input data
     wire end_line = s_axis_tlast & input_valid; // the end flag the line
-    wire cov_done = count >= (INPUT_PIXEL_NUM + 2 * EDGE_WIDTH); // flag to signal a convolutionary operation done
+    wire valid_data = count >= (INPUT_PIXEL_NUM + 2 * EDGE_WIDTH);
+    wire [COV_SIZE * 3 - 1 : 0] cov_done_elem;
+    wire all_cov_done = |cov_done_elem;  // flag to signal a convolutionary operation done
+    wire cov_done;
+    wire cov_done_next;
     wire cov_done_late;
 
     // AXIS output signal
@@ -110,8 +114,7 @@ module usm #(
     wire [(INPUT_PIXEL_NUM + 2 * EDGE_WIDTH) * CH_WIDTH - 1 : 0] pixel_vector [2 : 0];
     wire [WEIGHT_WIDTH * COV_SIZE - 1 : 0] weight_vector [COV_SIZE - 1 : 0];
     wire [INPUT_PIXEL_NUM * (PARTIAL_SUM_ELE_WIDTH) - 1 : 0] partial_sum [COV_SIZE - 1 : 0][2 : 0];
-    wire [INPUT_PIXEL_NUM * (PARTIAL_SUM_ELE_WIDTH) - 1 : 0] partial_sum_late [COV_SIZE - 1 : 0][2 : 0];
-    wire [INPUT_PIXEL_NUM * (BRAM_ELE_WIDTH / 3) - 1 : 0] negative_partial_sum_late [COV_SIZE - 1 : 0][2 : 0];
+    reg  [INPUT_PIXEL_NUM * (BRAM_ELE_WIDTH / 3) - 1 : 0] negative_partial_sum_late [COV_SIZE - 1 : 0][2 : 0];
 
     wire [$clog2(DST_IMAGE_WIDTH / INPUT_PIXEL_NUM) - 1 : 0] r_addra; // addr to read the bram bank
     wire [$clog2(DST_IMAGE_WIDTH / INPUT_PIXEL_NUM) - 1 : 0] w_addra; // addr to write the bram bank
@@ -125,13 +128,15 @@ module usm #(
     wire [$clog2(DST_IMAGE_WIDTH / INPUT_PIXEL_NUM) - 1 : 0] next_w_addrb = (w_addrb == (DST_IMAGE_WIDTH / INPUT_PIXEL_NUM - 1) ? {($clog2(DST_IMAGE_WIDTH / INPUT_PIXEL_NUM)){1'b0}} : w_addrb + 1); // next addr to write the bram bank
     
     wire [BRAM_DATA_WIDTH - 1 : 0] bram_ina [COV_SIZE : 0]; // data input to port a of bram banks
-    reg  [BRAM_DATA_WIDTH - 1 : 0] bram_inb [COV_SIZE : 0]; // data input to port b of the bram banks
+    wire [BRAM_DATA_WIDTH - 1 : 0] bram_inb [COV_SIZE : 0]; // data input to port b of the bram banks
     wire [BRAM_DATA_WIDTH - 1 : 0] bram_outa [COV_SIZE : 0]; // data output of the bram banks
     wire [BRAM_DATA_WIDTH - 1 : 0] bram_outb [COV_SIZE : 0]; // data output of the bram banks
     wire  [BRAM_DATA_WIDTH - 1 : 0] bram_data_b [COV_SIZE : 0]; // data of port b of bram banks
 
     reg  [BRAM_DATA_WIDTH - 1 : 0] partial_sum_in_0 [COV_SIZE - 1 : 0]; // negative partial sum 0 input to port b of the bram banks
     reg  [BRAM_DATA_WIDTH - 1 : 0] partial_sum_in_1 [COV_SIZE - 1: 0]; // negative partial sum 1 input to port b of the bram banks
+    reg  [BRAM_DATA_WIDTH - 1 : 0] partial_sum_in   [COV_SIZE - 1: 0]; // negative partial sum (0 + 1) input to port b of the bram banks
+    reg  [BRAM_DATA_WIDTH - 1 : 0] bram_b_in        [COV_SIZE: 0]; // negative partial sum (0 + 1 + origin) input to port b of the bram banks
 
     wire [COV_SIZE: 0] ena; // prot a enable vector to select corresponding bram banks
     wire [COV_SIZE: 0] enb; // port b enable vector to select corresponding bram banks
@@ -161,12 +166,12 @@ module usm #(
     wire line_is_normal = (line_state == NORMAL) ? 1'b1 : 1'b0;
     wire line_is_last = (line_state == LAST) ? 1'b1 : 1'b0;
     wire line_is_last_edge = (line_state == LAST_EDGE) ? 1'b1 : 1'b0;
-    wire line_is_last_edge_late;
 
+    wire line_complete = (w_addrb == (DST_IMAGE_WIDTH / INPUT_PIXEL_NUM - 1)) & (cov_done_late);
     wire state_idle_exit_ena = line_is_idle & input_valid;
     wire state_normal_exit_ena = line_is_normal & end_line;
     wire state_last_exit_ena = line_is_last;
-    wire state_last_edge_exit_ena = line_is_last_edge_late;
+    wire state_last_edge_exit_ena = line_complete;
 
     wire line_state_ena = state_idle_exit_ena
                         | state_normal_exit_ena
@@ -187,15 +192,22 @@ module usm #(
     );
 
     dffr #(.DW(1)) cov_done_dffr(
-        .dnxt(cov_done),
-        .qout(cov_done_late),
+        .dnxt(all_cov_done),
+        .qout(cov_done),
         .clk(clk),
         .rst_n(rst_n)
     );
 
-    dffr #(.DW(1)) line_is_last_edge_dffr(
-        .dnxt(line_is_last_edge),
-        .qout(line_is_last_edge_late),
+    dffr #(.DW(1)) cov_done_next_dffr(
+        .dnxt(cov_done),
+        .qout(cov_done_next),
+        .clk(clk),
+        .rst_n(rst_n)
+    );
+
+    dffr #(.DW(1)) cov_done_late_dffr(
+        .dnxt(cov_done_next),
+        .qout(cov_done_late),
         .clk(clk),
         .rst_n(rst_n)
     );
@@ -211,7 +223,7 @@ module usm #(
     assign nxt_idle_pos = (idle_pos + input_stride >= INPUT_BUFFER_SIZE) ? (idle_pos + input_stride - INPUT_BUFFER_SIZE) : (idle_pos + input_stride);
     assign nxt_start_pos = (start_pos + output_stride >= INPUT_BUFFER_SIZE) ? (start_pos + output_stride - INPUT_BUFFER_SIZE) : (start_pos + output_stride);
     assign idle_pos_ena = input_valid | line_is_last;
-    assign start_pos_ena = cov_done;
+    assign start_pos_ena = valid_data;
 
     assign count = (idle_pos == start_pos) ? ((line_is_idle | line_is_last_edge) ? {COUNT_WIDTH{1'b0}} : INPUT_BUFFER_SIZE) : ((idle_pos > start_pos) ? (idle_pos - start_pos) : (INPUT_BUFFER_SIZE - start_pos + idle_pos));
 
@@ -322,15 +334,13 @@ module usm #(
                     .WEIGHT_WIDTH(WEIGHT_WIDTH)
                 )
                 test_u(
+                    .clk(clk),
+                    .rst_n(rst_n),
+                    .valid_data(valid_data),
                     .pixel_vector(pixel_vector[j]),
                     .weight_vector(weight_vector[i]),
-                    .partial_sum(partial_sum[i][j])
-                );
-                dffr #(.DW(INPUT_PIXEL_NUM * (PARTIAL_SUM_ELE_WIDTH))) cov_data_dffr(
-                    .dnxt(partial_sum[i][j]),
-                    .qout(partial_sum_late[i][j]),
-                    .clk(clk),
-                    .rst_n(rst_n)
+                    .partial_sum(partial_sum[i][j]),
+                    .cov_done(cov_done_elem[3 * i + j])
                 );
             end
         end
@@ -340,7 +350,14 @@ module usm #(
         for(i = 0; i < COV_SIZE; i = i + 1) begin
             for(j = 0; j < 3; j = j + 1) begin
                 for(k = 0; k < INPUT_PIXEL_NUM; k = k + 1) begin
-                    assign negative_partial_sum_late[i][j][k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_data(partial_sum_late[i][j][k * PARTIAL_SUM_ELE_WIDTH +: PARTIAL_SUM_ELE_WIDTH]);
+                    always @(posedge clk or negedge rst_n) begin
+                        if(~rst_n) begin
+                            negative_partial_sum_late[i][j][k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] <= {(BRAM_ELE_WIDTH / 3){1'b0}};
+                        end
+                        else begin
+                            negative_partial_sum_late[i][j][k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] <= negative_data(partial_sum[i][j][k * PARTIAL_SUM_ELE_WIDTH +: PARTIAL_SUM_ELE_WIDTH]);
+                        end
+                    end
                 end
             end
         end
@@ -352,7 +369,7 @@ module usm #(
     wire r_addrb_ena;
     wire [LINE_COUNT_WIDTH - 1 : 0] line_count; // the number of input lines
     wire [LINE_COUNT_WIDTH - 1 : 0] next_line_count = line_count + 1;
-    wire line_count_ena = line_is_last_edge_late & line_is_last_edge;
+    wire line_count_ena = line_complete;
     wire [LINE_COUNT_WIDTH - 1 : 0] start_output_line = (line_count > EDGE_WIDTH) ? line_count - EDGE_WIDTH : {LINE_COUNT_WIDTH{1'b0}};
     wire [LINE_COUNT_WIDTH - 1 : 0] last_output_line = (line_count < DST_IMAGE_HEIGHT - EDGE_WIDTH) ? line_count + EDGE_WIDTH : DST_IMAGE_HEIGHT - 1;
     wire [LINE_COUNT_WIDTH - 1 : 0] output_line_num; // number of lines output to the M_AXIS
@@ -637,14 +654,20 @@ module usm #(
             end
             for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
                 for(k = 0; k < 3; k = k + 1) begin
-                    always @(*) begin
-                        if(enable_flag) begin
-                            bram_inb[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = partial_sum_in_0[correct_partial_sum_index][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] + partial_sum_in_1[correct_partial_sum_index][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] + bram_data_b[i][j * BRAM_ELE_WIDTH + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];   
+                    always @(posedge clk or negedge rst_n) begin
+                        if(~rst_n) begin
+                            bram_b_in[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] <= {(BRAM_ELE_WIDTH / 3){1'b0}};
                         end
                         else begin
-                            bram_inb[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = {(BRAM_ELE_WIDTH / 3){1'b0}};
+                            if(enable_flag) begin
+                                bram_b_in[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = partial_sum_in[correct_partial_sum_index][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] + bram_data_b[i][j * BRAM_ELE_WIDTH + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];   
+                            end
+                            else begin
+                                bram_b_in[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] <= {(BRAM_ELE_WIDTH / 3){1'b0}};
+                            end
                         end
                     end
+                    assign bram_inb[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = bram_b_in[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
                 end
             end
         end
@@ -652,6 +675,15 @@ module usm #(
         for(i = 0; i < COV_SIZE; i = i + 1) begin : partial_sum_control
             for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
                 for(k = 0; k < 3; k = k + 1) begin
+                    always @(posedge clk or negedge rst_n) begin
+                        if(~rst_n) begin
+                            partial_sum_in[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] <= {(BRAM_ELE_WIDTH / 3){1'b0}};
+                        end
+                        else begin
+                            partial_sum_in[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] <= partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] + partial_sum_in_1[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
+                        end
+                    end
+                    
                     always @(*) begin
                         if(usm_is_start & edge_distance == 0 & i < EDGE_WIDTH + 1) begin
                             partial_sum_in_0[i][(j * BRAM_ELE_WIDTH) + k * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)] = negative_partial_sum_late[EDGE_WIDTH - i][k][j * (BRAM_ELE_WIDTH / 3) +: (BRAM_ELE_WIDTH / 3)];
@@ -723,43 +755,43 @@ module usm #(
     end
 
     /* signal used to debug */
-    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_ina   [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_outa  [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_inb   [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_outb  [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_data_b[COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    wire [PARTIAL_SUM_ELE_WIDTH - 1 : 0] debug_partial_sum_late [COV_SIZE - 1 : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_compuate_data [INPUT_PIXEL_NUM - 1 : 0][2 : 0];
-    wire [CH_WIDTH : 0] debug_output_data [INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_ina   [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_outa  [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_inb   [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_outb  [COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_bram_data_b[COV_SIZE : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    // wire [PARTIAL_SUM_ELE_WIDTH - 1 : 0] debug_partial_sum_late [COV_SIZE - 1 : 0][INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    // wire [CH_WIDTH + EXPAND_PRECISION + 1 : 0] debug_compuate_data [INPUT_PIXEL_NUM - 1 : 0][2 : 0];
+    // wire [CH_WIDTH : 0] debug_output_data [INPUT_PIXEL_NUM - 1 : 0][2 : 0];
 
 
-    generate
-        for(i = 0; i < COV_SIZE + 1; i = i + 1) begin
-            for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
-                for(k = 0; k < 3; k = k + 1) begin
-                    assign debug_bram_ina   [i][j][k] = bram_ina   [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-                    assign debug_bram_outa  [i][j][k] = bram_outa  [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-                    assign debug_bram_inb   [i][j][k] = bram_inb   [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-                    assign debug_bram_outb  [i][j][k] = bram_outb  [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-                    assign debug_bram_data_b[i][j][k] = bram_data_b[i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-                end
-            end
-        end
+    // generate
+    //     for(i = 0; i < COV_SIZE + 1; i = i + 1) begin
+    //         for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
+    //             for(k = 0; k < 3; k = k + 1) begin
+    //                 assign debug_bram_ina   [i][j][k] = bram_ina   [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+    //                 assign debug_bram_outa  [i][j][k] = bram_outa  [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+    //                 assign debug_bram_inb   [i][j][k] = bram_inb   [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+    //                 assign debug_bram_outb  [i][j][k] = bram_outb  [i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+    //                 assign debug_bram_data_b[i][j][k] = bram_data_b[i][j * BRAM_ELE_WIDTH + k * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+    //             end
+    //         end
+    //     end
 
-        for(i = 0; i < INPUT_PIXEL_NUM; i = i + 1) begin
-            for(j = 0; j < 3; j = j + 1) begin
-                assign debug_compuate_data[i][j] = compute_data[i * BRAM_ELE_WIDTH + j * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
-                assign debug_output_data[i][j] = output_data[i * (CH_WIDTH + 1) * 3 + j * (CH_WIDTH + 1) +: (CH_WIDTH + 1)];
-            end
-        end
+    //     for(i = 0; i < INPUT_PIXEL_NUM; i = i + 1) begin
+    //         for(j = 0; j < 3; j = j + 1) begin
+    //             assign debug_compuate_data[i][j] = compute_data[i * BRAM_ELE_WIDTH + j * (CH_WIDTH + EXPAND_PRECISION + 2) +: (CH_WIDTH + EXPAND_PRECISION + 2)];
+    //             assign debug_output_data[i][j] = output_data[i * (CH_WIDTH + 1) * 3 + j * (CH_WIDTH + 1) +: (CH_WIDTH + 1)];
+    //         end
+    //     end
 
-        for(i = 0; i < COV_SIZE; i = i + 1) begin
-            for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
-                for(k = 0; k < 3; k = k + 1) begin
-                    assign debug_partial_sum_late[i][j][k] = partial_sum_late[i][k][j * PARTIAL_SUM_ELE_WIDTH +: PARTIAL_SUM_ELE_WIDTH];
-                end
-            end
-        end
-    endgenerate
+    //     for(i = 0; i < COV_SIZE; i = i + 1) begin
+    //         for(j = 0; j < INPUT_PIXEL_NUM; j = j + 1) begin
+    //             for(k = 0; k < 3; k = k + 1) begin
+    //                 assign debug_partial_sum_late[i][j][k] = partial_sum[i][k][j * PARTIAL_SUM_ELE_WIDTH +: PARTIAL_SUM_ELE_WIDTH];
+    //             end
+    //         end
+    //     end
+    // endgenerate
 
 endmodule
