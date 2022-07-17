@@ -216,7 +216,9 @@ module access_control # (
 	end
 
 	always@(posedge clk or negedge rst_n) begin: OLINE_COUNT
-		if(~rst_n | write_done)
+		if(~rst_n)
+			out_line_count <= 1'b0;
+		else if(write_done)
 			out_line_count <= 1'b0;
 		else if(finnalout_m_axis_tvalid & finnalout_m_axis_tready & finnalout_m_axis_tlast)
 			out_line_count <= out_line_count + 1;

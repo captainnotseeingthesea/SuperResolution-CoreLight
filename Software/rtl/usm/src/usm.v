@@ -416,11 +416,13 @@ module usm #(
             );
 
             always @(posedge clk or negedge rst_n) begin
-                if(~rst_n | dirty_clear[i]) begin
+                if(~rst_n) begin
                     dirty_flag[i] <= 1'b0;
                     next_dirty_flag[i] <= 1'b0;
-                end
-                else begin        
+                end else if(dirty_clear[i]) begin
+                    dirty_flag[i] <= 1'b0;
+                    next_dirty_flag[i] <= 1'b0;
+                end else begin        
                     if(web[i] & ~dirty_flag[i]) begin
                         dirty_flag[i] <= 1'b1;
                     end
