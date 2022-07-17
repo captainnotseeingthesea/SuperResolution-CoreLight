@@ -99,7 +99,8 @@ module ac_crf_top(ac_if acif);
 			   .AXI_DATA_WIDTH	(AXI_DATA_WIDTH),
 			   .AXI_ADDR_WIDTH	(AXI_ADDR_WIDTH),
 			   .CRF_DATA_WIDTH	(CRF_DATA_WIDTH),
-			   .CRF_ADDR_WIDTH	(CRF_ADDR_WIDTH))
+			   .CRF_ADDR_WIDTH	(CRF_ADDR_WIDTH),
+			   .N_PARALLEL		(N_PARALLEL))
     AAA_config_register_file(/*AUTOINST*/
 			     // Outputs
 			     .s_axi_awready	(acif.lite_slave.axi_awready), // Templated
@@ -138,7 +139,8 @@ module ac_crf_top(ac_if acif);
 			     .ac_crf_processing	(ac_crf_processing),
 			     .ac_crf_ac2usm_tvalid(ac_crf_ac2usm_tvalid),
 			     .ac_crf_ac2usm_tready(ac_crf_ac2usm_tready),
-			     .ac_crf_ac2usm_tlast(ac_crf_ac2usm_tlast));
+			     .ac_crf_ac2usm_tlast(ac_crf_ac2usm_tlast),
+			     .upsp_ac_rready	(upsp_ac_rready[N_PARALLEL-1:0]));
 
     /* access_control AUTO_TEMPLATE (
 		       .UPSTR		(acif.usif.UPSTR[CRF_DATA_WIDTH-1:0]),

@@ -20,7 +20,8 @@ module config_register_file # (
 		parameter AXI_DATA_WIDTH = 32,
 		parameter AXI_ADDR_WIDTH = 32,
 		parameter CRF_DATA_WIDTH = 32,
-		parameter CRF_ADDR_WIDTH = 32
+		parameter CRF_ADDR_WIDTH = 32,
+		parameter N_PARALLEL     = 2
 	) (/*AUTOARG*/
    // Outputs
    s_axi_awready, s_axi_wready, s_axi_bvalid, s_axi_bresp,
@@ -33,7 +34,7 @@ module config_register_file # (
    ac_crf_wrt, ac_crf_waddr, ac_crf_wdata, ac_crf_axisi_tvalid,
    ac_crf_axisi_tready, ac_crf_axiso_tvalid, ac_crf_axiso_tready,
    ac_crf_processing, ac_crf_ac2usm_tvalid, ac_crf_ac2usm_tready,
-   ac_crf_ac2usm_tlast
+   ac_crf_ac2usm_tlast, upsp_ac_rready
    );
 
 	localparam RESP_OKAY = 2'b00;
@@ -92,6 +93,9 @@ module config_register_file # (
 	input                       ac_crf_ac2usm_tvalid;
 	input                       ac_crf_ac2usm_tready;
 	input                       ac_crf_ac2usm_tlast;
+
+	// Input processing element status
+	input [N_PARALLEL-1:0]      upsp_ac_rready;
 
 
 
@@ -182,26 +186,45 @@ module config_register_file # (
 	end
 
 	// Count how many lines transmitted to usm
-	reg [CRF_DATA_WIDTH-1:0] UP2USMCNT;
+	reg [CRF_DATA_WIDTH-1:0] UPUSMRCVCNT;
 	always@(posedge clk or negedge rst_n) begin: USMRCV_COUNT
 		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			UP2USMCNT <= {CRF_DATA_WIDTH{1'b0}};
+			UPUSMRCVCNT <= {CRF_DATA_WIDTH{1'b0}};
 			// End of automatics
 		end else if(ac_crf_processing) begin
 			if(ac_crf_ac2usm_tvalid & ac_crf_ac2usm_tready & ac_crf_ac2usm_tlast)
-				UP2USMCNT <= UP2USMCNT + 1;
+				UPUSMRCVCNT <= UPUSMRCVCNT + 1;
 		end else if(crf_ac_UPEND) begin
-			UP2USMCNT <= UP2USMCNT  ;
+			UPUSMRCVCNT <= UPUSMRCVCNT  ;
 		end else begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			UP2USMCNT <= {CRF_DATA_WIDTH{1'b0}};
+			UPUSMRCVCNT <= {CRF_DATA_WIDTH{1'b0}};
 			// End of automatics
 		end
 	end
 
+	// Track processing element status
+	reg [CRF_DATA_WIDTH-1:0] UPELERRDY;
+	always@(posedge clk or negedge rst_n) begin: UPELE_RDYSTAT
+		if(~rst_n) begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			UPELERRDY <= {CRF_DATA_WIDTH{1'b0}};
+			// End of automatics
+		end else if(ac_crf_processing) begin
+			UPELERRDY <= upsp_ac_rready;
+		end else if(crf_ac_UPEND) begin
+			UPELERRDY <= UPELERRDY  ;
+		end else begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			UPELERRDY <= {CRF_DATA_WIDTH{1'b0}};
+			// End of automatics
+		end
+	end
 
 /*************************** Performance monitoring registers end ***************************/
 
@@ -352,7 +375,8 @@ module config_register_file # (
 				12: s_axi_rdata <= UPOUTHSKCNT ;
 				16: s_axi_rdata <= UPOUTNRDYCNT;
 				20: s_axi_rdata <= UPPROCCNT   ;
-				24: s_axi_rdata <= UP2USMCNT   ;
+				24: s_axi_rdata <= UPUSMRCVCNT ;
+				28: s_axi_rdata <= UPELERRDY   ;
 				default: s_axi_rdata <= {AXI_DATA_WIDTH{1'b0}};
 			endcase
 		end else begin

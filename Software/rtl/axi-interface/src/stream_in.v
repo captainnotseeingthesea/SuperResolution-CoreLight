@@ -96,7 +96,7 @@ module stream_in # (
 		else if(one_row_hsked && input_row_cnt == SRC_IMG_HEIGHT - 1)
 			frame_done <= 1'b1;
 		// Up-Sampling finished the operation, which means no further data needed
-		else if(UPEND)
+		else if(input_row_cnt == SRC_IMG_HEIGHT)
 			frame_done <= 1'b1;
 		// reset when next stream begins.
 		else if(frame_done & UPSTART)

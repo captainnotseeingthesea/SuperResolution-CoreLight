@@ -154,6 +154,13 @@ module bcci_ip
 
 
 
+	wire [N_PARALLEL-1:0]					 upsp_ac_rready;
+	wire [N_PARALLEL-1:0]         		     ac_upsp_rvalid;
+	wire [UPSP_RDDATA_WIDTH-1:0]             ac_upsp_rdata;
+	wire [N_PARALLEL-1:0]                    ac_upsp_wready;
+	wire [N_PARALLEL-1:0]                    upsp_ac_wvalid;
+	wire [N_PARALLEL*UPSP_WRTDATA_WIDTH-1:0] upsp_ac_wdata;
+
     /* config_register_file AUTO_TEMPLATE(
     );
     */
@@ -162,7 +169,8 @@ module bcci_ip
 			   .AXI_DATA_WIDTH	(AXI_DATA_WIDTH),
 			   .AXI_ADDR_WIDTH	(AXI_ADDR_WIDTH),
 			   .CRF_DATA_WIDTH	(CRF_DATA_WIDTH),
-			   .CRF_ADDR_WIDTH	(CRF_ADDR_WIDTH))
+			   .CRF_ADDR_WIDTH	(CRF_ADDR_WIDTH),
+			   .N_PARALLEL		(N_PARALLEL))
     AAA_config_register_file(/*AUTOINST*/
 			     // Outputs
 			     .s_axi_awready	(s_axi_awready),
@@ -201,18 +209,9 @@ module bcci_ip
 			     .ac_crf_processing	(ac_crf_processing),
 			     .ac_crf_ac2usm_tvalid(ac_crf_ac2usm_tvalid),
 			     .ac_crf_ac2usm_tready(ac_crf_ac2usm_tready),
-			     .ac_crf_ac2usm_tlast(ac_crf_ac2usm_tlast));
+			     .ac_crf_ac2usm_tlast(ac_crf_ac2usm_tlast),
+			     .upsp_ac_rready	(upsp_ac_rready[N_PARALLEL-1:0]));
 
-
-
-
-
-	wire [N_PARALLEL-1:0]					 upsp_ac_rready;
-	wire [N_PARALLEL-1:0]         		     ac_upsp_rvalid;
-	wire [UPSP_RDDATA_WIDTH-1:0]             ac_upsp_rdata;
-	wire [N_PARALLEL-1:0]                    ac_upsp_wready;
-	wire [N_PARALLEL-1:0]                    upsp_ac_wvalid;
-	wire [N_PARALLEL*UPSP_WRTDATA_WIDTH-1:0] upsp_ac_wdata;
 
     /* access_control AUTO_TEMPLATE (
 		.finnalout_m_axis_tvalid(m_axis_tvalid),

@@ -48,8 +48,11 @@ import utils_pkg::*;
 `ifdef SIM_ONEPIECE54
         $dumpvars(0, tb_bcci_ip);
 `else
-        $dumpvars(3, tb_bcci_ip.dut.AAA_bcci.AAA_access_control.ac_rdbuf_cnt, 
+        $dumpvars(3, tb_bcci_ip.dut.AAA_bcci.AAA_access_control.ac_rdbuf_cnt,
         tb_bcci_ip.dut.AAA_bcci.AAA_config_register_file.UPPROCCNT,
+        tb_bcci_ip.dut.AAA_bcci.AAA_config_register_file.USMRCV_COUNT,
+        tb_bcci_ip.dut.AAA_bcci.AAA_config_register_file.UPELERRDY,
+        tb_bcci_ip.dut.AAA_bcci.AAA_config_register_file.interrupt_updone,
         tb_bcci_ip.dut.acif.stream_slave.axis_tvalid,
         tb_bcci_ip.dut.acif.stream_slave.axis_tready,
         tb_bcci_ip.dut.acif.stream_slave.axis_tlast);
