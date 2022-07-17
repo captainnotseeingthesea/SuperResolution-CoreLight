@@ -217,9 +217,12 @@ module access_control # (
 
 	always@(posedge clk or negedge rst_n) begin: OLINE_COUNT
 		if(~rst_n)
-			out_line_count <= 1'b0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			out_line_count <= {DST_IMG_HEIGHT_LB2{1'b0}};
+			// End of automatics
 		else if(write_done)
-			out_line_count <= 1'b0;
+			out_line_count <= {DST_IMG_HEIGHT_LB2{1'b0}};
 		else if(finnalout_m_axis_tvalid & finnalout_m_axis_tready & finnalout_m_axis_tlast)
 			out_line_count <= out_line_count + 1;
 	end
