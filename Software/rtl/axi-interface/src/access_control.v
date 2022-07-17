@@ -38,7 +38,8 @@ module access_control # (
    // Outputs
    ac_crf_wrt, ac_crf_wdata, ac_crf_waddr, ac_crf_processing,
    ac_crf_axisi_tvalid, ac_crf_axisi_tready, ac_crf_axiso_tvalid,
-   ac_crf_axiso_tready, ac_upsp_rvalid, ac_upsp_rdata, ac_upsp_wready,
+   ac_crf_axiso_tready, ac_crf_ac2usm_tvalid, ac_crf_ac2usm_tready,
+   ac_crf_ac2usm_tlast, ac_upsp_rvalid, ac_upsp_rdata, ac_upsp_wready,
    ac_upsp_reset, s_axis_tready, ac_m_axis_tvalid, ac_m_axis_tid,
    ac_m_axis_tdata, ac_m_axis_tkeep, ac_m_axis_tstrb, ac_m_axis_tlast,
    ac_m_axis_tdest, ac_m_axis_tuser,
@@ -119,7 +120,9 @@ module access_control # (
 	output                      ac_crf_axisi_tready;
 	output                      ac_crf_axiso_tvalid;
 	output                      ac_crf_axiso_tready;
-
+	output                      ac_crf_ac2usm_tvalid;
+	output                      ac_crf_ac2usm_tready;
+	output                      ac_crf_ac2usm_tlast;
 
 	// Interface with N upsp modules
 	input  [N_PARALLEL-1:0]					   upsp_ac_rready;
@@ -256,6 +259,10 @@ module access_control # (
 	wire ac_crf_axiso_tvalid = finnalout_m_axis_tvalid;
 	wire ac_crf_axiso_tready = finnalout_m_axis_tready;
 	wire ac_crf_processing   = processing;
+	wire ac_crf_ac2usm_tvalid = ac_m_axis_tvalid;
+	wire ac_crf_ac2usm_tready = ac_m_axis_tready;
+	wire ac_crf_ac2usm_tlast  = ac_m_axis_tlast;
+
 
 
 	// Stream in to handle input axi-stream

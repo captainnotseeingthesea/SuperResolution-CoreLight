@@ -38,6 +38,9 @@ module ac_crf_top(ac_if acif);
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    wire		ac_crf_ac2usm_tlast;	// From AAA_access_control of access_control.v
+    wire		ac_crf_ac2usm_tready;	// From AAA_access_control of access_control.v
+    wire		ac_crf_ac2usm_tvalid;	// From AAA_access_control of access_control.v
     wire		ac_crf_axisi_tready;	// From AAA_access_control of access_control.v
     wire		ac_crf_axisi_tvalid;	// From AAA_access_control of access_control.v
     wire		ac_crf_axiso_tready;	// From AAA_access_control of access_control.v
@@ -132,7 +135,10 @@ module ac_crf_top(ac_if acif);
 			     .ac_crf_axisi_tready(ac_crf_axisi_tready),
 			     .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
 			     .ac_crf_axiso_tready(ac_crf_axiso_tready),
-			     .ac_crf_processing	(ac_crf_processing));
+			     .ac_crf_processing	(ac_crf_processing),
+			     .ac_crf_ac2usm_tvalid(ac_crf_ac2usm_tvalid),
+			     .ac_crf_ac2usm_tready(ac_crf_ac2usm_tready),
+			     .ac_crf_ac2usm_tlast(ac_crf_ac2usm_tlast));
 
     /* access_control AUTO_TEMPLATE (
 		       .UPSTR		(acif.usif.UPSTR[CRF_DATA_WIDTH-1:0]),
@@ -189,6 +195,9 @@ module ac_crf_top(ac_if acif);
 		       .ac_crf_axisi_tready(ac_crf_axisi_tready),
 		       .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
 		       .ac_crf_axiso_tready(ac_crf_axiso_tready),
+		       .ac_crf_ac2usm_tvalid(ac_crf_ac2usm_tvalid),
+		       .ac_crf_ac2usm_tready(ac_crf_ac2usm_tready),
+		       .ac_crf_ac2usm_tlast(ac_crf_ac2usm_tlast),
 		       .ac_upsp_rvalid	(acif.usif.ac_upsp_rvalid), // Templated
 		       .ac_upsp_rdata	(acif.usif.ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]), // Templated
 		       .ac_upsp_wready	(acif.usif.ac_upsp_wready), // Templated

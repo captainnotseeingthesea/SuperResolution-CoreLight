@@ -108,6 +108,9 @@ module bcci_ip
 
     /*AUTOWIRE*/
     // Beginning of automatic wires (for undeclared instantiated-module outputs)
+    wire		ac_crf_ac2usm_tlast;	// From AAA_access_control of access_control.v
+    wire		ac_crf_ac2usm_tready;	// From AAA_access_control of access_control.v
+    wire		ac_crf_ac2usm_tvalid;	// From AAA_access_control of access_control.v
     wire		ac_crf_axisi_tready;	// From AAA_access_control of access_control.v
     wire		ac_crf_axisi_tvalid;	// From AAA_access_control of access_control.v
     wire		ac_crf_axiso_tready;	// From AAA_access_control of access_control.v
@@ -195,7 +198,10 @@ module bcci_ip
 			     .ac_crf_axisi_tready(ac_crf_axisi_tready),
 			     .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
 			     .ac_crf_axiso_tready(ac_crf_axiso_tready),
-			     .ac_crf_processing	(ac_crf_processing));
+			     .ac_crf_processing	(ac_crf_processing),
+			     .ac_crf_ac2usm_tvalid(ac_crf_ac2usm_tvalid),
+			     .ac_crf_ac2usm_tready(ac_crf_ac2usm_tready),
+			     .ac_crf_ac2usm_tlast(ac_crf_ac2usm_tlast));
 
 
 
@@ -238,6 +244,9 @@ module bcci_ip
 		       .ac_crf_axisi_tready(ac_crf_axisi_tready),
 		       .ac_crf_axiso_tvalid(ac_crf_axiso_tvalid),
 		       .ac_crf_axiso_tready(ac_crf_axiso_tready),
+		       .ac_crf_ac2usm_tvalid(ac_crf_ac2usm_tvalid),
+		       .ac_crf_ac2usm_tready(ac_crf_ac2usm_tready),
+		       .ac_crf_ac2usm_tlast(ac_crf_ac2usm_tlast),
 		       .ac_upsp_rvalid	(ac_upsp_rvalid[N_PARALLEL-1:0]),
 		       .ac_upsp_rdata	(ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]),
 		       .ac_upsp_wready	(ac_upsp_wready[N_PARALLEL-1:0]),
