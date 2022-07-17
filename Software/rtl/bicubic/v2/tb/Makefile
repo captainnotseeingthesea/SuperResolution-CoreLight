@@ -41,7 +41,7 @@ bicubic_verilator:
 	make clean
 	verilator -Wno-lint --output-split 40000 -threads 2 --trace -cc -exe --build -top bicubic_processing_element sim_main.cpp -I define.v  \
 		 ../src/bicubic_mult_stage1.v ../src/bicubic_mult_stage2.v ../src/bicubic_vector_mult_stage1.v ../src/bicubic_vector_mult_stage2.v ../src/bicubic_pvector_mult_wmatrix.v ../src/bicubic_wvector_mult_pmatrix.v \
-		 ../src/dffs.v ../src/sram.v ./bicubic_read_bmp.v ../src/bicubic_upsample.v ../src/buffer_sram.v ../src/bicubic_processing_element.v
+		 ../../../common/dffs.v ../src/sram.v ./bicubic_read_bmp.v ../src/bicubic_upsample.v ../src/buffer_sram.v ../src/bicubic_processing_element.v
 	numactl -C 0-1 -- obj_dir/Vbicubic_processing_element > display_verilator.txt
 
 

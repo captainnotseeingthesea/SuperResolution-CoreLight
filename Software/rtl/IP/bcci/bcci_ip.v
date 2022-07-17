@@ -294,7 +294,8 @@ module bcci_ip
 						 // Parameters
 						 .BUFFER_WIDTH		(BUFFER_WIDTH),
 						 .CHANNEL_WIDTH		(CHANNEL_WIDTH),
-						 .BLOCK_SIZE		(BLOCK_SIZE))
+						 .BLOCK_SIZE		(BLOCK_SIZE),
+						 .SRC_IMG_HEIGHT    (SRC_IMG_HEIGHT))
     		AAA_bicubic_processing_element(
 						   // Outputs
 						   .upsp_ac_rready	(upsp_ac_rready[j]),

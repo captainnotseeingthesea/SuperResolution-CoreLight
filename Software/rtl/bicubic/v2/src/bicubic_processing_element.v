@@ -3,7 +3,8 @@ module bicubic_processing_element
 #(
     parameter BUFFER_WIDTH = 24, 
     parameter CHANNEL_WIDTH = 8,
-    parameter BLOCK_SIZE = 960
+    parameter BLOCK_SIZE = 960,
+    parameter SRC_IMG_HEIGHT = 540
 )
 (
     input clk,
@@ -52,7 +53,8 @@ module bicubic_processing_element
 
     buffer_sram #(
         .BUFFER_WIDTH(BUFFER_WIDTH),
-        .BLOCK_SIZE(BLOCK_SIZE)
+        .BLOCK_SIZE(BLOCK_SIZE),
+        .SRC_IMG_HEIGHT(SRC_IMG_HEIGHT)
     ) u_buffer (
         .clk(clk),
         .rst_n(rst_n),
@@ -192,7 +194,8 @@ module bicubic_processing_element
     wire B_bf_rsp_ready = ac_upsp_wready;
 
     bicubic_upsample #(
-        .BLOCK_SIZE(BLOCK_SIZE)
+        .BLOCK_SIZE(BLOCK_SIZE),
+        .SRC_IMG_HEIGHT(SRC_IMG_HEIGHT)
     ) u_R_bicubic_upsample (
         .clk(clk),
         .rst_n(rst_n),
@@ -226,7 +229,8 @@ module bicubic_processing_element
 
 
     bicubic_upsample #(
-        .BLOCK_SIZE(BLOCK_SIZE)
+        .BLOCK_SIZE(BLOCK_SIZE),
+        .SRC_IMG_HEIGHT(SRC_IMG_HEIGHT)
     ) u_G_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),
@@ -259,7 +263,8 @@ module bicubic_processing_element
     );
 
     bicubic_upsample #(
-        .BLOCK_SIZE(BLOCK_SIZE)
+        .BLOCK_SIZE(BLOCK_SIZE),
+        .SRC_IMG_HEIGHT(SRC_IMG_HEIGHT)
     ) u_B_bicubic_upsample(
         .clk(clk),
         .rst_n(rst_n),

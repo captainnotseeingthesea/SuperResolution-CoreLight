@@ -3,8 +3,8 @@
 `define SIM_WITHOUT_AXI
 
 `define UPSP_DATA_WIDTH 24
-`define SRC_IMG_WIDTH 960
-`define SRC_IMG_HEIGHT 540
+`define SRC_IMG_WIDTH 96
+`define SRC_IMG_HEIGHT 54
 
 
 // `define USE_IPs

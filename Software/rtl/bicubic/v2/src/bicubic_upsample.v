@@ -1,10 +1,11 @@
-// `include "../tb/define.v"
+ `include "../../../../../new/define.v"
 module bicubic_upsample #
 (
     parameter CHANNEL_WIDTH = 8,
     parameter INTER_PRODUCT_WIDTH = 24,
     parameter PRODUCT_WIDTH = 32,
-    parameter BLOCK_SIZE = 960
+    parameter BLOCK_SIZE = 960,
+    parameter SRC_IMG_HEIGHT = 540
 )
 
   (
@@ -56,7 +57,7 @@ module bicubic_upsample #
     dfflr #(.DW(WIDTH_LEN)) u_col_cnt(.lden(col_cnt_ena), .dnxt(nxt_col_cnt), .qout(cur_col_cnt), .clk(clk), .rst_n(rst_n));
 
 
-    localparam HEIGHT = `SRC_IMG_HEIGHT;
+    localparam HEIGHT = SRC_IMG_HEIGHT;
     localparam DES_HEIGHT_LEN = $clog2(HEIGHT*4)+1;
     
     // the row counter to count the current row in progress

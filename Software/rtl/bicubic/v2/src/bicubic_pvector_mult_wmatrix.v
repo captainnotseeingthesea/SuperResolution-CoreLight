@@ -1,4 +1,4 @@
-
+ `include "../../../../../new/define.v"
 module bicubic_pvector_mult_wmatrix #
 (
     parameter INTER_PRODUCT_WIDTH = 24,
