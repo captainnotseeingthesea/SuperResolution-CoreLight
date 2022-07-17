@@ -1,4 +1,5 @@
 
+ `include "../../../../../new/define.v"
 
 module bicubic_mult_stage1 #
 (

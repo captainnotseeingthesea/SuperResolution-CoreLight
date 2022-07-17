@@ -12,7 +12,7 @@
  Description:
 
  **************************************************/
-
+ `include "../../../../new/define.v"
 module bcci_ip
 #(
 	parameter N_PARALLEL         = `N_PARALLEL        ,
@@ -29,6 +29,7 @@ module bcci_ip
 
 	parameter AXISOUT_DATA_WIDTH = 24*4*N_PARALLEL     ,
 	parameter AXI_STRB_WIDTH     = AXI_DATA_WIDTH/8    ,
+	parameter AXIS_STRB_WIDTH    = AXI_DATA_WIDTH/8    ,
 	parameter AXISIN_STRB_WIDTH  = AXISIN_DATA_WIDTH/8 ,
 	parameter AXISOUT_STRB_WIDTH = AXISOUT_DATA_WIDTH/8
 )
@@ -124,7 +125,6 @@ module bcci_ip
     wire [AXISOUT_STRB_WIDTH-1:0] ac_m_axis_tstrb;// From AAA_access_control of access_control.v
     wire		ac_m_axis_tuser;	// From AAA_access_control of access_control.v
     wire		ac_m_axis_tvalid;	// From AAA_access_control of access_control.v
-    wire		ac_upsp_reset;		// From AAA_access_control of access_control.v
     wire		crf_ac_UPEND;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_UPSTART;		// From AAA_config_register_file of config_register_file.v
     wire		crf_ac_wbusy;		// From AAA_config_register_file of config_register_file.v
@@ -241,7 +241,6 @@ module bcci_ip
 		       .ac_upsp_rvalid	(ac_upsp_rvalid[N_PARALLEL-1:0]),
 		       .ac_upsp_rdata	(ac_upsp_rdata[UPSP_RDDATA_WIDTH-1:0]),
 		       .ac_upsp_wready	(ac_upsp_wready[N_PARALLEL-1:0]),
-		       .ac_upsp_reset	(ac_upsp_reset),
 		       .s_axis_tready	(s_axis_tready),
 		       .ac_m_axis_tvalid(ac_m_axis_tvalid),
 		       .ac_m_axis_tid	(ac_m_axis_tid),
@@ -286,7 +285,8 @@ module bcci_ip
 						 // Parameters
 						 .BUFFER_WIDTH		(BUFFER_WIDTH),
 						 .CHANNEL_WIDTH		(CHANNEL_WIDTH),
-						 .BLOCK_SIZE		(BLOCK_SIZE))
+						 .BLOCK_SIZE		(BLOCK_SIZE),
+						 .SRC_IMG_HEIGHT    (SRC_IMG_HEIGHT))
     		AAA_bicubic_processing_element(
 						   // Outputs
 						   .upsp_ac_rready	(upsp_ac_rready[j]),
@@ -294,7 +294,7 @@ module bcci_ip
 						   .upsp_ac_wvalid	(upsp_ac_wvalid[j]),
 						   // Inputs
 						   .clk			(clk),
-						   .rst_n		(rst_n & (~ac_upsp_reset)),
+						   .rst_n		(rst_n),
 						   .ac_upsp_rdata	(ac_upsp_rdata),
 						   .ac_upsp_rvalid	(ac_upsp_rvalid[j]),
 						   .ac_upsp_wready	(ac_upsp_wready[j]));

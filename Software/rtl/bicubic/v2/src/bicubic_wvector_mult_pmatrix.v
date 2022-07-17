@@ -1,4 +1,3 @@
-
 module bicubic_wvector_mult_pmatrix #
 (
     parameter CHANNEL_WIDTH = 8,
