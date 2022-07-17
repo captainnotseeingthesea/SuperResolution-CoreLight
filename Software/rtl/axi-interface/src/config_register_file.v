@@ -32,7 +32,8 @@ module config_register_file # (
    s_axi_arvalid, s_axi_araddr, s_axi_arprot, s_axi_rready,
    ac_crf_wrt, ac_crf_waddr, ac_crf_wdata, ac_crf_axisi_tvalid,
    ac_crf_axisi_tready, ac_crf_axiso_tvalid, ac_crf_axiso_tready,
-   ac_crf_processing
+   ac_crf_processing, ac_crf_ac2usm_tvalid, ac_crf_ac2usm_tready,
+   ac_crf_ac2usm_tlast
    );
 
 	localparam RESP_OKAY = 2'b00;
@@ -88,6 +89,9 @@ module config_register_file # (
 	input                       ac_crf_axiso_tvalid;
 	input                       ac_crf_axiso_tready;
 	input                       ac_crf_processing;
+	input                       ac_crf_ac2usm_tvalid;
+	input                       ac_crf_ac2usm_tready;
+	input                       ac_crf_ac2usm_tlast;
 
 
 
@@ -159,7 +163,7 @@ module config_register_file # (
 
 	// Count the time of whole processing
 	reg [CRF_DATA_WIDTH-1:0] UPPROCCNT;
-	always@(posedge clk or negedge rst_n) begin: CLK_DIV_10
+	always@(posedge clk or negedge rst_n) begin: UPPROC_COUNT
 		if(~rst_n) begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -173,6 +177,27 @@ module config_register_file # (
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			UPPROCCNT <= {CRF_DATA_WIDTH{1'b0}};
+			// End of automatics
+		end
+	end
+
+	// Count how many lines transmitted to usm
+	reg [CRF_DATA_WIDTH-1:0] UP2USMCNT;
+	always@(posedge clk or negedge rst_n) begin: USMRCV_COUNT
+		if(~rst_n) begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			UP2USMCNT <= {CRF_DATA_WIDTH{1'b0}};
+			// End of automatics
+		end else if(ac_crf_processing) begin
+			if(ac_crf_ac2usm_tvalid & ac_crf_ac2usm_tready & ac_crf_ac2usm_tlast)
+				UP2USMCNT <= UP2USMCNT + 1;
+		end else if(crf_ac_UPEND) begin
+			UP2USMCNT <= UP2USMCNT  ;
+		end else begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			UP2USMCNT <= {CRF_DATA_WIDTH{1'b0}};
 			// End of automatics
 		end
 	end
@@ -327,6 +352,7 @@ module config_register_file # (
 				12: s_axi_rdata <= UPOUTHSKCNT ;
 				16: s_axi_rdata <= UPOUTNRDYCNT;
 				20: s_axi_rdata <= UPPROCCNT   ;
+				24: s_axi_rdata <= UP2USMCNT   ;
 				default: s_axi_rdata <= {AXI_DATA_WIDTH{1'b0}};
 			endcase
 		end else begin
