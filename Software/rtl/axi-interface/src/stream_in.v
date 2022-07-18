@@ -128,8 +128,12 @@ module stream_in # (
 	// If not frame_done, generate tready signals depending on upsp ready.
 	// The tready for output will be asserted if all elements requiring the data are ready
 	wire [N_PARALLEL-1:0] tready;
-	wire all_ready = ~(|(ac_upsp_rvalid^tready)) & (|tready);
+	wire [N_PARALLEL-1:0] rvalid;
+	wire valid_ready_match = ~(|(rvalid^tready));
+
+	wire all_ready = valid_ready_match & (|tready);
 	assign s_axis_tready  = all_ready & ~frame_done;
+	assign ac_upsp_rvalid = valid_ready_match?rvalid:{N_PARALLEL{1'b0}};
 	assign ac_upsp_rdata  = s_axis_tdata;
 
 	wire [N_PARALLEL-1:0] in_range;
@@ -143,7 +147,7 @@ module stream_in # (
 									:START + BLOCK_SIZE -1;
 
 			assign in_range[j] = (cur_row_pos >= START) && (cur_row_pos <= END);
-			assign ac_upsp_rvalid[j] = in_range[j] & s_axis_tvalid;
+			assign rvalid[j] = in_range[j] & s_axis_tvalid;
 			assign tready[j] = in_range[j] & upsp_ac_rready[j];
 		end
 	endgenerate
