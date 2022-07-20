@@ -264,7 +264,7 @@ module usm #(
             wire input_data_edge_ena = (edge_data_idle_pos >= idle_pos & i >= idle_pos & i <= edge_data_idle_pos) | ((edge_data_idle_pos < idle_pos) & (i >= idle_pos | i <= edge_data_idle_pos));
             wire input_data_ena = (data_idle_pos >= idle_pos & i >= idle_pos & i <= data_idle_pos) | ((data_idle_pos < idle_pos) & (i >= idle_pos | i <= data_idle_pos));
 
-            wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] axis_data_index_0 = i >= idle_pos ? (i - idle_pos + 1) : (i + INPUT_BUFFER_SIZE - idle_pos + 1);
+            wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] axis_data_index_0 = i >= idle_pos ? (EDGE_WIDTH - i + idle_pos) : (EDGE_WIDTH - i - INPUT_BUFFER_SIZE + idle_pos);
             wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] correct_axis_data_index_0 = (axis_data_index_0 < INPUT_PIXEL_NUM ? axis_data_index_0 : INPUT_PIXEL_NUM - 1);
             wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] axis_data_index_1 = i >= idle_pos + EDGE_WIDTH ? i - idle_pos - EDGE_WIDTH : i + INPUT_BUFFER_SIZE - idle_pos - EDGE_WIDTH;
             wire [$clog2(INPUT_PIXEL_NUM) - 1 : 0] correct_axis_data_index_1 = (axis_data_index_1 < INPUT_PIXEL_NUM ? axis_data_index_1 : INPUT_PIXEL_NUM - 1);
@@ -309,15 +309,48 @@ module usm #(
         end
     endgenerate
 
-    assign weight_vector[0][0 +: WEIGHT_WIDTH] = 225;
-    assign weight_vector[0][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 228;
-    assign weight_vector[0][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 225;
-    assign weight_vector[1][0 +: WEIGHT_WIDTH] = 228;
-    assign weight_vector[1][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 231;
-    assign weight_vector[1][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 228;
-    assign weight_vector[2][0 +: WEIGHT_WIDTH] = 225;
-    assign weight_vector[2][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 228;
-    assign weight_vector[2][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 225;
+    generate
+        if(COV_SIZE == 3) begin
+            assign weight_vector[0][0 +: WEIGHT_WIDTH] = 225;
+            assign weight_vector[0][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 228;
+            assign weight_vector[0][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 225;
+            assign weight_vector[1][0 +: WEIGHT_WIDTH] = 228;
+            assign weight_vector[1][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 231;
+            assign weight_vector[1][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 228;
+            assign weight_vector[2][0 +: WEIGHT_WIDTH] = 225;
+            assign weight_vector[2][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 228;
+            assign weight_vector[2][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 225;
+        end
+        else if(COV_SIZE == 5) begin
+            assign weight_vector[0][0 +: WEIGHT_WIDTH] = 77;
+            assign weight_vector[0][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 80;
+            assign weight_vector[0][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 81;
+            assign weight_vector[0][3 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 80;
+            assign weight_vector[0][4 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 77;
+            assign weight_vector[1][0 +: WEIGHT_WIDTH] = 80;
+            assign weight_vector[1][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 84;
+            assign weight_vector[1][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 85;
+            assign weight_vector[1][3 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 84;
+            assign weight_vector[1][4 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 80;
+            assign weight_vector[2][0 +: WEIGHT_WIDTH] = 81;
+            assign weight_vector[2][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 85;
+            assign weight_vector[2][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 86;
+            assign weight_vector[2][3 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 85;
+            assign weight_vector[2][4 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 81;
+            assign weight_vector[3][0 +: WEIGHT_WIDTH] = 80;
+            assign weight_vector[3][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 84;
+            assign weight_vector[3][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 85;
+            assign weight_vector[3][3 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 84;
+            assign weight_vector[3][4 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 80;
+            assign weight_vector[4][0 +: WEIGHT_WIDTH] = 77;
+            assign weight_vector[4][WEIGHT_WIDTH +: WEIGHT_WIDTH] = 80;
+            assign weight_vector[4][2 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 81;
+            assign weight_vector[4][3 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 80;
+            assign weight_vector[4][4 * WEIGHT_WIDTH +: WEIGHT_WIDTH] = 77;
+        end
+    endgenerate
+
+    
     generate
         for (i = 0; i < INPUT_PIXEL_NUM + 2 * EDGE_WIDTH; i = i + 1) begin
             for(j = 0; j < 3; j = j + 1) begin

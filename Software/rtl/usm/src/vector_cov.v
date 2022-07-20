@@ -35,7 +35,7 @@ module vector_cov #(
     output [OUTPUT_LENGTH * (INNER_MUL_WIDTH + $clog2(COV_SIZE)) - 1 : 0] partial_sum,
     output cov_done
 );
-    localparam OUTPUT_DELAY = 4;
+    localparam OUTPUT_DELAY = 2 + $clog2(COV_SIZE);
 
     reg [INNER_MUL_WIDTH - 1: 0] inner_mul [OUTPUT_LENGTH * COV_SIZE - 1 : 0];
     reg [CH_WIDTH * LENGTH - 1 : 0] pixel_vector_next; // cut the critical path

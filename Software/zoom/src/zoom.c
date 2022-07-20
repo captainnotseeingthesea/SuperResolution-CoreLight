@@ -172,14 +172,14 @@ void Gaussian_blur(Gaussian_blur_info *blur_info)
                 for(int v = 0; v < _size; v++)
                 {
                     pix_x = (jj - center + v) < 0 ? (center - v - jj) : (jj - center + v) >= info->widthOut ? (2 * info->widthOut - jj + center - v - 2) : (jj - center + v);
-                    r_sum += info->rgbOut[pix_y * info->widthOut + pix_x].r * (int)(weight[u][v] * 8192);
-                    g_sum += info->rgbOut[pix_y * info->widthOut + pix_x].g * (int)(weight[u][v] * 8192);
-                    b_sum += info->rgbOut[pix_y * info->widthOut + pix_x].b * (int)(weight[u][v] * 8192);
+                    r_sum += info->rgbOut[pix_y * info->widthOut + pix_x].r * (int)(weight[u][v] * 2048);
+                    g_sum += info->rgbOut[pix_y * info->widthOut + pix_x].g * (int)(weight[u][v] * 2048);
+                    b_sum += info->rgbOut[pix_y * info->widthOut + pix_x].b * (int)(weight[u][v] * 2048);
                 }
             }
-            dst_img[ii * info->widthOut + jj].r = (r_sum >> 13);
-            dst_img[ii * info->widthOut + jj].g = (g_sum >> 13);
-            dst_img[ii * info->widthOut + jj].b = (b_sum >> 13);
+            dst_img[ii * info->widthOut + jj].r = (r_sum >> 11);
+            dst_img[ii * info->widthOut + jj].g = (g_sum >> 11);
+            dst_img[ii * info->widthOut + jj].b = (b_sum >> 11);
         }
     }
     //多线程,处理完成行数
