@@ -1,4 +1,4 @@
- `include "../../../../../new/define.v"
+
 module bicubic_upsample #
 (
     parameter CHANNEL_WIDTH = 8,

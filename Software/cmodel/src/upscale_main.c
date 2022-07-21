@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +22,7 @@ int main(int argc, char const *argv[])
     int result;
     BMPImage *img = bmp_read(argv[1]);
     BMPImage *res = bmp_create(atoi(argv[2]), atoi(argv[3]));
-    bcci(img->data, img->header.width_px, img->header.height_px, res->data, res->header.width_px, res->header.height_px, 4);
+    bcci(img->data, img->header.width_px, img->header.height_px, res->data, res->header.width_px, res->header.height_px, 2);
     result = bmp_write(res, argc > 4 ? argv[4] : default_filename);
     if(res)
         free(res);

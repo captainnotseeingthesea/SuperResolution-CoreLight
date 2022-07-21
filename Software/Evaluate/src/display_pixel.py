@@ -1,7 +1,8 @@
+
 from PIL import Image
 
 f = open("out.txt", "w")
-img = Image.open('out.bmp')
+img = Image.open('../0.bmp')
 rgb_img = img.convert("RGB")
 
 """ Generate the memory map for bmp """

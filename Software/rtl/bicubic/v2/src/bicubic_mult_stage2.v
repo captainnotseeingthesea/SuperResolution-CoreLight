@@ -1,4 +1,4 @@
- `include "../../../../../new/define.v"
+
 module bicubic_mult_stage2 #
 (
     parameter PRODUCT_WIDTH = 32

@@ -1,4 +1,4 @@
- `include "../../../../../new/define.v"
+
 module buffer_sram #(
     parameter BUFFER_WIDTH=24,
     parameter BLOCK_SIZE=960,

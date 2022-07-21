@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/Software/zoom/app",
-            "args": ["${workspaceFolder}/Software/Evaluate/src/0.bmp", "${workspaceFolder}/Software/Evaluate/src/out.bmp", "1", "2"],
+            "args": ["${workspaceFolder}/Software/Evaluate/src/1.bmp", "${workspaceFolder}/Software/Evaluate/src/out.bmp", "1", "2"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/Software/zoom",
             "environment": [],
