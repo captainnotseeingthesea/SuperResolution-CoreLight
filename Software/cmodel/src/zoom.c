@@ -55,6 +55,10 @@ typedef struct
 } addWeighted_info;
 
 
+pthread_mutex_t mutex_bicubic, mutex_bicubic_opencv, mutex_near, mutex_linear, mutex_linear_opencv;
+pthread_mutex_t mutex_gaussian_blur, mutex_add_weight;
+
+
 /*
  *  多线程并行的方式来缩放图像(双三次插值算法)
  */
@@ -153,7 +157,9 @@ void Gaussian_blur(Gaussian_blur_info *blur_info)
     //多线程
     int startLine, endLine;
     //多线程,获得自己处理行信息
+    pthread_mutex_lock(&mutex_gaussian_blur);
     startLine = info->lineDiv * (info->threadCount++);
+    pthread_mutex_unlock(&mutex_gaussian_blur);
     endLine = startLine + info->lineDiv;
     if (endLine > info->heightOut)
         endLine = info->heightOut;
@@ -202,7 +208,9 @@ void addWeighted(addWeighted_info *weight_info)
     float gama = weight_info->gama;
 
     //多线程,获得自己处理行信息
+    pthread_mutex_lock(&mutex_add_weight);
     startLine = info->lineDiv * (info->threadCount++);
+    pthread_mutex_unlock(&mutex_add_weight);
     endLine = startLine + info->lineDiv;
     if (endLine > info->heightOut)
         endLine = info->heightOut;
@@ -335,7 +343,9 @@ void _zoom_linear_opencv(Zoom_Info *info)
     //多线程
     int startLine, endLine;
     //多线程,获得自己处理行信息
+    pthread_mutex_lock(&mutex_linear_opencv);
     startLine = info->lineDiv * (info->threadCount++);
+    pthread_mutex_unlock(&mutex_linear_opencv);
     endLine = startLine + info->lineDiv;
     if (endLine > info->heightOut)
         endLine = info->heightOut;
@@ -408,7 +418,9 @@ void _zoom_linear(Zoom_Info *info)
     //多线程
     int startLine, endLine;
     //多线程,获得自己处理行信息
+    pthread_mutex_lock(&mutex_linear);
     startLine = info->lineDiv * (info->threadCount++);
+    pthread_mutex_unlock(&mutex_linear);
     endLine = startLine + info->lineDiv;
     if (endLine > info->heightOut)
         endLine = info->heightOut;
@@ -694,7 +706,9 @@ void _zoom_near(Zoom_Info *info)
     //多线程
     int startLine, endLine;
     //多线程,获得自己处理行信息
+    pthread_mutex_lock(&mutex_near);
     startLine = info->lineDiv * (info->threadCount++);
+    pthread_mutex_unlock(&mutex_near);
     endLine = startLine + info->lineDiv;
     if (endLine > info->heightOut)
         endLine = info->heightOut;
@@ -1179,7 +1193,9 @@ void _zoom_bicubic_opencv(Zoom_Info *info)
     //多线程
     int startLine, endLine;
     //多线程,获得自己处理行信息
+    pthread_mutex_lock(&mutex_bicubic_opencv);
     startLine = info->lineDiv * (info->threadCount++);
+    pthread_mutex_unlock(&mutex_bicubic_opencv);
     endLine = startLine + info->lineDiv;
     if (endLine > info->heightOut)
         endLine = info->heightOut;
@@ -1269,7 +1285,9 @@ void _zoom_bicubic(Zoom_Info *info)
     //多线程
     int startLine, endLine;
     //多线程,获得自己处理行信息
+    pthread_mutex_lock(&mutex_bicubic);
     startLine = info->lineDiv * (info->threadCount++);
+    pthread_mutex_unlock(&mutex_bicubic);
     endLine = startLine + info->lineDiv;
     if (endLine > info->heightOut)
         endLine = info->heightOut;
