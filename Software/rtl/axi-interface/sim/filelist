@@ -1,0 +1,49 @@
+// Utils
+"../env/utils/utils_pkg.sv"
+
+// Src
+"../../common/bram_subbank.v"
+"../../common/fifo.v"
+"../../common/dffs.v"
+
+"../src/access_control.v"
+"../src/config_register_file.v"
+"../src/stream_in.v"
+"../src/upsp_outbuf.v"
+"../src/ac_outbuf.v"
+"../src/stream_transformer.v"
+
+"../../bicubic/v2/src/bicubic_mult_stage1.v"
+"../../bicubic/v2/src/bicubic_mult_stage2.v"
+"../../bicubic/v2/src/bicubic_processing_element.v"
+"../../bicubic/v2/src/bicubic_pvector_mult_wmatrix.v"
+"../../bicubic/v2/src/bicubic_upsample.v"
+"../../bicubic/v2/src/bicubic_vector_mult_stage1.v"
+"../../bicubic/v2/src/bicubic_vector_mult_stage2.v"
+"../../bicubic/v2/src/bicubic_wvector_mult_pmatrix.v"
+"../../bicubic/v2/src/buffer_sram.v"
+"../../bicubic/v2/src/sram.v"
+
+"../../usm/src/UnsignedAdderTree.v"
+"../../usm/src/usm.v"
+"../../usm/src/vector_cov.v"
+
+// DUT
+"../env/interface_lib/ifs.sv"
+"../env/dut/duts.sv"
+
+// Env
+"../env/axi_lite/axi_lite_pkg.sv"
+"../env/axi_stream/axi_stream_pkg.sv"
+"../env/up_sampling/upsp_pkg.sv"
+"../env/sequence_lib/sequence_pkg.sv"
+"../env/scoreboard/scoreboard_pkg.sv"
+"../env/environment/env_pkg.sv"
+"../env/test_lib/test_pkg.sv"
+
+
+// TB
+"../env/testbench/tb_bcci_ip.sv"
+
+// IP
+"../../IP/bcci/bcci_ip.v"
